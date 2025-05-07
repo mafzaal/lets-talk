@@ -1,4 +1,4 @@
-# Certification Challenge: AI-Driven Blog Chat Component
+# AIM AIE 6 Certification Challenge: AI-Driven Blog Chat Component
 
 ## Task 1: Defining your Problem and Audience
 
@@ -43,7 +43,7 @@ We propose an AI-driven chat assistant for [TheDataGuy](https://thedataguy.pro)'
 
 ## Technology Stack
 
-1. **LLM**: OpenAI o4.1 - Provides an excellent balance of reasoning capabilities, context length, and cost-effectiveness while maintaining high accuracy for technical topics.
+1. **LLM**: OpenAI GPT-4.1/o4-mini - Provides an excellent balance of reasoning capabilities, context length, and cost-effectiveness while maintaining high accuracy for technical topics.
 
 2. **Embedding Model**: OpenAI's text-embedding-3-small - Offers strong performance on technical content while being cost-efficient for production deployment.
 
