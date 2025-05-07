@@ -35,7 +35,7 @@ For our first implementation, we will focus on content from [TheDataGuy](https:/
 
 These questions align with the main themes in the blog posts, which cover LLM evaluation, RAG systems, custom development of AI tools, and data strategy.
 
-# AI-Driven Chat for [TheDataGuy.pro](https://thedataguy.pro): Solution Design
+# AI-Driven Chat for [TheDataGuy](https://thedataguy.pro): Solution Design
 
 ## Proposed Solution
 
