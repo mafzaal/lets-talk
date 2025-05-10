@@ -43,9 +43,9 @@ We propose an AI-driven chat assistant for [TheDataGuy](https://thedataguy.pro)'
 
 ## Technology Stack
 
-1. **LLM**: OpenAI GPT-4.1/o4-mini - Provides an excellent balance of reasoning capabilities, context length, and cost-effectiveness while maintaining high accuracy for technical topics.
+1. **LLM**: OpenAI GPT-4.1/o4-mini - Delivers superior reasoning capabilities for technical content interpretation with an optimal balance of context handling and cost-efficiency, ensuring accurate responses to complex AI engineering questions.
 
-2. **Embedding Model**: Huggingface's snowflake-arctic-embed-l - to start with and fine-tuned based to production use.
+2. **Embedding Model**: Snowflake Arctic Embed L v2.0 (Snowflake/snowflake-arctic-embed-l-v2.0) - Optimized for technical content retrieval with strong semantic understanding of AI concepts while maintaining efficient inference for blog content vectorization.
 
 3. **Orchestration**: LangChain - Provides flexible components for building LLM applications with robust RAG pipelines and context management tailored for technical blog content.
 
