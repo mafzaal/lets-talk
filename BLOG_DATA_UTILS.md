@@ -4,23 +4,29 @@ This directory contains utilities for loading, processing, and maintaining blog 
 
 ## Available Tools
 
-### `utils_data_loading.ipynb`
+### `blog_utils.py`
 
-This notebook contains utility functions for:
+This Python module contains utility functions for:
 - Loading blog posts from the data directory
 - Processing and enriching metadata (adding URLs, titles, etc.)
 - Getting statistics about the documents
 - Creating and updating vector embeddings
 - Loading existing vector stores
 
-### `update_blog_data.ipynb`
+### `update_blog_data.py`
 
-This notebook demonstrates how to:
-- Use the utility functions to update the blog data
+This script allows you to:
+- Update the blog data when new posts are published
 - Process new blog posts
 - Update the vector store
-- Test the updated system with sample queries
 - Track changes over time
+
+### Legacy Notebooks (Reference Only)
+
+The following notebooks are kept for reference but the functionality has been moved to Python modules:
+
+- `utils_data_loading.ipynb` - Contains the original utility functions
+- `update_blog_data.ipynb` - Demonstrates the update workflow
 
 ## How to Use
 
@@ -29,12 +35,17 @@ This notebook demonstrates how to:
 When new blog posts are published, follow these steps:
 
 1. Add the markdown files to the `data/` directory
-2. Run the update notebook:
+2. Run the update script:
    ```bash
    cd /home/mafzaal/source/lets-talk
-   uv run jupyter nbconvert --to notebook --execute update_blog_data.ipynb --output executed_update_$(date +%Y%m%d).ipynb
+   uv run python update_blog_data.py
    ```
    
+   You can also force recreation of the vector store:
+   ```bash
+   uv run python update_blog_data.py --force-recreate
+   ```
+
 This will:
 - Load all blog posts (including new ones)
 - Update the vector embeddings
@@ -50,23 +61,22 @@ VECTOR_STORAGE_PATH=./db/vectorstore_v3    # Path to vector store
 EMBEDDING_MODEL=Snowflake/snowflake-arctic-embed-l  # Embedding model
 QDRANT_COLLECTION=thedataguy_documents     # Collection name
 BLOG_BASE_URL=https://thedataguy.pro/blog/ # Base URL for blog
-FORCE_RECREATE_EMBEDDINGS=false           # Whether to force recreation
 ```
 
 ### In the Chainlit App
 
-The Chainlit app (`app.py`) has been updated to use these utility functions if available. It falls back to direct initialization if they can't be loaded.
+The Chainlit app (`app.py`) has been updated to use these utility functions from the `blog_utils.py` module. It falls back to notebook import and direct initialization if there are any issues.
 
 ## Adding Custom Processing
 
 To add custom processing for blog posts:
 
-1. Edit the `update_document_metadata` function in `utils_data_loading.ipynb`
+1. Edit the `update_document_metadata` function in `blog_utils.py`
 2. Add any additional enrichment or processing steps
-3. Update the vector store using the `update_blog_data.ipynb` notebook
+3. Update the vector store using the `update_blog_data.py` script
 
 ## Future Improvements
 
-- Add support for incremental updates (only process new posts)
-- Add webhook support to automatically update when new posts are published
+- Add scheduled update process for automatically including new blog posts
 - Add tracking of embedding models and versions
+- Add webhook support to automatically update when new posts are published

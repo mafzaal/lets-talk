@@ -1,9 +1,9 @@
 import os
 import getpass
 import sys
-import importlib.util
 from pathlib import Path
 from operator import itemgetter
+from config import LLM_MODEL, LLM_TEMPERATURE
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -17,78 +17,17 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams
-
-# Import utility functions from the notebook
-def import_notebook_functions(notebook_path):
-    """Import functions from a Jupyter notebook"""
-    import nbformat
-    from importlib.util import spec_from_loader, module_from_spec
-    from IPython.core.interactiveshell import InteractiveShell
+import blog_utils
     
-    # Create a module
-    module_name = Path(notebook_path).stem
-    spec = spec_from_loader(module_name, loader=None)
-    module = module_from_spec(spec)
-    sys.modules[module_name] = module
-    
-    # Read the notebook
-    with open(notebook_path) as f:
-        nb = nbformat.read(f, as_version=4)
-    
-    # Execute code cells
-    shell = InteractiveShell.instance()
-    for cell in nb.cells:
-        if cell.cell_type == 'code':
-            # Skip example code
-            if 'if __name__ == "__main__":' in cell.source:
-                continue
-                
-            code = shell.input_transformer_manager.transform_cell(cell.source)
-            exec(code, module.__dict__)
-    
-    return module
-
-# Try to import utility functions if available
-try:
-    utils = import_notebook_functions('utils_data_loading.ipynb')
-    
-    # Load vector store using the utility function
-    vector_store = utils.load_vector_store(
-        storage_path=os.environ.get("VECTOR_STORAGE_PATH", "./db/vectorstore_v3"),
-        collection_name=os.environ.get("QDRANT_COLLECTION", "thedataguy_documents"),
-        embedding_model=os.environ.get("EMBEDDING_MODEL", "Snowflake/snowflake-arctic-embed-l")
-    )
-    
-    print("Successfully loaded vector store using utility functions")
-    
-except Exception as e:
-    print(f"Could not load utility functions: {e}")
-    print("Falling back to direct initialization")
-    
-    # Get vector storage path from .env file with fallback
-    storage_path = Path(os.environ.get("VECTOR_STORAGE_PATH", "./db/vectorstore_v3"))
-    
-    # Load embedding model from environment variable with fallback
-    embedding_model = os.environ.get("EMBEDDING_MODEL", "Snowflake/snowflake-arctic-embed-l")
-    huggingface_embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
-    
-    # Set up Qdrant vectorstore from existing collection
-    collection_name = os.environ.get("QDRANT_COLLECTION", "thedataguy_documents")
-    
-    vector_store = QdrantVectorStore.from_existing_collection(
-        path=storage_path,
-        collection_name=collection_name,
-        embedding=huggingface_embeddings,
-    )
-
+# Load vector store using the utility function
+vector_store = blog_utils.load_vector_store()
 
 # Create a retriever
 retriever = vector_store.as_retriever()
 
 # Set up ChatOpenAI with environment variables
-llm_model = os.environ.get("LLM_MODEL", "gpt-4o-mini")
-temperature = float(os.environ.get("TEMPERATURE", "0"))
-llm = ChatOpenAI(model=llm_model, temperature=temperature)
+
+llm = ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
 
 # Create RAG prompt template
 rag_prompt_template = """\
@@ -149,24 +88,24 @@ async def on_message(message: cl.Message):
     response = chain.invoke({"question": message.content})
     
     # Get the sources to display them
-    sources = []
-    for doc in response["context"]:
-        if "url" in doc.metadata:
-            # Get title from post_title metadata if available, otherwise derive from URL
-            title = doc.metadata.get("post_title", "")
-            if not title:
-                title = doc.metadata["url"].split("/")[-2].replace("-", " ").title()
+    # sources = []
+    # for doc in response["context"]:
+    #     if "url" in doc.metadata:
+    #         # Get title from post_title metadata if available, otherwise derive from URL
+    #         title = doc.metadata.get("post_title", "")
+    #         if not title:
+    #             title = doc.metadata["url"].split("/")[-2].replace("-", " ").title()
                 
-            sources.append(
-                cl.Source(
-                    url=doc.metadata["url"],
-                    title=title
-                )
-            )
+    #         sources.append(
+    #             cl.Source(
+    #                 url=doc.metadata["url"],
+    #                 title=title
+    #             )
+    #         )
 
     # Send the response with sources
     await cl.Message(
         content=response["response"].content,
-        sources=sources
+        #sources=sources
     ).send()
 
