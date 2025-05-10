@@ -64,7 +64,7 @@ We propose an AI-driven chat assistant for [TheDataGuy](https://thedataguy.pro)'
 The solution will implement agentic reasoning in two key areas. First, a research agent will dynamically determine when additional context is needed beyond what's in the vector database, intelligently pulling supplementary information from recent blog posts or external technical documentation when appropriate. Second, a reasoning agent will manage complex technical questions that require multi-step thinking, breaking down queries about implementation details, evaluation methodologies, or architectural decisions into logical components before synthesizing comprehensive answers. This approach will be particularly valuable when users ask about applying concepts across multiple blog posts (e.g., "How would I evaluate a research agent using Ragas?") where simple retrieval wouldn't provide a satisfactory response.
 
 
-Task 3: Dealing with the Data
+# Task 3: Dealing with the Data
 
 We will be using data source
 
