@@ -15,9 +15,9 @@ dependencies = [
     "langchain-openai>=0.3.16",
     "langchain-qdrant>=0.2.0",
     "langchain-text-splitters>=0.3.8",
-    "nbformat>=5.10.4",
     "pandas>=2.2.3",
     "python-dotenv>=1.1.0",
     "qdrant-client>=1.14.2",
     "unstructured[md]>=0.17.2",
+    "websockets>=15.0.1",
 ]

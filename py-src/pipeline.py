@@ -18,17 +18,18 @@ import argparse
 from datetime import datetime
 import json
 from pathlib import Path
+from lets_talk.config import VECTOR_STORAGE_PATH
 
 # Import the blog utilities module
-import blog_utils
+import lets_talk.utils.blog as blog
 
 def parse_args():
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(description="Update blog data vector store")
     parser.add_argument("--force-recreate", action="store_true", 
                         help="Force recreation of the vector store")
-    parser.add_argument("--data-dir", default=blog_utils.DATA_DIR,
-                        help=f"Directory containing blog posts (default: {blog_utils.DATA_DIR})")
+    parser.add_argument("--data-dir", default=blog.DATA_DIR,
+                        help=f"Directory containing blog posts (default: {blog.DATA_DIR})")
     return parser.parse_args()
 
 def save_stats(stats, output_dir="./stats"):
@@ -68,26 +69,28 @@ def main():
     # Process blog posts without creating embeddings
     try:
         # Load and process documents
-        documents = blog_utils.load_blog_posts(args.data_dir)
-        documents = blog_utils.update_document_metadata(documents)
+        documents = blog.load_blog_posts(args.data_dir)
+        documents = blog.update_document_metadata(documents)
         
         # Get stats
-        stats = blog_utils.get_document_stats(documents)
-        blog_utils.display_document_stats(stats)
+        stats = blog.get_document_stats(documents)
+        blog.display_document_stats(stats)
         
         # Save stats for tracking
         stats_file = save_stats(stats)
+
+        create_vector_store = (not Path.exists(Path(VECTOR_STORAGE_PATH))) or (args.force_recreate)
         
         # Create a reference file for the vector store
-        if args.force_recreate:
+        if create_vector_store:
             print("\nAttempting to save vector store reference file...")
-            blog_utils.create_vector_store(documents, force_recreate=args.force_recreate)
+            vector_store = blog.create_vector_store(documents, storage_path=VECTOR_STORAGE_PATH, force_recreate=create_vector_store)
+            vector_store.client.close()
+            print("Vector store reference file saved.")
         
         print("\n=== Update Summary ===")
         print(f"Processed {stats['total_documents']} documents")
         print(f"Stats saved to: {stats_file}")
-        print("Note: Vector store creation is currently disabled due to pickling issues.")
-        print("      See VECTOR_STORE_ISSUES.md for more information and possible solutions.")
         print("=====================")
         
         return 0

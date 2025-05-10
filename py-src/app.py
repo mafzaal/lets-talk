@@ -3,7 +3,6 @@ import getpass
 import sys
 from pathlib import Path
 from operator import itemgetter
-from config import LLM_MODEL, LLM_TEMPERATURE
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -17,10 +16,13 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams
-import blog_utils
+from lets_talk.config import LLM_MODEL, LLM_TEMPERATURE
+import lets_talk.utils.blog as blog
+from lets_talk.models.rag import LangChainRAG
+
     
 # Load vector store using the utility function
-vector_store = blog_utils.load_vector_store()
+vector_store = blog.load_vector_store()
 
 # Create a retriever
 retriever = vector_store.as_retriever()
@@ -72,40 +74,29 @@ async def setup_chain():
     # Set a loading message
     msg = cl.Message(content="Let's talk about [TheDataGuy](https://thedataguy.pro)'s blog posts, how can I help you?", author="System")
     await msg.send()
+
+    #rag_chain = LangChainRAG(llm=llm, retriever=retriever)
     
     # Store the chain in user session
     cl.user_session.set("chain", retrieval_augmented_qa_chain)
+    #cl.user_session.set("chain", rag_chain)
+    
 
     
 
 @cl.on_message
 async def on_message(message: cl.Message):
+    msg = cl.Message(content="")
+
     # Get chain from user session
     chain = cl.user_session.get("chain")
     
-    print(message.content)
     # Call the chain with the user message
-    response = chain.invoke({"question": message.content})
+    response = await chain.ainvoke({"question": message.content})
+    #response = await chain.arun_pipeline(message.content)
     
-    # Get the sources to display them
-    # sources = []
-    # for doc in response["context"]:
-    #     if "url" in doc.metadata:
-    #         # Get title from post_title metadata if available, otherwise derive from URL
-    #         title = doc.metadata.get("post_title", "")
-    #         if not title:
-    #             title = doc.metadata["url"].split("/")[-2].replace("-", " ").title()
-                
-    #         sources.append(
-    #             cl.Source(
-    #                 url=doc.metadata["url"],
-    #                 title=title
-    #             )
-    #         )
+     # Stream tokens from the final_answer
+    await msg.stream_token(response["response"].content)
+    await msg.send()
 
-    # Send the response with sources
-    await cl.Message(
-        content=response["response"].content,
-        #sources=sources
-    ).send()
-
+  

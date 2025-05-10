@@ -20,7 +20,7 @@ from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 
 
-from config import (
+from lets_talk.config import (
     DATA_DIR,
     VECTOR_STORAGE_PATH,
     EMBEDDING_MODEL,
