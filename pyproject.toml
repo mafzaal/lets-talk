@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "chainlit>=2.5.5",
     "ipykernel>=6.29.5",
+    "ipython>=9.2.0",
     "langchain>=0.3.25",
     "langchain-community>=0.3.23",
     "langchain-core>=0.3.59",
@@ -14,6 +15,7 @@ dependencies = [
     "langchain-openai>=0.3.16",
     "langchain-qdrant>=0.2.0",
     "langchain-text-splitters>=0.3.8",
+    "nbformat>=5.10.4",
     "pandas>=2.2.3",
     "python-dotenv>=1.1.0",
     "qdrant-client>=1.14.2",
