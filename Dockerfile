@@ -25,8 +25,10 @@ COPY --chown=user ./uv.lock $HOME/app
 # Install the dependencies
 # RUN uv sync --frozen
 RUN uv sync
-#copdy vectorstore
-COPY --chown=user ./db/ $HOME/app/db
+
+#TODO: Fix this to download 
+#copy posts to container
+COPY --chown=user ./data/ $HOME/app/data
 # Expose the port
 EXPOSE 7860
 
