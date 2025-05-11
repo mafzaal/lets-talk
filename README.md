@@ -1,3 +1,12 @@
+---
+title: Lets Talk
+emoji: 🐨
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # Welcome to TheDataGuy Chat! 👋
 
 This is a Q&A chatbot powered by TheDataGuy blog posts. Ask questions about topics covered in the blog, such as:
@@ -23,8 +32,10 @@ All answers are generated based on content from [TheDataGuy blog](https://thedat
 
 
 ```bash
-docker build -t lets-talk.
+docker build -t lets-talk .
 docker run -p 7860:7860 \
     --env-file ./.env \
     lets-talk
 ```
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
