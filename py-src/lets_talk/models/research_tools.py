@@ -183,7 +183,7 @@ def create_rss_feed_tool() -> Tool:
 
 if __name__ == "__main__":
     # Example usage of the RSS feed tool
-    urls = ["https://news.ycombinator.com/rss","http://fox13now.com/2013/12/30/new-year-new-laws-obamacare-pot-guns-and-drones/"]
+    urls = ["https://thedataguy.pro/rss.xml","https://news.ycombinator.com/rss"]
     query = "latest research"
     max_results = 5
     nlp = True

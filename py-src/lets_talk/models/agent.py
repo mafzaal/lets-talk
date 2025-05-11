@@ -183,7 +183,7 @@ def parse_output(input_state: Dict[str, Any]) -> str:
         return "I encountered an error while processing your request."
 
 
-def build_agent_chain(tools, retriever=None):
+def build_agent_chain(tools, retriever) -> StateGraph:
     """
     Constructs and returns the research agent execution chain.
     
@@ -204,17 +204,17 @@ def build_agent_chain(tools, retriever=None):
     model = model.bind_tools(tools)
     
     # Create document search tool if retriever is provided
-    if retriever:
-        doc_search_tool = Tool(
-            name="DocumentSearch",
-            description="Search within the user's uploaded document. Use this tool when you need information from the specific document that was uploaded.",
-            func=lambda query: document_search_tool(retriever, query),
-            args_schema=RAGQueryInput
-        )
-        
-        # Add document search tool to the tool belt if we have upload capability
-        tools = tools.copy()
-        tools.append(doc_search_tool)
+    
+    doc_search_tool = Tool(
+        name="DocumentSearch",
+        description="Search within the user's uploaded document. Use this tool when you need information from the specific document that was uploaded.",
+        func=lambda query: document_search_tool(retriever, query),
+        args_schema=RAGQueryInput
+    )
+    
+    # Add document search tool to the tool belt if we have upload capability
+    tools = tools.copy()
+    tools.append(doc_search_tool)
     
     # Create a node for tool execution
     tool_node = ToolNode(tools)
@@ -227,16 +227,14 @@ def build_agent_chain(tools, retriever=None):
         return call_model(model, state)
 
     # Add nodes
-    if retriever:
-        # Define retrieval node factory with bound retriever
-        def retrieve_node(state):
-            return retrieve_from_documents(state, retriever)
-            
-        uncompiled_graph.add_node("retrieve", retrieve_node)
-        uncompiled_graph.set_entry_point("retrieve")
-        uncompiled_graph.add_edge("retrieve", "agent")
-    else:
-        uncompiled_graph.set_entry_point("agent")
+    
+    # Define retrieval node factory with bound retriever
+    def retrieve_node(state):
+        return retrieve_from_documents(state, retriever)
+    
+    uncompiled_graph.add_node("retrieve", retrieve_node)
+    uncompiled_graph.set_entry_point("retrieve")
+    uncompiled_graph.add_edge("retrieve", "agent")
         
     uncompiled_graph.add_node("agent", call_model_node)
     uncompiled_graph.add_node("action", tool_node)
