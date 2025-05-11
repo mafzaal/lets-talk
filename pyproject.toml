@@ -5,7 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "arxiv>=2.2.0",
     "chainlit>=2.5.5",
+    "feedparser>=6.0.11",
     "ipykernel>=6.29.5",
     "ipython>=9.2.0",
     "langchain>=0.3.25",
@@ -15,6 +17,7 @@ dependencies = [
     "langchain-openai>=0.3.16",
     "langchain-qdrant>=0.2.0",
     "langchain-text-splitters>=0.3.8",
+    "langgraph>=0.4.3",
     "pandas>=2.2.3",
     "python-dotenv>=1.1.0",
     "qdrant-client>=1.14.2",

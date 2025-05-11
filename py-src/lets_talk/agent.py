@@ -1,6 +1,4 @@
-"""
-LangGraph Agent implementation for the Research Agent.
-"""
+
 from typing import TypedDict, Annotated, Dict, Any, Literal, Union, cast, List, Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import Tool
@@ -9,8 +7,12 @@ from langchain_core.documents import Document
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
-from lets_talk.models.research_tools import RAGQueryInput
+from lets_talk.models import RAGQueryInput
 from lets_talk.config import LLM_MODEL, LLM_TEMPERATURE
+from lets_talk.tools import create_search_tools
+from datetime import datetime
+import lets_talk.rag as rag
+
 
 class ResearchAgentState(TypedDict):
     """
@@ -23,7 +25,68 @@ class ResearchAgentState(TypedDict):
     """
     messages: Annotated[list[BaseMessage], add_messages]
     context: str
-    documents: Optional[List[Document]]
+    
+
+rag_prompt_template = """\
+You are a helpful assistant that answers questions based on the context provided. 
+Generate a concise answer to the question in markdown format and include a list of relevant links to the context.
+Use links from context to help user to navigate to to find more information.
+
+You have access to the following information:
+
+Context:
+{context}
+
+If context is unrelated to question, say "I don't know".
+"""
+
+# Update the call_model function to include current datetime
+def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
+    """
+    Process the current state through the language model.
+    
+    Args:
+        model: Language model with tools bound
+        state: Current state containing messages and context
+        
+    Returns:
+        Updated state with model's response added to messages
+    """
+    try:
+        messages = state["messages"]
+        context = state.get("context", "")
+        
+        
+        # Get current datetime
+        current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Insert system message with context before the latest user message
+        sys_prompt = rag_prompt_template.format(
+            context=context,
+        )
+        sys_prompt = f"Today is: {current_datetime}\n\n" + sys_prompt
+        print(sys_prompt)
+        
+        context_message = SystemMessage(content=sys_prompt)
+
+        # Find the position of the last user message
+        for i in range(len(messages)-1, -1, -1):
+            if isinstance(messages[i], HumanMessage):
+                # Insert context right after the last user message
+                enhanced_messages = messages[:i+1] + [context_message] + messages[i+1:]
+                break
+        else:
+            # No user message found, just append context
+            enhanced_messages = messages + [context_message]
+        
+        # Get response from the model
+        response = model.invoke(enhanced_messages)
+        return {"messages": [response]}
+    except Exception as e:
+        # Handle exceptions gracefully
+        error_msg = f"Error calling model: {str(e)}"
+        print(error_msg)  # Log the error
+        # Return a fallback response
+        return {"messages": [HumanMessage(content=error_msg)]}
 
 
 def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
@@ -44,8 +107,8 @@ def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
         # Add context from documents if available
         if context:
             # Insert system message with context before the latest user message
-            context_message = SystemMessage(content=f"Use the following information from uploaded documents to enhance your response if relevant:\n\n{context}")
-            
+            context_message = SystemMessage(content=rag_prompt_template.format(context=context))
+
             # Find the position of the last user message
             for i in range(len(messages)-1, -1, -1):
                 if isinstance(messages[i], HumanMessage):
@@ -87,17 +150,8 @@ def should_continue(state: Dict[str, Any]) -> Union[Literal["action"], Literal["
     return "end"
 
 
-def retrieve_from_documents(state: Dict[str, Any], retriever) -> Dict[str, str]:
-    """
-    Retrieve relevant context from uploaded documents based on the user query.
-    
-    Args:
-        state: Current state containing messages and optional documents
-        retriever: Document retriever to use
-        
-    Returns:
-        Updated state with context from document retrieval
-    """
+def retrieve_from_blog(state: Dict[str, Any]) -> Dict[str, str]:
+  
     # Get the last user message
     for message in reversed(state["messages"]):
         if isinstance(message, HumanMessage):
@@ -107,48 +161,26 @@ def retrieve_from_documents(state: Dict[str, Any], retriever) -> Dict[str, str]:
         # No user message found
         return {"context": ""}
     
-    # Skip if no documents are uploaded
-    if not retriever:
-        return {"context": ""}
-    
     try:
-        # Retrieve relevant documents
-        docs = retriever.invoke(query)
-        if not docs:
-            return {"context": ""}
-        
-        # Extract text from documents
-        context = "\n\n".join([f"Document excerpt: {doc.page_content}" for doc in docs])
+        #context = blog_search_tool(query)
+        response = rag.rag_chain.invoke({"question": query})
+
+        context = response["response"].content
+
         return {"context": context}
     except Exception as e:
         print(f"Error retrieving from documents: {str(e)}")
         return {"context": ""}
 
 
-def document_search_tool(retriever, query: str) -> str:
-    """
-    Tool function to search within uploaded documents.
-    
-    Args:
-        retriever: Document retriever to use
-        query: Search query string
-        
-    Returns:
-        Information retrieved from the documents
-    """
-    if not retriever:
-        return "No documents have been uploaded yet. Please upload a document first."
-    
-    docs = retriever.invoke(query)
+def blog_search_tool(query: str) -> str:
+    docs =  rag.retriever.invoke(query)
     if not docs:
-        return "No relevant information found in the uploaded documents."
+        return "No relevant documents found."
     
-    # Format the results
-    results = []
-    for i, doc in enumerate(docs):
-        results.append(f"[Document {i+1}] {doc.page_content}")
-    
-    return "\n\n".join(results)
+    context = "\n\n---".join([ f"link: {doc.metadata["url"] }\n\n{doc.page_content}" for doc in docs])
+    return  context
+
 
 
 def convert_inputs(input_object: Dict[str, str]) -> Dict[str, list[BaseMessage]]:
@@ -183,22 +215,10 @@ def parse_output(input_state: Dict[str, Any]) -> str:
         return "I encountered an error while processing your request."
 
 
-def build_agent_chain(tools, retriever) -> StateGraph:
-    """
-    Constructs and returns the research agent execution chain.
-    
-    The chain consists of:
-    1. A retrieval node that gets context from documents
-    2. An agent node that processes messages
-    3. A tool node that executes tools when called
-    
-    Args:
-        tools: List of tools for the agent
-        retriever: Optional retriever for document search
-        
-    Returns:
-        Compiled agent chain ready for execution
-    """
+def build_agent() -> StateGraph:
+       
+    tools = create_search_tools(5)
+
     # Create an instance of ChatOpenAI
     model = ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
     model = model.bind_tools(tools)
@@ -206,9 +226,9 @@ def build_agent_chain(tools, retriever) -> StateGraph:
     # Create document search tool if retriever is provided
     
     doc_search_tool = Tool(
-        name="DocumentSearch",
-        description="Search within the user's uploaded document. Use this tool when you need information from the specific document that was uploaded.",
-        func=lambda query: document_search_tool(retriever, query),
+        name="TheDataGuy Blog Search",
+        description="Search within blog posts of thedataguy.pro. ALWAYS use this tool to retrieve the context.",
+        func=lambda query: blog_search_tool(query),
         args_schema=RAGQueryInput
     )
     
@@ -226,17 +246,15 @@ def build_agent_chain(tools, retriever) -> StateGraph:
     def call_model_node(state):
         return call_model(model, state)
 
-    # Add nodes
     
     # Define retrieval node factory with bound retriever
     def retrieve_node(state):
-        return retrieve_from_documents(state, retriever)
+        return retrieve_from_blog(state)
     
     uncompiled_graph.add_node("retrieve", retrieve_node)
     uncompiled_graph.set_entry_point("retrieve")
-    uncompiled_graph.add_edge("retrieve", "agent")
-        
     uncompiled_graph.add_node("agent", call_model_node)
+    uncompiled_graph.add_edge("retrieve", "agent")
     uncompiled_graph.add_node("action", tool_node)
     
     # Add an end node - this is required for the "end" state to be valid

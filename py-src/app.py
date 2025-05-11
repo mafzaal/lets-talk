@@ -18,44 +18,12 @@ from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams
 from lets_talk.config import LLM_MODEL, LLM_TEMPERATURE
 import lets_talk.utils.blog as blog
-from lets_talk.models.rag import LangChainRAG
+from lets_talk.agent import build_agent,parse_output
+
 
     
-# Load vector store using the utility function
-vector_store = blog.load_vector_store()
 
-# Create a retriever
-retriever = vector_store.as_retriever()
-
-# Set up ChatOpenAI with environment variables
-
-llm = ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
-
-# Create RAG prompt template
-rag_prompt_template = """\
-You are a helpful assistant that answers questions based on the context provided. 
-Generate a concise answer to the question in markdown format and include a list of relevant links to the context.
-Use links from context to help user to navigate to to find more information.
-You have access to the following information:
-
-Context:
-{context}
-
-Question:
-{question}
-
-If context is unrelated to question, say "I don't know".
-"""
-
-rag_prompt = ChatPromptTemplate.from_template(rag_prompt_template)
-
-# Create chain
-retrieval_augmented_qa_chain = (
-    {"context": itemgetter("question") | retriever, "question": itemgetter("question")}
-    | RunnablePassthrough.assign(context=itemgetter("context"))
-    | {"response": rag_prompt | llm, "context": itemgetter("context")}
-)
-
+tdg_agent = build_agent()
 
   
 @cl.on_chat_start
@@ -74,29 +42,56 @@ async def setup_chain():
     # Set a loading message
     msg = cl.Message(content="Let's talk about [TheDataGuy](https://thedataguy.pro)'s blog posts, how can I help you?", author="System")
     await msg.send()
-
-    #rag_chain = LangChainRAG(llm=llm, retriever=retriever)
     
     # Store the chain in user session
-    cl.user_session.set("chain", retrieval_augmented_qa_chain)
-    #cl.user_session.set("chain", rag_chain)
+    cl.user_session.set("agent", tdg_agent)
+    
     
 
     
 
 @cl.on_message
 async def on_message(message: cl.Message):
+    """
+    Handler for user messages. Processes the query through the research agent
+    and streams the response back to the user.
+    
+    Args:
+        message: The user's message
+    """
+    agent_executor = cl.user_session.get("agent")
+    
+    # Create Chainlit message for streaming
     msg = cl.Message(content="")
-
-    # Get chain from user session
-    chain = cl.user_session.get("chain")
     
-    # Call the chain with the user message
-    response = await chain.ainvoke({"question": message.content})
-    #response = await chain.arun_pipeline(message.content)
+    # Create a parent step for the research process
+    with cl.Step(name="TheDataGuy thinking", type="tool") as step:
+        # Run the agent executor with callbacks to stream the response
+        result = await agent_executor.ainvoke(
+            {"question": message.content},
+            config={
+                "callbacks": [cl.AsyncLangchainCallbackHandler()],
+                "configurable": {"session_id": message.id}  # Add session_id from message
+            }
+        )
+        
+        # Add steps from agent's intermediate steps
+        # for i, step_data in enumerate(result.get("intermediate_steps", [])):
+        #     step_name = f"Using: {step_data[0].tool}"
+        #     step_input = str(step_data[0].tool_input)
+        #     step_output = str(step_data[1])
+            
+        #     # Create individual steps as children of the main step
+        #     with cl.Step(name=step_name, type="tool") as substep:
+        #         await cl.Message(
+        #             content=f"**Input:** {step_input}\n\n**Output:** {step_output}",
+        #         ).send()
     
-     # Stream tokens from the final_answer
-    await msg.stream_token(response["response"].content)
+    # Get the final answer
+    final_answer = parse_output(result)
+    
+    # Stream tokens from the final_answer
+    await msg.stream_token(final_answer)
     await msg.send()
 
   
