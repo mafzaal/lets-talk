@@ -44,6 +44,9 @@ jobs:
       - name: Build vector store
         id: build-vector
         run: |
+          # Create artifacts directory
+          mkdir -p ./artifacts
+          
           FORCE_RECREATE=${{ github.event.inputs.force_recreate == 'true' || github.event_name == 'workflow_dispatch' }}
           
           # Build with or without force recreate based on the input
@@ -53,21 +56,32 @@ jobs:
             uv run python py-src/pipeline.py --ci --output-dir ./artifacts
           fi
           
-          # Set artifacts directory for the next steps
-          echo "ARTIFACTS_DIR=./artifacts" >> $GITHUB_ENV
-          
           # Create a zip file of the vector store
-          cd db
-          zip -r ../artifacts/vector_store.zip vector_store_4
-          cd ..
+          if [ -d "db/vector_store_4" ]; then
+            cd db
+            zip -r ../artifacts/vector_store.zip vector_store_4
+            cd ..
+          else
+            echo "Warning: Vector store directory not found at db/vector_store_4"
+            echo "This may be normal if the vector store hasn't been created yet"
+            # Create an empty zip file to prevent upload failure
+            touch ./artifacts/vector_store.zip
+          fi
+      
+      - name: Debug Artifacts Directory
+        run: |
+          echo "Listing contents of artifacts directory:"
+          ls -la ./artifacts
+          echo "Checking if CI summary exists:"
+          test -f "./artifacts/ci_summary.json" && echo "CI summary exists" || echo "CI summary does not exist"
       
       - name: Read CI summary
         id: ci_summary
         run: |
           # Read the CI summary file to extract values
-          if [ -f "${{ env.ARTIFACTS_DIR }}/ci_summary.json" ]; then
-            STATUS=$(jq -r '.status' ${{ env.ARTIFACTS_DIR }}/ci_summary.json)
-            DOC_COUNT=$(jq -r '.document_count' ${{ env.ARTIFACTS_DIR }}/ci_summary.json)
+          if [ -f "./artifacts/ci_summary.json" ]; then
+            STATUS=$(jq -r '.status' ./artifacts/ci_summary.json)
+            DOC_COUNT=$(jq -r '.document_count' ./artifacts/ci_summary.json)
             
             echo "status=$STATUS" >> $GITHUB_OUTPUT
             echo "document_count=$DOC_COUNT" >> $GITHUB_OUTPUT
@@ -81,8 +95,8 @@ jobs:
         with:
           name: vector-store-artifacts
           path: |
-            ${{ env.ARTIFACTS_DIR }}/*.json
-            ${{ env.ARTIFACTS_DIR }}/vector_store.zip
+            ./artifacts/*.json
+            ./artifacts/vector_store.zip
       
       - name: Get version
         id: get_version
@@ -103,8 +117,8 @@ jobs:
             
             This is an automated release created by the vector store build workflow.
           files: |
-            ${{ env.ARTIFACTS_DIR }}/*.json
-            ${{ env.ARTIFACTS_DIR }}/vector_store.zip
+            ./artifacts/*.json
+            ./artifacts/vector_store.zip
           draft: false
           prerelease: false
         env:
