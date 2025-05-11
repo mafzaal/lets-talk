@@ -12,6 +12,8 @@ QDRANT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "thedataguy_documents")
 BLOG_BASE_URL = os.environ.get("BLOG_BASE_URL", "https://thedataguy.pro/blog/")
 LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
 LLM_TEMPERATURE = float(os.environ.get("TEMPERATURE", "0"))
+SDG_LLM_MODLEL = os.environ.get("SDG_LLM_MODEL", "gpt-4.1")
+EVAL_LLM_MODEL = os.environ.get("EVAL_LLM_MODEL", "gpt-4.1")
 MAX_SEARCH_RESULTS = int(os.environ.get("MAX_SEARCH_RESULTS", "5"))
 
 
