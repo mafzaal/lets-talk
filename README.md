@@ -20,3 +20,11 @@ Under the hood, this application uses:
 ## Sources
 
 All answers are generated based on content from [TheDataGuy blog](https://thedataguy.pro/blog/). Sources are shown for each response so you can read more about the topic.
+
+
+```bash
+docker build -t lets-talk.
+docker run -p 7860:7860 \
+    --env-file ./.env \
+    lets-talk
+```
