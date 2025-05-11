@@ -65,14 +65,14 @@ async def on_message(message: cl.Message):
     msg = cl.Message(content="")
     
     # Create a parent step for the research process
-    with cl.Step(name="TheDataGuy thinking", type="tool") as step:
+    with cl.Step(name="Agent") as step:
         # Run the agent executor with callbacks to stream the response
         result = await agent_executor.ainvoke(
             {"question": message.content},
-            config={
-                "callbacks": [cl.AsyncLangchainCallbackHandler()],
-                "configurable": {"session_id": message.id}  # Add session_id from message
-            }
+            # config={
+            #     "callbacks": [cl.AsyncLangchainCallbackHandler()],
+            #     "configurable": {"session_id": message.id}  # Add session_id from message
+            # }
         )
         
         # Add steps from agent's intermediate steps
@@ -86,7 +86,7 @@ async def on_message(message: cl.Message):
         #         await cl.Message(
         #             content=f"**Input:** {step_input}\n\n**Output:** {step_output}",
         #         ).send()
-    
+   
     # Get the final answer
     final_answer = parse_output(result)
     
