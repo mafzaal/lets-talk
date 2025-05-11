@@ -1,0 +1,111 @@
+name: Build Vector Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_recreate:
+        description: 'Force recreation of the vector store'
+        required: false
+        default: true
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      - 'data/**'
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+
+jobs:
+  build-vector-store:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          # Install uv
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          # Use uv to install dependencies
+          uv pip install --upgrade pip
+          uv sync
+      - name: Build vector store
+        id: build-vector
+        run: |
+          FORCE_RECREATE=${{ github.event.inputs.force_recreate == 'true' || github.event_name == 'workflow_dispatch' }}
+          
+          # Build with or without force recreate based on the input
+          if [ "$FORCE_RECREATE" = "true" ]; then
+            uv run python py-src/pipeline.py --force-recreate --ci --output-dir ./artifacts
+          else
+            uv run python py-src/pipeline.py --ci --output-dir ./artifacts
+          fi
+          
+          # Set artifacts directory for the next steps
+          echo "ARTIFACTS_DIR=./artifacts" >> $GITHUB_ENV
+          
+          # Create a zip file of the vector store
+          cd db
+          zip -r ../artifacts/vector_store.zip vector_store_4
+          cd ..
+      
+      - name: Read CI summary
+        id: ci_summary
+        run: |
+          # Read the CI summary file to extract values
+          if [ -f "${{ env.ARTIFACTS_DIR }}/ci_summary.json" ]; then
+            STATUS=$(jq -r '.status' ${{ env.ARTIFACTS_DIR }}/ci_summary.json)
+            DOC_COUNT=$(jq -r '.document_count' ${{ env.ARTIFACTS_DIR }}/ci_summary.json)
+            
+            echo "status=$STATUS" >> $GITHUB_OUTPUT
+            echo "document_count=$DOC_COUNT" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "document_count=0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: vector-store-artifacts
+          path: |
+            ${{ env.ARTIFACTS_DIR }}/*.json
+            ${{ env.ARTIFACTS_DIR }}/vector_store.zip
+      
+      - name: Get version
+        id: get_version
+        run: |
+          # Create a version based on date and document count
+          VERSION="v$(date +'%Y.%m.%d')-docs${{ steps.ci_summary.outputs.document_count }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        if: steps.ci_summary.outputs.status == 'success'
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Vector Store ${{ steps.get_version.outputs.version }}
+          body: |
+            Vector store updated with ${{ steps.ci_summary.outputs.document_count }} documents.
+            
+            This is an automated release created by the vector store build workflow.
+          files: |
+            ${{ env.ARTIFACTS_DIR }}/*.json
+            ${{ env.ARTIFACTS_DIR }}/vector_store.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
