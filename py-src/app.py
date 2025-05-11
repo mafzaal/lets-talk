@@ -10,7 +10,7 @@ load_dotenv()
 import pipeline
 #build vector store
 print("=== Blog Data Update ===")
-pipeline.main()
+pipeline.create_vector_database(force_recreate=True)
 print("========================")
 
 import chainlit as cl
