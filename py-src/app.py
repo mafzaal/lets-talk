@@ -7,6 +7,11 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+import pipeline
+#build vector store
+print("=== Blog Data Update ===")
+pipeline.main()
+print("========================")
 
 import chainlit as cl
 from langchain.prompts import ChatPromptTemplate
@@ -19,11 +24,10 @@ from qdrant_client.http.models import Distance, VectorParams
 from lets_talk.config import LLM_MODEL, LLM_TEMPERATURE
 import lets_talk.utils.blog as blog
 from lets_talk.agent import build_agent,parse_output
-import pipeline
 
 
-#build vector store
-pipeline.main()
+
+
 
 tdg_agent = build_agent()
 

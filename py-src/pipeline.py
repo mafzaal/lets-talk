@@ -5,7 +5,7 @@ This script updates the blog data vector store when new posts are added.
 It can be scheduled to run periodically or manually executed.
 
 Usage:
-    python update_blog_data.py [--force-recreate] [--data-dir DATA_DIR]
+    python pipeline.py [--force-recreate] [--data-dir DATA_DIR]
 
 Options:
     --force-recreate   Force recreation of the vector store even if it exists
@@ -57,6 +57,37 @@ def save_stats(stats, output_dir="./stats"):
     print(f"Saved stats to {filename}")
     return filename
 
+def create_vector_database(documents, data_dir, storage_path=VECTOR_STORAGE_PATH, force_recreate=False):
+    """
+    Create or update the vector database with blog documents.
+    
+    Args:
+        documents: List of document objects to store in the vector database
+        data_dir: Directory containing the blog posts (for reporting)
+        storage_path: Path where the vector database will be stored
+        force_recreate: Whether to force recreation of the vector store
+        
+    Returns:
+        Tuple of (success status, message)
+    """
+    try:
+        create_vector_store = (not Path.exists(Path(storage_path))) or force_recreate
+        
+        if create_vector_store:
+            print("\nAttempting to save vector store reference file...")
+            vector_store = blog.create_vector_store(
+                documents, 
+                storage_path=storage_path, 
+                force_recreate=force_recreate
+            )
+            vector_store.client.close()
+            print("Vector store reference file saved.")
+            return True, f"Vector store successfully created at {storage_path}"
+        else:
+            return True, f"Vector store already exists at {storage_path} (use --force-recreate to rebuild)"
+    except Exception as e:
+        return False, f"Error creating vector store: {str(e)}"
+
 def main():
     """Main function to update blog data"""
     args = parse_args()
@@ -66,7 +97,6 @@ def main():
     print(f"Force recreate: {args.force_recreate}")
     print("========================")
     
-    # Process blog posts without creating embeddings
     try:
         # Load and process documents
         documents = blog.load_blog_posts(args.data_dir)
@@ -79,20 +109,22 @@ def main():
         # Save stats for tracking
         stats_file = save_stats(stats)
 
-        create_vector_store = (not Path.exists(Path(VECTOR_STORAGE_PATH))) or (args.force_recreate)
-        
-        # Create a reference file for the vector store
-        if create_vector_store:
-            print("\nAttempting to save vector store reference file...")
-            vector_store = blog.create_vector_store(documents, storage_path=VECTOR_STORAGE_PATH, force_recreate=create_vector_store)
-            vector_store.client.close()
-            print("Vector store reference file saved.")
+        # Create or update vector database
+        success, message = create_vector_database(
+            documents, 
+            args.data_dir, 
+            storage_path=VECTOR_STORAGE_PATH, 
+            force_recreate=args.force_recreate
+        )
         
         print("\n=== Update Summary ===")
         print(f"Processed {stats['total_documents']} documents")
         print(f"Stats saved to: {stats_file}")
+        print(f"Vector DB status: {message}")
         print("=====================")
         
+        if not success:
+            return 1
         return 0
     except Exception as e:
         print(f"Error: {e}")

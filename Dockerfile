@@ -17,14 +17,16 @@ ENV UVICORN_WS_PROTOCOL=websockets
 # Set the working directory
 WORKDIR $HOME/app
 
-# Copy the app to the container
-COPY --chown=user ./py-src/ $HOME/app
 COPY --chown=user ./pyproject.toml $HOME/app
 COPY --chown=user ./uv.lock $HOME/app
 
 # Install the dependencies
 # RUN uv sync --frozen
 RUN uv sync
+
+# Copy the app to the container
+COPY --chown=user ./py-src/ $HOME/app
+
 
 #TODO: Fix this to download 
 #copy posts to container
