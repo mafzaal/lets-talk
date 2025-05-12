@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
+from langchain_community.document_loaders.text import TextLoader
 from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema.document import Document
@@ -48,7 +49,9 @@ def load_blog_posts(data_dir: str = DATA_DIR,
         data_dir, 
         glob=glob_pattern, 
         show_progress=show_progress,
-        recursive=recursive
+        recursive=recursive,
+        loader_cls=TextLoader
+        
     )
     
     documents = text_loader.load()
@@ -85,8 +88,12 @@ def update_document_metadata(documents: List[Document],
         if len(path_parts) > 1:
             # Use the directory name as post_slug
             doc.metadata["post_slug"] = path_parts[-2]
-            doc.metadata["post_title"] = path_parts[-2].replace("-", " ").title()
-            
+            try:
+                #extract title from `doc.page_content`'s front matter like `title:`
+                doc.metadata["post_title"] = doc.page_content.split("title:")[1].split("\n")[0].strip()
+            except Exception as e:
+                doc.metadata["post_title"] = path_parts[-2].replace("-", " ").title()
+
         # Add document length as metadata
         doc.metadata["content_length"] = len(doc.page_content)
     
@@ -249,7 +256,9 @@ def load_vector_store(storage_path: str = VECTOR_STORAGE_PATH,
 def process_blog_posts(data_dir: str = DATA_DIR,
                       create_embeddings: bool = True,
                       force_recreate_embeddings: bool = False,
-                      storage_path: str = VECTOR_STORAGE_PATH):
+                      storage_path: str = VECTOR_STORAGE_PATH,
+                      split_docs: bool = True,
+                      display_stats:bool = False) -> Dict[str, Any]:
     """
     Complete pipeline to process blog posts and optionally create vector embeddings.
     
@@ -267,11 +276,17 @@ def process_blog_posts(data_dir: str = DATA_DIR,
     
     # Update metadata
     documents = update_document_metadata(documents)
+
+    if split_docs:
+        # Split documents into smaller chunks
+        documents = split_documents(documents)
     
 
     # Get and display stats
     stats = get_document_stats(documents)
-    display_document_stats(stats)
+
+    if display_stats:
+        display_document_stats(stats)
     
     result = {
         "documents": documents,
@@ -284,7 +299,8 @@ def process_blog_posts(data_dir: str = DATA_DIR,
         # Using in-memory vector store to avoid pickling issues
         vector_store = create_vector_store(
             documents, 
-            force_recreate=force_recreate_embeddings
+            force_recreate=force_recreate_embeddings,
+            storage_path=storage_path
         )
         result["vector_store"] = vector_store
     
