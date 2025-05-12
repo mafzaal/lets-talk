@@ -1,4 +1,4 @@
-
+from operator import itemgetter
 from typing import TypedDict, Annotated, Dict, Any, Literal, Union, cast, List, Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import Tool
@@ -6,6 +6,7 @@ from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
 from langchain_core.documents import Document
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, END
+from langchain_core.prompts import ChatPromptTemplate
 from langgraph.prebuilt import ToolNode
 from lets_talk.models import RAGQueryInput
 from lets_talk.config import LLM_MODEL, LLM_TEMPERATURE
@@ -14,7 +15,7 @@ from datetime import datetime
 import lets_talk.rag as rag
 
 
-class ResearchAgentState(TypedDict):
+class InputState(TypedDict):
     """
     State definition for the Research Agent using LangGraph.
     
@@ -25,13 +26,14 @@ class ResearchAgentState(TypedDict):
     """
     messages: Annotated[list[BaseMessage], add_messages]
     context: str
+    question: str
+    is_rude: bool = False
+    documents: Optional[list[Document]]
     
 
 rag_prompt_template = """\
 You are a helpful assistant that answers questions based on the context provided. 
 Generate a concise answer to the question in markdown format and include a list of relevant links to the context.
-Use links from context to help user to navigate to to find more information.
-
 You have access to the following information:
 
 Context:
@@ -215,6 +217,58 @@ def parse_output(input_state: Dict[str, Any]) -> str:
         return "I encountered an error while processing your request."
 
 
+tone_check_prompt_template = """\
+Check if the input query is rude, derogatory, disrespectful, or negative, and respond with "YES" or "NO".
+
+Query: 
+{query}
+# Output Format
+
+Respond only with "YES" or "NO".
+"""
+
+def check_query_tone(state: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Check the tone of the user's query and adjust the state accordingly.
+    
+    Args:
+        state: Current state containing messages and context
+    Returns:
+        Updated state with tone information
+    """
+    last_message = state["messages"][-1]
+    
+    if isinstance(last_message, HumanMessage):
+        # Check the tone of the last message
+        state["is_rude"] = check_query_rudeness(last_message.content)
+       
+    return state
+
+
+def check_query_rudeness(query: str) -> bool:
+    """
+    Check if the query is rude or negative.
+
+    Args:
+        query: The user's query
+    Returns:
+        True if the query is rude, False otherwise
+    """
+
+    tone_prompt = ChatPromptTemplate.from_template(tone_check_prompt_template)
+    llm = ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
+
+    # Create chain
+    tone_chain = (
+            {"query": itemgetter("question")}
+            | tone_prompt
+            | llm
+        )
+    response = tone_chain.invoke({"query": query})
+    return response.content.strip().lower() == "yes"
+
+
+
 def build_agent() -> StateGraph:
        
     tools = create_search_tools(5)
@@ -240,7 +294,7 @@ def build_agent() -> StateGraph:
     tool_node = ToolNode(tools)
 
     # Initialize the graph with our state type
-    uncompiled_graph = StateGraph(ResearchAgentState)
+    uncompiled_graph = StateGraph(InputState)
     
     # Define model node factory with bound model
     def call_model_node(state):
