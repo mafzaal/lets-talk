@@ -31,16 +31,7 @@ class InputState(TypedDict):
     documents: Optional[list[Document]]
     
 
-rag_prompt_template = """\
-You are a helpful assistant that answers questions based on the context provided. 
-Generate a concise answer to the question in markdown format and include a list of relevant links to the context.
-You have access to the following information:
 
-Context:
-{context}
-
-If context is unrelated to question, say "I don't know".
-"""
 
 # Update the call_model function to include current datetime
 def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
@@ -58,15 +49,12 @@ def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
         messages = state["messages"]
         context = state.get("context", "")
         
-        
-        # Get current datetime
-        current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         # Insert system message with context before the latest user message
-        sys_prompt = rag_prompt_template.format(
+        from prompts import call_llm_prompt_template
+        sys_prompt = call_llm_prompt_template.format(
             context=context,
         )
-        sys_prompt = f"Today is: {current_datetime}\n\n" + sys_prompt
-        print(sys_prompt)
+             
         
         context_message = SystemMessage(content=sys_prompt)
 
@@ -217,15 +205,6 @@ def parse_output(input_state: Dict[str, Any]) -> str:
         return "I encountered an error while processing your request."
 
 
-tone_check_prompt_template = """\
-Check if the input query is rude, derogatory, disrespectful, or negative, and respond with "YES" or "NO".
-
-Query: 
-{query}
-# Output Format
-
-Respond only with "YES" or "NO".
-"""
 
 def check_query_tone(state: Dict[str, Any]) -> Dict[str, str]:
     """
@@ -254,8 +233,8 @@ def check_query_rudeness(query: str) -> bool:
     Returns:
         True if the query is rude, False otherwise
     """
-
-    tone_prompt = ChatPromptTemplate.from_template(tone_check_prompt_template)
+    from prompts import query_tone_check_prompt_template
+    tone_prompt = ChatPromptTemplate.from_template(query_tone_check_prompt_template)
     llm = ChatOpenAI(model=LLM_MODEL, temperature=LLM_TEMPERATURE)
 
     # Create chain
