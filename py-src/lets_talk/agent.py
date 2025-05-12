@@ -50,7 +50,7 @@ def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
         context = state.get("context", "")
         
         # Insert system message with context before the latest user message
-        from prompts import call_llm_prompt_template
+        from lets_talk.prompts import call_llm_prompt_template
         sys_prompt = call_llm_prompt_template.format(
             context=context,
         )
@@ -79,47 +79,47 @@ def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
         return {"messages": [HumanMessage(content=error_msg)]}
 
 
-def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
-    """
-    Process the current state through the language model.
+# def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
+#     """
+#     Process the current state through the language model.
     
-    Args:
-        model: Language model with tools bound
-        state: Current state containing messages and context
+#     Args:
+#         model: Language model with tools bound
+#         state: Current state containing messages and context
         
-    Returns:
-        Updated state with model's response added to messages
-    """
-    try:
-        messages = state["messages"]
-        context = state.get("context", "")
+#     Returns:
+#         Updated state with model's response added to messages
+#     """
+#     try:
+#         messages = state["messages"]
+#         context = state.get("context", "")
         
-        # Add context from documents if available
-        if context:
-            # Insert system message with context before the latest user message
-            context_message = SystemMessage(content=rag_prompt_template.format(context=context))
+#         # Add context from documents if available
+#         if context:
+#             # Insert system message with context before the latest user message
+#             context_message = SystemMessage(content=rag_prompt_template.format(context=context))
 
-            # Find the position of the last user message
-            for i in range(len(messages)-1, -1, -1):
-                if isinstance(messages[i], HumanMessage):
-                    # Insert context right after the last user message
-                    enhanced_messages = messages[:i+1] + [context_message] + messages[i+1:]
-                    break
-            else:
-                # No user message found, just append context
-                enhanced_messages = messages + [context_message]
-        else:
-            enhanced_messages = messages
+#             # Find the position of the last user message
+#             for i in range(len(messages)-1, -1, -1):
+#                 if isinstance(messages[i], HumanMessage):
+#                     # Insert context right after the last user message
+#                     enhanced_messages = messages[:i+1] + [context_message] + messages[i+1:]
+#                     break
+#             else:
+#                 # No user message found, just append context
+#                 enhanced_messages = messages + [context_message]
+#         else:
+#             enhanced_messages = messages
         
-        # Get response from the model
-        response = model.invoke(enhanced_messages)
-        return {"messages": [response]}
-    except Exception as e:
-        # Handle exceptions gracefully
-        error_msg = f"Error calling model: {str(e)}"
-        print(error_msg)  # Log the error
-        # Return a fallback response
-        return {"messages": [HumanMessage(content=error_msg)]}
+#         # Get response from the model
+#         response = model.invoke(enhanced_messages)
+#         return {"messages": [response]}
+#     except Exception as e:
+#         # Handle exceptions gracefully
+#         error_msg = f"Error calling model: {str(e)}"
+#         print(error_msg)  # Log the error
+#         # Return a fallback response
+#         return {"messages": [HumanMessage(content=error_msg)]}
 
 
 def should_continue(state: Dict[str, Any]) -> Union[Literal["action"], Literal["end"]]:

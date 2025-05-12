@@ -22,7 +22,7 @@ retriever = vector_store.as_retriever()
 llm = ChatOpenAI(model=config.LLM_MODEL, temperature=config.LLM_TEMPERATURE)
 
 
-from prompts import rag_prompt_template
+from lets_talk.prompts import rag_prompt_template
 
 rag_prompt = ChatPromptTemplate.from_template(rag_prompt_template)
 
