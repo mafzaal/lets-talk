@@ -25,6 +25,6 @@ FORCE_RECREATE = os.environ.get("FORCE_RECREATE", "False").lower() == "true"
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./stats")
 USE_CHUNKING = os.environ.get("USE_CHUNKING", "True").lower() == "true"
 SHOULD_SAVE_STATS = os.environ.get("SHOULD_SAVE_STATS", "True").lower() == "true"
-
+CREATE_VECTOR_DB = os.environ.get("CREATE_VECTOR_DB", "True").lower() == "true"
 
 

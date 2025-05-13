@@ -4,15 +4,24 @@ import sys
 from pathlib import Path
 from operator import itemgetter
 from dotenv import load_dotenv
+from lets_talk.config import (CREATE_VECTOR_DB,VECTOR_STORAGE_PATH)
 
 # Load environment variables from .env file
 load_dotenv()
-import pipeline
-#build vector store
-print("=== create vector db ===")
-# Use configuration from config rather than hardcoded values
-pipeline.create_vector_database()
-print("========================")
+
+if CREATE_VECTOR_DB:
+    import pipeline
+    #build vector store
+    print("=== create vector db ===")
+    # Use configuration from config rather than hardcoded values
+    pipeline.create_vector_database()
+    print("========================")
+else:
+    # Check if the vector store exists
+    print("=== check vector db ===")
+    if not Path(VECTOR_STORAGE_PATH).exists():
+        print(f"Vector store not found at {VECTOR_STORAGE_PATH}. Please create it first.")
+        sys.exit(1)
 
 import chainlit as cl
 from lets_talk.agent import build_agent,parse_output
