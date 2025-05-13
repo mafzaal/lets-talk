@@ -117,9 +117,14 @@ For our blog chat component, we evaluated multiple chunking approaches:
    - RecursiveCharacterTextSplitter with 1000-character chunks and 200-character overlap
    - Provided granular context chunks for baseline testing and embedding fine-tuning
 
-2. **Final Implementation**:
+2. **No Chunking Implementation**:
    - Whole blog posts as individual chunks to preserve complete article context
    - Each post treated as a distinct retrievable unit in the vector database
+
+3. **Final Implementation**:
+   - RecursiveCharacterTextSplitter with 1000-character chunks and 200-character overlap
+   - `mafzaal/thedataguy_arctic_ft` Fine-tuned model on [TheDataGuy](https://thedataguy.pro/)'s blog posts.
+
 
 The whole-document strategy preserves article narrative integrity while providing sufficient context for accurate responses.
 
@@ -147,7 +152,6 @@ Our implementation leverages several tools and APIs for data processing and inte
 2. **Data Processing**:
    - LangChain DocumentLoaders - Structured parsing of blog content
    - DateTime API - Timestamping and content freshness verification
-   - BeautifulSoup - HTML parsing and content cleaning
 
 3. **Integration**:
    - Tool Calls functionality - Enables dynamic content updates from RSS
