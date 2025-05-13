@@ -94,7 +94,7 @@ def save_stats(stats, output_dir="./stats", ci_mode=False):
     return filename, basic_stats
 
 def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH, 
-                      force_recreate=False, output_dir="./stats", ci_mode=False):
+                      force_recreate=False, output_dir="./stats", ci_mode=False, use_chunking=True, save_stats=True):
     """
     Create or update the vector database with blog documents.
     
@@ -114,12 +114,22 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
         documents = blog.load_blog_posts(data_dir)
         documents = blog.update_document_metadata(documents)
         
+        
         # Get stats
         stats = blog.get_document_stats(documents)
         blog.display_document_stats(stats)
-        
+
         # Save stats for tracking
-        stats_file, stats_content = save_stats(stats, output_dir=output_dir, ci_mode=ci_mode)
+        stats_file = None
+        stats_content = None
+        if save_stats:
+            stats_file, stats_content = save_stats(stats, output_dir=output_dir, ci_mode=ci_mode)
+        
+        if use_chunking:
+            logger.info("Chunking documents...")
+            documents = blog.split_documents(documents)
+
+        
 
         create_vector_store = (not Path.exists(Path(storage_path))) or force_recreate
         

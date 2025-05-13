@@ -9,25 +9,12 @@ from dotenv import load_dotenv
 load_dotenv()
 import pipeline
 #build vector store
-print("=== Blog Data Update ===")
-pipeline.create_vector_database(force_recreate=True)
+print("=== create vector db ===")
+pipeline.create_vector_database(force_recreate=True,save_stats=False,use_chunking=True)
 print("========================")
 
 import chainlit as cl
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema.runnable import RunnablePassthrough
-from langchain_openai.chat_models import ChatOpenAI
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams
-from lets_talk.config import LLM_MODEL, LLM_TEMPERATURE
-import lets_talk.utils.blog as blog
 from lets_talk.agent import build_agent,parse_output
-
-
-
-
 
 tdg_agent = build_agent()
 
