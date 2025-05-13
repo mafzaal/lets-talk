@@ -26,11 +26,13 @@ RUN uv sync
 
 # Copy the app to the container
 COPY --chown=user ./py-src/ $HOME/app
-
+COPY --chown=user ./.chainlit/ $HOME/app
+COPY --chown=user ./chainlit.md $HOME/app
 
 #TODO: Fix this to download 
 #copy posts to container
 COPY --chown=user ./data/ $HOME/app/data
+
 # Expose the port
 EXPOSE 7860
 
