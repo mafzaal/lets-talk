@@ -46,6 +46,16 @@ When new blog posts are published, follow these steps:
    uv run python update_blog_data.py --force-recreate
    ```
 
+   Or customize the chunking behavior:
+   ```bash
+   uv run python update_blog_data.py --chunk-size 1500 --chunk-overlap 300
+   ```
+
+   Or use whole documents without chunking:
+   ```bash
+   uv run python update_blog_data.py --no-chunking
+   ```
+
 This will:
 - Load all blog posts (including new ones)
 - Update the vector embeddings
@@ -61,6 +71,8 @@ VECTOR_STORAGE_PATH=./db/vectorstore_v3    # Path to vector store
 EMBEDDING_MODEL=Snowflake/snowflake-arctic-embed-l  # Embedding model
 QDRANT_COLLECTION=thedataguy_documents     # Collection name
 BLOG_BASE_URL=https://thedataguy.pro/blog/ # Base URL for blog
+CHUNK_SIZE=1000                            # Size of each document chunk
+CHUNK_OVERLAP=200                          # Overlap between chunks
 ```
 
 ### In the Chainlit App

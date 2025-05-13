@@ -26,7 +26,9 @@ from lets_talk.config import (
     VECTOR_STORAGE_PATH,
     EMBEDDING_MODEL,
     QDRANT_COLLECTION,
-    BLOG_BASE_URL
+    BLOG_BASE_URL,
+    CHUNK_SIZE,
+    CHUNK_OVERLAP
 )
 
 def load_blog_posts(data_dir: str = DATA_DIR, 
@@ -161,8 +163,8 @@ def display_document_stats(stats: Dict[str, Any]):
 
 
 def split_documents(documents: List[Document], 
-                   chunk_size: int = 1000, 
-                   chunk_overlap: int = 200) -> List[Document]:
+                   chunk_size: int = CHUNK_SIZE, 
+                   chunk_overlap: int = CHUNK_OVERLAP) -> List[Document]:
     """
     Split documents into chunks for better embedding and retrieval.
     

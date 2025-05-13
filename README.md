@@ -90,6 +90,8 @@ OPENAI_API_KEY=your_openai_api_key
 VECTOR_STORAGE_PATH=./db/vector_store_tdg
 LLM_MODEL=gpt-4o-mini
 EMBEDDING_MODEL=Snowflake/snowflake-arctic-embed-l
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
 ```
 
 ## Running Locally

@@ -16,5 +16,9 @@ SDG_LLM_MODLEL = os.environ.get("SDG_LLM_MODEL", "gpt-4.1")
 EVAL_LLM_MODEL = os.environ.get("EVAL_LLM_MODEL", "gpt-4.1")
 MAX_SEARCH_RESULTS = int(os.environ.get("MAX_SEARCH_RESULTS", "5"))
 
+# Document chunking configuration
+CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "1000"))
+CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "200"))
+
 
 

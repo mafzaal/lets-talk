@@ -45,6 +45,12 @@ def parse_args():
                         help="Directory to save stats and artifacts (default: ./stats)")
     parser.add_argument("--ci", action="store_true",
                         help="Run in CI mode (no interactive prompts, exit codes for CI)")
+    parser.add_argument("--chunk-size", type=int,
+                        help=f"Size of each chunk in characters (default from config)")
+    parser.add_argument("--chunk-overlap", type=int,
+                        help=f"Overlap between chunks in characters (default from config)")
+    parser.add_argument("--no-chunking", action="store_true",
+                        help="Don't split documents into chunks (use whole documents)")
     return parser.parse_args()
 
 def save_stats(stats, output_dir="./stats", ci_mode=False):
@@ -94,7 +100,8 @@ def save_stats(stats, output_dir="./stats", ci_mode=False):
     return filename, basic_stats
 
 def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH, 
-                      force_recreate=False, output_dir="./stats", ci_mode=False, use_chunking=True, save_stats=True):
+                      force_recreate=False, output_dir="./stats", ci_mode=False, 
+                      use_chunking=True, should_save_stats=True, chunk_size=None, chunk_overlap=None):
     """
     Create or update the vector database with blog documents.
     
@@ -104,6 +111,10 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
         force_recreate: Whether to force recreation of the vector store
         output_dir: Directory to save stats and artifacts
         ci_mode: Whether to run in CI mode
+        use_chunking: Whether to split documents into chunks
+        should_save_stats: Whether to save statistics about the documents
+        chunk_size: Size of each chunk in characters (default from config)
+        chunk_overlap: Overlap between chunks in characters (default from config)
         
     Returns:
         Tuple of (success status, message, stats, stats_file, stats_file_content)
@@ -122,12 +133,20 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
         # Save stats for tracking
         stats_file = None
         stats_content = None
-        if save_stats:
+        if should_save_stats:
             stats_file, stats_content = save_stats(stats, output_dir=output_dir, ci_mode=ci_mode)
         
         if use_chunking:
             logger.info("Chunking documents...")
-            documents = blog.split_documents(documents)
+            # Use provided chunk_size and chunk_overlap or default from config
+            chunking_params = {}
+            if chunk_size is not None:
+                chunking_params['chunk_size'] = chunk_size
+            if chunk_overlap is not None:
+                chunking_params['chunk_overlap'] = chunk_overlap
+                
+            logger.info(f"Using chunk size: {chunking_params.get('chunk_size', 'default')} and overlap: {chunking_params.get('chunk_overlap', 'default')}")
+            documents = blog.split_documents(documents, **chunking_params)
 
         
 
@@ -183,6 +202,10 @@ def main():
     logger.info(f"Force recreate: {args.force_recreate}")
     logger.info(f"Output directory: {args.output_dir}")
     logger.info(f"CI mode: {args.ci}")
+    logger.info(f"Chunking: {not args.no_chunking}")
+    if not args.no_chunking:
+        logger.info(f"Chunk size: {args.chunk_size if args.chunk_size else 'default from config'}")
+        logger.info(f"Chunk overlap: {args.chunk_overlap if args.chunk_overlap else 'default from config'}")
     logger.info("========================")
     
     try:
@@ -192,7 +215,10 @@ def main():
             storage_path=VECTOR_STORAGE_PATH, 
             force_recreate=args.force_recreate,
             output_dir=args.output_dir,
-            ci_mode=args.ci
+            ci_mode=args.ci,
+            use_chunking=not args.no_chunking,
+            chunk_size=args.chunk_size,
+            chunk_overlap=args.chunk_overlap
         )
         
         logger.info("\n=== Update Summary ===")
