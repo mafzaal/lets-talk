@@ -136,7 +136,24 @@ The whole-document strategy preserves article narrative integrity while providin
 With average post length under 8,000 characters, whole-document retrieval remains efficient while maintaining content coherence, supporting comprehensive responses about RAG systems, evaluation frameworks, and data strategy.
 
 ## Tools and APIs
-We will use the [RSS Feed](https://thedataguy.pro/rss.xml) with tool calls to retrieve latest posts not yet vectorized.
+
+Our implementation leverages several tools and APIs for data processing and integration:
+
+1. **Content Retrieval**:
+   - [RSS Feed](https://thedataguy.pro/rss.xml) - Automated collection of latest blog posts
+   - Custom scraping scripts for initial content extraction
+   - GitHub Actions for scheduled content updates
+
+2. **Data Processing**:
+   - LangChain DocumentLoaders - Structured parsing of blog content
+   - DateTime API - Timestamping and content freshness verification
+   - BeautifulSoup - HTML parsing and content cleaning
+
+3. **Integration**:
+   - Tool Calls functionality - Enables dynamic content updates from RSS
+   - LangSmith API - Monitoring and tracking system performance
+
+This toolset enables automated content discovery, processing, and integration into our vector database, ensuring the chat component stays current with the latest blog posts.
 
 # Task 4: Building a Quick End-to-End Prototype
 
