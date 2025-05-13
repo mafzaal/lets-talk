@@ -94,6 +94,16 @@ CHUNK_SIZE=1000
 CHUNK_OVERLAP=200
 ```
 
+Additional configuration options for vector database creation:
+
+```
+# Vector Database Creation Configuration
+FORCE_RECREATE=False      # Whether to force recreation of the vector store
+OUTPUT_DIR=./stats        # Directory to save stats and artifacts
+USE_CHUNKING=True         # Whether to split documents into chunks
+SHOULD_SAVE_STATS=True    # Whether to save statistics about the documents
+```
+
 ## Running Locally
 
 ### Using Docker

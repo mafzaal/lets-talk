@@ -10,7 +10,8 @@ load_dotenv()
 import pipeline
 #build vector store
 print("=== create vector db ===")
-pipeline.create_vector_database(force_recreate=True,save_stats=False,use_chunking=True)
+# Use configuration from config rather than hardcoded values
+pipeline.create_vector_database()
 print("========================")
 
 import chainlit as cl

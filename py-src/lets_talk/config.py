@@ -20,5 +20,11 @@ MAX_SEARCH_RESULTS = int(os.environ.get("MAX_SEARCH_RESULTS", "5"))
 CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "200"))
 
+# Vector database creation configuration
+FORCE_RECREATE = os.environ.get("FORCE_RECREATE", "False").lower() == "true"
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./stats")
+USE_CHUNKING = os.environ.get("USE_CHUNKING", "True").lower() == "true"
+SHOULD_SAVE_STATS = os.environ.get("SHOULD_SAVE_STATS", "True").lower() == "true"
+
 
 

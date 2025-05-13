@@ -29,6 +29,12 @@ TheDataGuy Chat is a Q&A chatbot powered by the content from [TheDataGuy blog](h
    VECTOR_STORAGE_PATH=./db/vector_store_tdg
    LLM_MODEL=gpt-4o-mini
    EMBEDDING_MODEL=Snowflake/snowflake-arctic-embed-l
+   
+   # Vector Database Creation Configuration (optional)
+   FORCE_RECREATE=False      # Whether to force recreation of the vector store
+   OUTPUT_DIR=./stats        # Directory to save stats and artifacts
+   USE_CHUNKING=True         # Whether to split documents into chunks
+   SHOULD_SAVE_STATS=True    # Whether to save statistics about the documents
    ```
 
 3. Install dependencies:

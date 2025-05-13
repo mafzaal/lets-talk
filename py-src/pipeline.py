@@ -21,7 +21,10 @@ from datetime import datetime
 import json
 import logging
 from pathlib import Path
-from lets_talk.config import VECTOR_STORAGE_PATH, DATA_DIR
+from lets_talk.config import (
+    CHUNK_OVERLAP, CHUNK_SIZE, VECTOR_STORAGE_PATH, DATA_DIR,
+    FORCE_RECREATE, OUTPUT_DIR, USE_CHUNKING, SHOULD_SAVE_STATS
+)
 
 # Import the blog utilities module
 import lets_talk.utils.blog as blog
@@ -100,19 +103,20 @@ def save_stats(stats, output_dir="./stats", ci_mode=False):
     return filename, basic_stats
 
 def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH, 
-                      force_recreate=False, output_dir="./stats", ci_mode=False, 
-                      use_chunking=True, should_save_stats=True, chunk_size=None, chunk_overlap=None):
+                      force_recreate=FORCE_RECREATE, output_dir=OUTPUT_DIR, ci_mode=False, 
+                      use_chunking=USE_CHUNKING, should_save_stats=SHOULD_SAVE_STATS, 
+                      chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
     """
     Create or update the vector database with blog documents.
     
     Args:
-        data_dir: Directory containing the blog posts
-        storage_path: Path where the vector database will be stored
-        force_recreate: Whether to force recreation of the vector store
-        output_dir: Directory to save stats and artifacts
+        data_dir: Directory containing the blog posts (default from config)
+        storage_path: Path where the vector database will be stored (default from config)
+        force_recreate: Whether to force recreation of the vector store (default from config)
+        output_dir: Directory to save stats and artifacts (default from config)
         ci_mode: Whether to run in CI mode
-        use_chunking: Whether to split documents into chunks
-        should_save_stats: Whether to save statistics about the documents
+        use_chunking: Whether to split documents into chunks (default from config)
+        should_save_stats: Whether to save statistics about the documents (default from config)
         chunk_size: Size of each chunk in characters (default from config)
         chunk_overlap: Overlap between chunks in characters (default from config)
         

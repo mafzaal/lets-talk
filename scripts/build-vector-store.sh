@@ -1,14 +1,21 @@
 #!/bin/bash
 # Script to build vector store locally
 # Usage: ./scripts/build-vector-store.sh [--force-recreate]
+#
+# Environment variables that can be set:
+#   FORCE_RECREATE   - Set to "true" to force recreation of the vector store
+#   OUTPUT_DIR       - Directory to save stats and artifacts (default: ./artifacts)
+#   USE_CHUNKING     - Set to "false" to disable document chunking
+#   SHOULD_SAVE_STATS - Set to "false" to disable saving document statistics
 
+# Parse command line arguments
 FORCE_RECREATE=""
 if [[ "$1" == "--force-recreate" ]]; then
   FORCE_RECREATE="--force-recreate"
 fi
 
-# Set output directory for artifacts
-OUTPUT_DIR="./artifacts"
+# Set output directory for artifacts (use environment variable if set)
+OUTPUT_DIR=${OUTPUT_DIR:-"./artifacts"}
 mkdir -p $OUTPUT_DIR
 
 echo "Building vector store with output to $OUTPUT_DIR"
