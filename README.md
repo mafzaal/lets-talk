@@ -155,7 +155,7 @@ This project is available under the MIT License.
 
 - [TheDataGuy blog](https://thedataguy.pro/blog/) for the content
 - [Ragas](https://docs.ragas.io/) for evaluation framework
-- [LangChain](https://python.langchain.com/docs/get_started/introduction.html) for RAG components
+- [LangChain](https://python.langchain.com/docs/tutorials/) for RAG components
 - [Chainlit](https://docs.chainlit.io/) for the chat interface
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
