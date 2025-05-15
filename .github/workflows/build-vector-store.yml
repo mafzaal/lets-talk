@@ -38,6 +38,9 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
           
+          # Create a virtual environment for uv
+          uv venv
+          
           # Use uv to install dependencies
           uv pip install --upgrade pip
           uv sync
