@@ -43,24 +43,16 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history for proper versioning
       
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+    
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
-          cache: 'uv'
+          python-version-file: "pyproject.toml"
       
       - name: Install dependencies
-        run: |
-          # Install uv
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          export PATH="$HOME/.cargo/bin:$PATH"
-          
-          # Create a virtual environment for uv
-          uv venv
-          
-          # Use uv to install dependencies
-          uv pip install --upgrade pip
-          uv sync
+        run: uv sync
       - name: Build vector store
         id: build-vector
         run: |
