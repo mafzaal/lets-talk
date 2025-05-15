@@ -9,8 +9,7 @@ from langgraph.graph import StateGraph, END
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.prebuilt import ToolNode
 from lets_talk.models import RAGQueryInput
-from lets_talk.config import LLM_MODEL, LLM_TEMPERATURE
-from lets_talk.tools import create_search_tools
+from lets_talk.tools import create_tools
 from datetime import datetime
 import lets_talk.rag as rag
 
@@ -204,7 +203,7 @@ def is_rude_question(question: str) -> bool:
 
 def build_graph() -> StateGraph:
        
-    tools = create_search_tools(5)
+    tools = create_tools()
 
     # Create an instance of ChatOpenAI
     from lets_talk.chains import chat_llm
