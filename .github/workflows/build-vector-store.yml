@@ -8,6 +8,21 @@ on:
         required: false
         default: true
         type: boolean
+      collection_name:
+        description: 'Name of the Qdrant collection'
+        required: false
+        default: 'thedataguy_documents'
+        type: string
+      embedding_model:
+        description: 'Embedding model to use'
+        required: false
+        default: 'Snowflake/snowflake-arctic-embed-l'
+        type: string
+      vector_storage_path:
+        description: 'Path where vector store will be saved'
+        required: false
+        default: './db/vectorstore'
+        type: string
   push:
     branches: [main]
     paths:
@@ -15,6 +30,8 @@ on:
   schedule:
     # Run daily at midnight UTC
     - cron: '0 0 * * *'
+permissions:
+  contents: write
 
 jobs:
   build-vector-store:
@@ -51,21 +68,38 @@ jobs:
           mkdir -p ./artifacts
           
           FORCE_RECREATE=${{ github.event.inputs.force_recreate == 'true' || github.event_name == 'workflow_dispatch' }}
+          COLLECTION_NAME="${{ github.event.inputs.collection_name || 'thedataguy_documents' }}"
+          EMBEDDING_MODEL="${{ github.event.inputs.embedding_model || 'Snowflake/snowflake-arctic-embed-l' }}"
+          VECTOR_STORAGE_PATH="${{ github.event.inputs.vector_storage_path || './db/vectorstore' }}"
           
           # Build with or without force recreate based on the input
           if [ "$FORCE_RECREATE" = "true" ]; then
-            uv run python py-src/pipeline.py --force-recreate --ci --output-dir ./artifacts
+            uv run python py-src/pipeline.py --force-recreate --ci --output-dir ./artifacts \
+              --collection-name "$COLLECTION_NAME" \
+              --embedding-model "$EMBEDDING_MODEL" \
+              --vector-storage-path "$VECTOR_STORAGE_PATH"
           else
-            uv run python py-src/pipeline.py --ci --output-dir ./artifacts
+            uv run python py-src/pipeline.py --ci --output-dir ./artifacts \
+              --collection-name "$COLLECTION_NAME" \
+              --embedding-model "$EMBEDDING_MODEL" \
+              --vector-storage-path "$VECTOR_STORAGE_PATH"
           fi
           
           # Create a zip file of the vector store
-          if [ -d "db/vector_store_4" ]; then
-            cd db
-            zip -r ../artifacts/vector_store.zip vector_store_4
-            cd ..
+          # Extract the directory name from the path
+          VECTOR_DIR=$(basename "$VECTOR_STORAGE_PATH")
+          VECTOR_PARENT_DIR=$(dirname "$VECTOR_STORAGE_PATH")
+          VECTOR_PARENT_DIR="${VECTOR_PARENT_DIR#./}"  # Remove leading ./ if present
+          
+          # Check if the vector store directory exists
+          if [ -d "$VECTOR_STORAGE_PATH" ]; then
+            echo "Creating zip from $VECTOR_STORAGE_PATH"
+            # Navigate to the parent directory and zip the target directory
+            cd "$VECTOR_PARENT_DIR" 2>/dev/null || cd "."
+            zip -r "../artifacts/vector_store.zip" "$VECTOR_DIR"
+            cd - >/dev/null  # Return to previous directory
           else
-            echo "Warning: Vector store directory not found at db/vector_store_4"
+            echo "Warning: Vector store directory not found at $VECTOR_STORAGE_PATH"
             echo "This may be normal if the vector store hasn't been created yet"
             # Create an empty zip file to prevent upload failure
             touch ./artifacts/vector_store.zip
@@ -85,9 +119,13 @@ jobs:
           if [ -f "./artifacts/ci_summary.json" ]; then
             STATUS=$(jq -r '.status' ./artifacts/ci_summary.json)
             DOC_COUNT=$(jq -r '.document_count' ./artifacts/ci_summary.json)
+            COLLECTION_NAME=$(jq -r '.collection_name' ./artifacts/ci_summary.json)
+            EMBEDDING_MODEL=$(jq -r '.embedding_model' ./artifacts/ci_summary.json)
             
             echo "status=$STATUS" >> $GITHUB_OUTPUT
             echo "document_count=$DOC_COUNT" >> $GITHUB_OUTPUT
+            echo "collection_name=$COLLECTION_NAME" >> $GITHUB_OUTPUT
+            echo "embedding_model=$EMBEDDING_MODEL" >> $GITHUB_OUTPUT
           else
             echo "status=failure" >> $GITHUB_OUTPUT
             echo "document_count=0" >> $GITHUB_OUTPUT
@@ -117,6 +155,10 @@ jobs:
           name: Vector Store ${{ steps.get_version.outputs.version }}
           body: |
             Vector store updated with ${{ steps.ci_summary.outputs.document_count }} documents.
+            
+            ## Configuration
+            - Collection: ${{ steps.ci_summary.outputs.collection_name }}
+            - Embedding Model: ${{ steps.ci_summary.outputs.embedding_model }}
             
             This is an automated release created by the vector store build workflow.
           files: |

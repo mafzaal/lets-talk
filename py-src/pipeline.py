@@ -5,13 +5,17 @@ This script updates the blog data vector store when new posts are added.
 It can be scheduled to run periodically or manually executed.
 
 Usage:
-    python pipeline.py [--force-recreate] [--data-dir DATA_DIR] [--output-dir OUTPUT_DIR] [--ci]
+    python pipeline.py [--force-recreate] [--data-dir DATA_DIR] [--output-dir OUTPUT_DIR] 
+                       [--vector-storage-path PATH] [--collection-name NAME] [--embedding-model MODEL] [--ci]
 
 Options:
-    --force-recreate   Force recreation of the vector store even if it exists
-    --data-dir DIR     Directory containing the blog posts (default: data/)
-    --output-dir DIR   Directory to save stats and artifacts (default: ./stats)
-    --ci               Run in CI mode (no interactive prompts, exit codes for CI)
+    --force-recreate         Force recreation of the vector store even if it exists
+    --data-dir DIR           Directory containing the blog posts (default: data/)
+    --output-dir DIR         Directory to save stats and artifacts (default: ./stats)
+    --vector-storage-path PATH  Path to store the vector database (default from config)
+    --collection-name NAME   Name of the Qdrant collection (default from config)
+    --embedding-model MODEL  Embedding model to use (default from config) 
+    --ci                     Run in CI mode (no interactive prompts, exit codes for CI)
 """
 
 import os
@@ -23,7 +27,8 @@ import logging
 from pathlib import Path
 from lets_talk.config import (
     CHUNK_OVERLAP, CHUNK_SIZE, VECTOR_STORAGE_PATH, DATA_DIR,
-    FORCE_RECREATE, OUTPUT_DIR, USE_CHUNKING, SHOULD_SAVE_STATS
+    FORCE_RECREATE, OUTPUT_DIR, USE_CHUNKING, SHOULD_SAVE_STATS,
+    QDRANT_COLLECTION, EMBEDDING_MODEL
 )
 
 # Import the blog utilities module
@@ -46,6 +51,12 @@ def parse_args():
                         help=f"Directory containing blog posts (default: {DATA_DIR})")
     parser.add_argument("--output-dir", default="./stats",
                         help="Directory to save stats and artifacts (default: ./stats)")
+    parser.add_argument("--vector-storage-path", default=VECTOR_STORAGE_PATH,
+                        help=f"Path to store the vector database (default: {VECTOR_STORAGE_PATH})")
+    parser.add_argument("--collection-name", default=QDRANT_COLLECTION,
+                        help=f"Name of the Qdrant collection (default: {QDRANT_COLLECTION})")
+    parser.add_argument("--embedding-model", default=EMBEDDING_MODEL,
+                        help=f"Embedding model to use (default: {EMBEDDING_MODEL})")
     parser.add_argument("--ci", action="store_true",
                         help="Run in CI mode (no interactive prompts, exit codes for CI)")
     parser.add_argument("--chunk-size", type=int,
@@ -105,7 +116,8 @@ def save_stats(stats, output_dir="./stats", ci_mode=False):
 def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH, 
                       force_recreate=FORCE_RECREATE, output_dir=OUTPUT_DIR, ci_mode=False, 
                       use_chunking=USE_CHUNKING, should_save_stats=SHOULD_SAVE_STATS, 
-                      chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
+                      chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP,
+                      collection_name=QDRANT_COLLECTION, embedding_model=EMBEDDING_MODEL):
     """
     Create or update the vector database with blog documents.
     
@@ -119,6 +131,8 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
         should_save_stats: Whether to save statistics about the documents (default from config)
         chunk_size: Size of each chunk in characters (default from config)
         chunk_overlap: Overlap between chunks in characters (default from config)
+        collection_name: Name of the Qdrant collection (default from config)
+        embedding_model: Embedding model to use (default from config)
         
     Returns:
         Tuple of (success status, message, stats, stats_file, stats_file_content)
@@ -161,6 +175,8 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
             vector_store = blog.create_vector_store(
                 documents, 
                 storage_path=storage_path, 
+                collection_name=collection_name,
+                embedding_model=embedding_model,
                 force_recreate=force_recreate
             )
             vector_store.client.close()
@@ -172,6 +188,8 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
                     "build_timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "document_count": stats["total_documents"],
                     "storage_path": str(storage_path),
+                    "collection_name": collection_name,
+                    "embedding_model": embedding_model,
                     "vector_store_size_bytes": get_directory_size(storage_path),
                 }
                 build_info_path = Path(output_dir) / "vector_store_build_info.json"
@@ -203,26 +221,31 @@ def main():
     
     logger.info("=== Blog Data Update ===")
     logger.info(f"Data directory: {args.data_dir}")
+    logger.info(f"Vector storage path: {args.vector_storage_path}")
+    logger.info(f"Collection name: {args.collection_name}")
+    logger.info(f"Embedding model: {args.embedding_model}")
     logger.info(f"Force recreate: {args.force_recreate}")
     logger.info(f"Output directory: {args.output_dir}")
     logger.info(f"CI mode: {args.ci}")
     logger.info(f"Chunking: {not args.no_chunking}")
     if not args.no_chunking:
-        logger.info(f"Chunk size: {args.chunk_size if args.chunk_size else 'default from config'}")
-        logger.info(f"Chunk overlap: {args.chunk_overlap if args.chunk_overlap else 'default from config'}")
+        logger.info(f"Chunk size: {args.chunk_size if args.chunk_size else CHUNK_SIZE}")
+        logger.info(f"Chunk overlap: {args.chunk_overlap if args.chunk_overlap else CHUNK_OVERLAP}")
     logger.info("========================")
     
     try:
         # Create or update vector database
         success, message, stats, stats_file, stats_content = create_vector_database(
             data_dir=args.data_dir, 
-            storage_path=VECTOR_STORAGE_PATH, 
+            storage_path=args.vector_storage_path, 
             force_recreate=args.force_recreate,
             output_dir=args.output_dir,
             ci_mode=args.ci,
             use_chunking=not args.no_chunking,
             chunk_size=args.chunk_size,
-            chunk_overlap=args.chunk_overlap
+            chunk_overlap=args.chunk_overlap,
+            collection_name=args.collection_name,
+            embedding_model=args.embedding_model
         )
         
         logger.info("\n=== Update Summary ===")
@@ -240,7 +263,9 @@ def main():
                 "message": message,
                 "stats_file": stats_file,
                 "document_count": stats["total_documents"],
-                "vector_store_path": str(VECTOR_STORAGE_PATH)
+                "vector_store_path": str(args.vector_storage_path),
+                "collection_name": args.collection_name,
+                "embedding_model": args.embedding_model
             }
             with open(ci_summary_path, "w") as f:
                 json.dump(ci_summary, f, indent=2)
