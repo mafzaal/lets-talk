@@ -16,6 +16,19 @@ This chat application allows you to ask questions about topics covered in [TheDa
 2. The system will **search for relevant content** from the blog posts
 3. You'll receive an **informative response** with links to the original articles
 
+## Contact the Author
+
+You can also use this chat to reach out to Muhammad Afzaal (TheDataGuy):
+
+- Ask for a **contact form** to send a direct message
+- Provide your name, email, subject, and message
+- Your message will be securely stored and reviewed by the blog author
+
+Examples:
+- "I'd like to contact Muhammad about a consulting opportunity"
+- "Can I send feedback about the blog?"
+- "I want to reach out to TheDataGuy about a collaboration"
+
 ## Examples
 
 Try asking questions like:

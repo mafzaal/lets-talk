@@ -16,6 +16,8 @@ This is a Q&A chatbot powered by [TheDataGuy blog](https://thedataguy.pro/blog/)
 - Metric-driven development
 - Data science best practices
 
+You can also use the Contact form feature to send messages directly to the blog author.
+
 ## How it works
 
 Under the hood, this application uses:
@@ -139,6 +141,19 @@ This project includes extensive evaluation capabilities using the Ragas framewor
 - **Synthetic Data Generation**: For creating test datasets
 - **Metric Evaluation**: Measuring faithfulness, relevance, and more
 - **Fine-tuning Analysis**: Comparing different embedding models
+
+## Features
+
+### RAG-based Q&A
+- Semantic search across blog content
+- Contextual responses with relevant information
+- Support for follow-up questions
+
+### Contact Form
+- Send messages directly to the blog author
+- Input validation for name, email, subject, and message
+- Secure storage of contact submissions
+- Easy retrieval of user communications
 
 ## Future Enhancements
 

@@ -27,3 +27,10 @@ class RSSFeedInput(BaseModel):
     max_results: int = Field(default=5, description="Maximum number of articles to return")
     nlp: bool = Field(default=True, description="Whether to use NLP processing on articles (extracts keywords and summaries)")
 
+class ContactInput(BaseModel):
+    """Input for Contact form."""
+    name: str = Field(..., description="Name of the person contacting")
+    email: str = Field(..., description="Email address of the person contacting")
+    subject: str = Field(..., description="Subject of the contact message")
+    message: str = Field(..., description="The message body")
+

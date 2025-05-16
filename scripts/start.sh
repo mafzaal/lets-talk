@@ -1,0 +1,1 @@
+uv run chainlit run ./py-src/app.py --port 8000
