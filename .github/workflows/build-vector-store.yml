@@ -23,6 +23,7 @@ on:
         required: false
         default: './db/vectorstore'
         type: string
+      
   push:
     branches: [main]
     paths:
@@ -127,9 +128,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: vector-store-artifacts
-          path: |
-            ./artifacts/*.json
-            ./artifacts/vector_store.zip
+          path: ./artifacts/**/*
       
       - name: Get version
         id: get_version
@@ -153,9 +152,7 @@ jobs:
             - Embedding Model: ${{ steps.ci_summary.outputs.embedding_model }}
             
             This is an automated release created by the vector store build workflow.
-          files: |
-            ./artifacts/*.json
-            ./artifacts/vector_store.zip
+          files: ./artifacts/**/*
           draft: false
           prerelease: false
         env:

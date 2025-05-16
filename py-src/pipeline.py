@@ -108,22 +108,14 @@ def save_stats(stats, output_dir="./stats", ci_mode=False):
     with open(filename, "w") as f:
         json.dump(basic_stats, f, indent=2)
 
+    logger.info(f"Saved stats to {filename}")
+
     import pandas as pd
     docs_df = pd.DataFrame(stats["documents"])
 
     docs_df.to_csv(f"{output_dir}/blog_docs.csv", index=False)
     logger.info(f"Saved document details to {output_dir}/blog_docs.csv")    
 
-    # In CI mode, also save a timestamped version
-    if ci_mode:
-        with open(history_filename, "w") as f:
-            json.dump(basic_stats, f, indent=2)
-        logger.info(f"Saved stats to {filename} and {history_filename}")
-        docs_df.to_csv(f"{output_dir}/blog_docs_{timestamp}.csv", index=False)
-        logger.info(f"Saved document details to {output_dir}/blog_docs_{timestamp}.csv")
-    else:
-        logger.info(f"Saved stats to {filename}")
-    
     return filename, basic_stats
 
 def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH, 
