@@ -6,7 +6,8 @@ It can be scheduled to run periodically or manually executed.
 
 Usage:
     python pipeline.py [--force-recreate] [--data-dir DATA_DIR] [--output-dir OUTPUT_DIR] 
-                       [--vector-storage-path PATH] [--collection-name NAME] [--embedding-model MODEL] [--ci]
+                       [--vector-storage-path PATH] [--collection-name NAME] [--embedding-model MODEL] 
+                       [--no-chunking] [--no-save-stats] [--ci]
 
 Options:
     --force-recreate         Force recreation of the vector store even if it exists
@@ -15,6 +16,8 @@ Options:
     --vector-storage-path PATH  Path to store the vector database (default from config)
     --collection-name NAME   Name of the Qdrant collection (default from config)
     --embedding-model MODEL  Embedding model to use (default from config) 
+    --no-chunking            Don't split documents into chunks (use whole documents)
+    --no-save-stats          Don't save document statistics
     --ci                     Run in CI mode (no interactive prompts, exit codes for CI)
 """
 
@@ -65,6 +68,8 @@ def parse_args():
                         help=f"Overlap between chunks in characters (default from config)")
     parser.add_argument("--no-chunking", action="store_true",
                         help="Don't split documents into chunks (use whole documents)")
+    parser.add_argument("--no-save-stats", action="store_true",
+                        help="Don't save document statistics")
     return parser.parse_args()
 
 def save_stats(stats, output_dir="./stats", ci_mode=False):
@@ -102,12 +107,20 @@ def save_stats(stats, output_dir="./stats", ci_mode=False):
     
     with open(filename, "w") as f:
         json.dump(basic_stats, f, indent=2)
-    
+
+    import pandas as pd
+    docs_df = pd.DataFrame(stats["documents"])
+
+    docs_df.to_csv(f"{output_dir}/blog_docs.csv", index=False)
+    logger.info(f"Saved document details to {output_dir}/blog_docs.csv")    
+
     # In CI mode, also save a timestamped version
     if ci_mode:
         with open(history_filename, "w") as f:
             json.dump(basic_stats, f, indent=2)
         logger.info(f"Saved stats to {filename} and {history_filename}")
+        docs_df.to_csv(f"{output_dir}/blog_docs_{timestamp}.csv", index=False)
+        logger.info(f"Saved document details to {output_dir}/blog_docs_{timestamp}.csv")
     else:
         logger.info(f"Saved stats to {filename}")
     
@@ -228,6 +241,7 @@ def main():
     logger.info(f"Output directory: {args.output_dir}")
     logger.info(f"CI mode: {args.ci}")
     logger.info(f"Chunking: {not args.no_chunking}")
+    logger.info(f"Save stats: {not args.no_save_stats}")
     if not args.no_chunking:
         logger.info(f"Chunk size: {args.chunk_size if args.chunk_size else CHUNK_SIZE}")
         logger.info(f"Chunk overlap: {args.chunk_overlap if args.chunk_overlap else CHUNK_OVERLAP}")
@@ -242,6 +256,7 @@ def main():
             output_dir=args.output_dir,
             ci_mode=args.ci,
             use_chunking=not args.no_chunking,
+            should_save_stats=not args.no_save_stats,
             chunk_size=args.chunk_size,
             chunk_overlap=args.chunk_overlap,
             collection_name=args.collection_name,

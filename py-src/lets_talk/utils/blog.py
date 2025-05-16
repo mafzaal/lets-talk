@@ -92,7 +92,48 @@ def update_document_metadata(documents: List[Document],
             doc.metadata["post_slug"] = path_parts[-2]
             try:
                 #extract title from `doc.page_content`'s front matter like `title:`
-                doc.metadata["post_title"] = doc.page_content.split("title:")[1].split("\n")[0].strip()
+                # Extract frontmatter data
+                frontmatter_data = {}
+                content_parts = doc.page_content.split('---', 2)
+                
+                if len(content_parts) >= 3:  # Valid frontmatter found
+                    frontmatter_text = content_parts[1]
+                    for line in frontmatter_text.strip().split('\n'):
+                        if ':' in line:
+                            key, value = line.split(':', 1)
+                            key = key.strip()
+                            value = value.strip().strip('"')
+                            frontmatter_data[key] = value
+                
+                # Set metadata fields from frontmatter
+                doc.metadata["post_title"] = frontmatter_data.get("title", 
+                                            path_parts[-2].replace("-", " ").title())
+                
+                def make_absolute_url(url, base_url=blog_base_url):
+                    """Helper function to convert relative URLs to absolute ones."""
+                    if url and not (url.startswith("http://") or url.startswith("https://")):
+                        return f"{base_url.rstrip('/')}/{url.lstrip('/')}"
+                    return url
+                
+                # Handle cover image and video with the same logic
+                for media_type in ["coverImage", "coverVideo"]:
+                    metadata_key = media_type.replace("cover", "cover_").lower()
+                    if media_type in frontmatter_data:
+                        doc.metadata[metadata_key] = make_absolute_url(frontmatter_data[media_type])
+
+                # Add additional metadata fields if available
+                if "date" in frontmatter_data:
+                    doc.metadata["date"] = frontmatter_data["date"]
+                if "categories" in frontmatter_data:
+                    categories = frontmatter_data["categories"].strip('[]').replace('"', '')
+                    doc.metadata["categories"] = [c.strip() for c in categories.split(',')]
+                if "description" in frontmatter_data:
+                    doc.metadata["description"] = frontmatter_data["description"]
+                if "readingTime" in frontmatter_data:
+                    doc.metadata["reading_time"] = frontmatter_data["readingTime"]
+                if "published" in frontmatter_data:
+                    doc.metadata["published"] = frontmatter_data["published"].lower() == "true"
+
             except Exception as e:
                 doc.metadata["post_title"] = path_parts[-2].replace("-", " ").title()
 
@@ -128,6 +169,16 @@ def get_document_stats(documents: List[Document]) -> Dict[str, Any]:
             "source": doc.metadata.get("source", ""),
             "title": doc.metadata.get("post_title", ""),
             "text_length": doc.metadata.get("content_length", 0),
+            "date": doc.metadata.get("date", ""),
+            "categories": doc.metadata.get("categories", []),
+            "description": doc.metadata.get("description", ""),
+            "cover_image": doc.metadata.get("cover_image", ""),
+            "cover_video": doc.metadata.get("cover_video", ""),
+            "reading_time": doc.metadata.get("reading_time", ""),
+            "published": doc.metadata.get("published", ""),
+            "post_slug": doc.metadata.get("post_slug", ""),
+
+
         })
     
     stats["documents"] = doc_info
@@ -146,20 +197,18 @@ def display_document_stats(stats: Dict[str, Any]):
     print(f"Min Length: {stats['min_length']} characters")
     print(f"Max Length: {stats['max_length']} characters")
     print(f"Average Length: {stats['avg_length']:.2f} characters")
-    
-    # For use in notebooks where pandas and display are available:
-    try:
-        import pandas as pd
-        from IPython.display import display
-        if stats["documents"]:
-            df = pd.DataFrame(stats["documents"])
-            display(df)
-    except (ImportError, NameError):
-        # Just print the first 5 documents if not in a notebook environment
-        if stats["documents"]:
-            print("\nFirst 5 documents:")
-            for i, doc in enumerate(stats["documents"][:5]):
-                print(f"{i+1}. {doc['title']} ({doc['url']})")
+    print("\nDocument Details:")
+    for doc in stats["documents"]:
+        print(f"Title: {doc['title']}")
+        print(f"URL: {doc['url']}")
+        print(f"Date: {doc['date']}")
+        print(f"Categories: {', '.join(doc['categories']) if doc['categories'] else 'N/A'}")
+        print(f"Description: {doc['description']}")
+        print(f"Cover Image: {doc['cover_image']}")
+        print(f"Cover Video: {doc['cover_video']}")
+        print(f"Reading Time: {doc['reading_time']}")
+        print(f"Published: {doc['published']}")
+        print("-" * 40)
 
 
 def split_documents(documents: List[Document], 
@@ -309,15 +358,3 @@ def process_blog_posts(data_dir: str = DATA_DIR,
     return result
 
 
-# Allow script to be run directly if needed
-if __name__ == "__main__":
-    print("Blog Data Utilities Module")
-    print("Available functions:")
-    print("- load_blog_posts()")
-    print("- update_document_metadata()")
-    print("- get_document_stats()")
-    print("- display_document_stats()")
-    print("- split_documents()")
-    print("- create_vector_store()")
-    print("- load_vector_store()")
-    print("- process_blog_posts()")
