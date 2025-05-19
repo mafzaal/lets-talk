@@ -42,12 +42,17 @@ async def setup_chain():
         ).send()
         os.environ["OPENAI_API_KEY"] = api_key.content
 
-    # Set a loading message
-    msg = cl.Message(content="Let's talk about [TheDataGuy](https://thedataguy.pro)'s blog posts, how can I help you?", author="System")
-    await msg.send()
-    
     # Store the chain in user session
     cl.user_session.set("agent", tdg_agent)
+    
+    response = tdg_agent.invoke({"question": "Greet the user and provide latest 2 blog posts"})
+    content = parse_output(response)
+
+    # Set a loading message
+    msg = cl.Message(content=content, author="System")
+    await msg.send()
+    
+    
     
     
 

@@ -5,7 +5,7 @@ from langchain_core.tools import Tool
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage,AIMessage
 from langchain_core.documents import Document
 from langgraph.graph.message import add_messages
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, START,END
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.prebuilt import ToolNode
 from lets_talk.models import RAGQueryInput
@@ -26,8 +26,9 @@ class InputState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
     context: str
     question: str
-    is_rude: bool = False
+    is_rude:  Optional[bool] = False
     documents: Optional[list[Document]]
+    answer: Optional[str] = None
     
 
 
@@ -52,7 +53,7 @@ def call_model(model, state: Dict[str, Any]) -> Dict[str, list[BaseMessage]]:
         from lets_talk.prompts import rag_prompt_template
         sys_prompt = rag_prompt_template.format(
             context=context,
-            question=messages[-1].content,
+            question=state["question"],
         )
         
         context_message = SystemMessage(content=sys_prompt)
@@ -93,7 +94,7 @@ def should_continue(state: Dict[str, Any]) -> Union[Literal["action"], Literal["
     if last_message.tool_calls:
         return "action"
     
-    return "end"
+    return "set_answer"
 
 
 def retrieve_from_blog(state: Dict[str, Any]) -> Dict[str, str]:
@@ -170,17 +171,17 @@ def check_question_tone(state: Dict[str, Any]) -> Dict[str, str]:
     Returns:
         Updated state with tone information
     """
-    last_message = state["messages"][-1]
+    last_message = state["question"] #state["messages"][-1]
     
-    if isinstance(last_message, HumanMessage):
-        # Check the tone of the last message
-        state["is_rude"] = is_rude_question(last_message.content)
+    #if isinstance(last_message, HumanMessage):
+    # Check the tone of the last message
+    state["is_rude"] = is_rude_question(last_message)
 
-        if state["is_rude"]:
-            # If the question is rude, respond with a positive message
-            from lets_talk.chains import rude_query_answer_chain
-            response = rude_query_answer_chain.invoke({"question": last_message.content})
-            state["messages"].append(response)
+    if state["is_rude"]:
+        # If the question is rude, respond with a positive message
+        from lets_talk.chains import rude_query_answer_chain
+        response = rude_query_answer_chain.invoke({"question": last_message})
+        state["messages"].append(response)
        
     return state
 
@@ -238,31 +239,44 @@ def build_graph() -> StateGraph:
     def retrieve_node(state):
         return retrieve_from_blog(state)
     
+    def set_answer(state):
+        # Get the last message from the state
+        last_message = state["messages"][-1]
+        
+        # Check if the last message is a response from the model
+        if isinstance(last_message, AIMessage):
+            # Set the answer in the state
+            state["answer"] = last_message.content
+        
+        return state
 
 
 
     uncompiled_graph.add_node("check_question_tone", check_question_tone)
-    uncompiled_graph.set_entry_point("check_question_tone")
+    #uncompiled_graph.set_entry_point("check_question_tone")
     uncompiled_graph.add_node("retrieve", retrieve_node)
-    #uncompiled_graph.set_entry_point("retrieve")
     uncompiled_graph.add_node("agent", call_model_node)
+    uncompiled_graph.add_node("action", tool_node)
+    uncompiled_graph.add_node("set_answer", set_answer)
+    
 
     
+    # Add an end node - this is required for the "end" state to be valid
+    # uncompiled_graph.add_node("end", lambda state: state)
+
+    uncompiled_graph.add_edge(START, "check_question_tone")
     uncompiled_graph.add_conditional_edges(
         "check_question_tone",
-        lambda state: "end" if state["is_rude"] else "retrieve",
+        lambda state: "set_answer" if state["is_rude"] else "retrieve",
         {
             "retrieve": "retrieve",
-            "end": END
+            "set_answer": "set_answer"
         }
     )
 
-   
     uncompiled_graph.add_edge("retrieve", "agent")
-    uncompiled_graph.add_node("action", tool_node)
-    
-    # Add an end node - this is required for the "end" state to be valid
-    uncompiled_graph.add_node("end", lambda state: state)
+    uncompiled_graph.add_edge("agent", "set_answer")
+
     
     # Add conditional edges from agent
     uncompiled_graph.add_conditional_edges(
@@ -270,12 +284,14 @@ def build_graph() -> StateGraph:
         should_continue,
         {
             "action": "action",
-            "end": END
+            "set_answer": "set_answer"
         }
     )
 
     # Complete the loop
     uncompiled_graph.add_edge("action", "agent")
+
+    uncompiled_graph.add_edge("set_answer", END)
     
     return uncompiled_graph
 
@@ -289,8 +305,8 @@ def create_agent_chain(uncompiled_graph) -> StateGraph:
     compiled_graph = uncompiled_graph.compile()
 
     # Create the full chain
-    agent_chain = convert_inputs | compiled_graph 
-    return agent_chain
+    #agent_chain = convert_inputs | compiled_graph 
+    return compiled_graph 
 
 
 def build_agent():
