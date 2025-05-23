@@ -21,8 +21,8 @@ def create_tools():
         List of tools for the agent
     """
     return [
-        get_current_datetime,
-        get_blog_posts_tool,
+        #get_current_datetime,
+        #get_blog_posts_tool,
         contact_form_tool
     ]
 
