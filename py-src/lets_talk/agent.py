@@ -70,7 +70,7 @@ async def generate_query(
 
         message_value = {
                 "messages":messages,
-                "queries": "\n- ".join(state.get("queries", []) + [state["question"]]),
+                "queries": "\n- ".join(state.get("queries", [])),
                 "system_time": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
             }
         
@@ -96,19 +96,15 @@ async def retrieve(state: InputState, *, config: RunnableConfig) -> dict[str, li
     """
 
     queries = state.get("queries", None)
-    query = queries[-1] if queries else state["question"]
+    query = queries[-1] if queries else get_user_message(state)
+    if not query:
+        return {"documents": []}
+    
+    # If no query is generated, return an empty list of documents
     docs = await rag.retriever.ainvoke(query,config=config) # type: ignore
 
     return {"documents": docs}
 
-
-# def retrieve_context(query: str) -> str:
-#     docs =  rag.retriever.invoke(query)
-#     if not docs:
-#         return "No relevant documents found."
-   
-#     context = format_docs(docs)
-#     return  context
 
 
 
@@ -122,17 +118,9 @@ async def is_rude_question(state: InputState, *, config:RunnableConfig) -> Dict[
         True if the question is rude, False otherwise
     """
 
-    
-    question = state.get("question","") 
+    query = get_user_message(state)
 
-    if not question:
-        # Get the last human message from state
-        for msg in reversed(state["messages"]):
-            if isinstance(msg, HumanMessage):
-                last_message = get_message_text(msg)
-                break
-
-    if not question:
+    if not query:
         return {"is_rude": False}
     
 
@@ -143,7 +131,7 @@ async def is_rude_question(state: InputState, *, config:RunnableConfig) -> Dict[
 
     tone_check_chain = prompt | llm | StrOutputParser()
 
-    response = await tone_check_chain.ainvoke({"question": question}, config)
+    response = await tone_check_chain.ainvoke({"query": query}, config)
     
     is_rude = False
     if isinstance(response, str):
@@ -158,36 +146,17 @@ async def is_rude_question(state: InputState, *, config:RunnableConfig) -> Dict[
     return {"is_rude": is_rude}
 
 
-# async def check_question_tone(state: InputState, *, config: RunnableConfig) -> Dict[str, Union[bool, list[BaseMessage]]]:
-#     """
-#     Check the tone of the user's query and adjust the state accordingly.
-    
-#     Args:
-#         state: Current state containing messages and context
-#     Returns:
-#         Updated state with tone information and optional messages
-#     """
+def get_user_message(state):
+    query = ""
+    # Get the last human message from state
+    for msg in reversed(state["messages"]):
+        if isinstance(msg, HumanMessage):
+            query = get_message_text(msg)
+            break
+    return query
 
 
-#     last_message = state.get("question","") 
-
-#     if not last_message:
-#         # Get the last human message from state
-#         for msg in reversed(state["messages"]):
-#             if isinstance(msg, HumanMessage):
-#                 last_message = get_message_text(msg)
-#                 break
-
-#     if not last_message:
-#         return {"is_rude": False, "messages": []}
-    
-
-#     # Check the tone of the last message
-#     is_rude = await is_rude_question(str(last_message), config)
-
-#     return {"is_rude": is_rude}
-
-async def handle_rude_question(question: str, config: RunnableConfig) -> BaseMessage:
+async def handle_rude_question(state: InputState, config: RunnableConfig) -> BaseMessage:
         """
         Generate a polite response to a rude question.
         
@@ -198,6 +167,8 @@ async def handle_rude_question(question: str, config: RunnableConfig) -> BaseMes
         Returns:
             A polite AI message response
         """
+
+        query = get_user_message(state)
         configuration = Configuration.from_runnable_config(config)
         
         prompt = ChatPromptTemplate.from_template(configuration.query_rude_answer_prompt)
@@ -205,7 +176,7 @@ async def handle_rude_question(question: str, config: RunnableConfig) -> BaseMes
 
         rude_query_answer_chain = prompt | llm 
         
-        return await rude_query_answer_chain.ainvoke({"question": question}, config)
+        return await rude_query_answer_chain.ainvoke({"query": query}, config)
 
 
 
@@ -313,15 +284,20 @@ def should_continue(state: Dict[str, Any]) -> Union[Literal["action"], Literal["
 #         print(error_msg)  # Log the error
 #         return "I encountered an error while processing your request."
 
+from langgraph.types import Send
 
 async def respond(
     state: InputState, *, config: RunnableConfig
-) -> dict[str, list[BaseMessage]]:
+) -> dict[str, list[BaseMessage]] | Send:
     """Call the LLM powering our "agent"."""
+
+    
 
     if state.get("is_rude", False):
         # Handle rude questions
-        rude_response = await handle_rude_question(state["question"], config)
+        rude_response = await handle_rude_question(state, config)
+        #TODO: use Send 
+        
         return {"messages": [rude_response]}
   
 
@@ -335,18 +311,19 @@ async def respond(
 
     # Check if the last message is an AI message and has tool calls
     if found_tool_call and state["messages"] and isinstance(state["messages"][-1], AIMessage):
+        #TODO: use Send
         # If the last message is an AI message, return it (could be from a tool call response)
         return {"messages": [state["messages"][-1]]}
         
     
-
+    query = get_user_message(state)
     configuration = Configuration.from_runnable_config(config)
     # Feel free to customize the prompt, model, and other logic!
     prompt = ChatPromptTemplate.from_messages(
         [
             MessagesPlaceholder(variable_name="messages"),
             SystemMessagePromptTemplate.from_template(configuration.response_system_prompt),
-            HumanMessagePromptTemplate.from_template("{question}")
+            HumanMessagePromptTemplate.from_template("{query}")
             
         ]
     )
@@ -361,7 +338,7 @@ async def respond(
         {
             "messages": state["messages"],
             "context": contenxt,
-            "question": state["question"],
+            "query": query,
             "system_time": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
         }, config
         )
@@ -423,9 +400,11 @@ def create_agent(builder) -> StateGraph:
     """
     Create and return the agent chain.
     """
+    from langgraph.checkpoint.memory import InMemorySaver
 
+    checkpointer = InMemorySaver()
     # Compile the graph
-    graph = builder.compile()
+    graph = builder.compile(checkpoint_saver=checkpointer)
 
     return graph 
 

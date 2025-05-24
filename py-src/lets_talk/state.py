@@ -28,9 +28,13 @@ class InputState(MessagesState):
         messages: List of messages in the conversation
         documents: Optional list of Document objects from RAG retrievals
     """
-    #messages: Annotated[list[BaseMessage], add_messages]
-    question: str
+    
+    
     is_rude: NotRequired[bool]
+
+    #retrieved documents
     documents: NotRequired[list[Document]]
+
+    #user messages
     queries: NotRequired[Annotated[list[str], add_queries]]
     

@@ -3,10 +3,11 @@ from pathlib import Path
 from langchain.schema.runnable.config import RunnableConfig
 from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
-from lets_talk.config import (CREATE_VECTOR_DB,VECTOR_STORAGE_PATH)
-
 # Load environment variables from .env file
 load_dotenv()
+from lets_talk.config import (CREATE_VECTOR_DB,VECTOR_STORAGE_PATH)
+
+
 
 if CREATE_VECTOR_DB:
     import pipeline
@@ -23,25 +24,15 @@ else:
         sys.exit(1)
 
 import chainlit as cl
-from lets_talk.agent import create_agent, build_graph
+# from lets_talk.agent import create_agent, build_graph
+#tdg_agent = create_agent(build_graph())
+from lets_talk.agent_v2 import agent as tdg_agent
 
-tdg_agent = create_agent(build_graph())
 
   
 @cl.on_chat_start
 async def setup_chain():
-    # Check if API key is already set
-    # api_key = os.environ.get("OPENAI_API_KEY")
-    # if not api_key:
-    #     # In a real app, you'd want to handle this more gracefully
-    #     response = await cl.AskUserMessage(
-    #         content="Please enter your OpenAI API Key:",
-    #         timeout=60,
-    #         raise_on_timeout=True
-    #     ).send()
-        
-    #     os.environ["OPENAI_API_KEY"] = response
-
+   
     # Store the chain in user session
     cl.user_session.set("agent", tdg_agent)
     
@@ -49,7 +40,7 @@ async def setup_chain():
     # content = parse_output(response)
 
     # Set a loading message
-    welcome_message = "Welcome to Let's Talk! How can I help you today?"
+    welcome_message = "Welcome to TheDataGuy Chat! How can I help you today?"
     msg = cl.Message(content=welcome_message, author="System")
     await msg.send()
 
@@ -75,11 +66,13 @@ async def on_message(message: cl.Message):
     # Create Chainlit message for streaming
     # msg = cl.Message(content="")
 
+    final_answer = cl.Message(content="")
+    print("Session Id:",cl.context.session.id)
     configurable = {"thread_id": cl.context.session.id}
     cb = cl.LangchainCallbackHandler()
-    final_answer = cl.Message(content="")
+    runnable_config= RunnableConfig(callbacks=[cb], configurable=configurable)
 
-    async for response_msg, metadata in agent_executor.astream({"question": message.content}, stream_mode="messages", config=RunnableConfig(callbacks=[cb], configurable=configurable)):
+    async for response_msg, metadata in agent_executor.astream({"messages": [HumanMessage(content=message.content)]}, stream_mode="messages", config=runnable_config):
         if (
             response_msg.content
             and not isinstance(response_msg, HumanMessage)
@@ -89,34 +82,5 @@ async def on_message(message: cl.Message):
 
     await final_answer.send()
     
-    # Create a parent step for the research process
-    # with cl.Step(name="Agent") as step:
-    #     # Run the agent executor with callbacks to stream the response
-    #     result = await agent_executor.ainvoke(
-    #         {"question": message.content},
-    #         # config={
-    #         #     "callbacks": [cl.AsyncLangchainCallbackHandler()],
-    #         #     "configurable": {"session_id": message.id}  # Add session_id from message
-    #         # }
-    #     )
-        
-        # Add steps from agent's intermediate steps
-        # for i, step_data in enumerate(result.get("intermediate_steps", [])):
-        #     step_name = f"Using: {step_data[0].tool}"
-        #     step_input = str(step_data[0].tool_input)
-        #     step_output = str(step_data[1])
-            
-        #     # Create individual steps as children of the main step
-        #     with cl.Step(name=step_name, type="tool") as substep:
-        #         await cl.Message(
-        #             content=f"**Input:** {step_input}\n\n**Output:** {step_output}",
-        #         ).send()
    
-    # Get the final answer
-    # final_answer = result["messages"][-1].content
-    
-    # # Stream tokens from the final_answer
-    # await msg.stream_token(final_answer)
-    # await msg.send()
-
   

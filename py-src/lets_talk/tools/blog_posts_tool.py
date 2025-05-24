@@ -6,12 +6,12 @@ import json
 import logging
 import requests
 from typing import Optional
-
+from langchain_core.tools import tool
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-
+@tool
 def get_blog_posts_tool(
     max_posts: Optional[int] = None,
     category: Optional[str] = None,
@@ -40,7 +40,7 @@ def get_blog_posts_tool(
             return "Error: Invalid data format from API. Expected a list of posts."
         
         # Filter by category if provided
-        if category:
+        if category and category.strip() and category.lower() != "null":
             posts = [post for post in posts if category.lower() in [cat.lower() for cat in post.get("categories", [])]]
         
         # Sort by date (newest first) and limit results
