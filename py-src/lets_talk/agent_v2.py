@@ -1,6 +1,3 @@
-
-
-
 from langgraph.prebuilt import create_react_agent
 from langchain_core.tools import tool
 from langchain_community.tools.requests.tool import RequestsGetTool
@@ -26,7 +23,7 @@ def retrive_documents(query: str) -> str:
     Returns:
         Formatted text containing the retrieved document content
     """
-    docs = rag.retriever.invoke(query) 
+    docs = rag.retriever.invoke(query) # type: ignore
     return format_docs(docs)
 
 
@@ -72,7 +69,7 @@ requests_tool = RequestsGetTool(
     description="Use this tool to make HTTP GET requests to retrieve information from the web. Provide a valid URL to fetch data.",
 )
 
-tools =[RSSFeedTool(), get_current_datetime,,retrive_documents,requests_tool]
+tools =[RSSFeedTool(), get_current_datetime,retrive_documents,requests_tool]
 
 checkpointer = InMemorySaver()
 

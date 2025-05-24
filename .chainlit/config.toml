@@ -73,6 +73,8 @@ name = "Assistant"
 
 # layout = "wide"
 
+show_step_labels = false
+
 # default_sidebar_state = "open"
 
 # Description of the assistant. This is used for HTML tags.

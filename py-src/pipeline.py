@@ -184,7 +184,7 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
                 embedding_model=embedding_model,
                 force_recreate=force_recreate
             )
-            vector_store.client.close()
+            vector_store.client.close() # type: ignore
             logger.info(f"Vector store successfully created at {storage_path}")
             
             # In CI mode, create a metadata file with the build info
