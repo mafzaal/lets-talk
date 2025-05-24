@@ -97,18 +97,18 @@ async def retrieve(state: InputState, *, config: RunnableConfig) -> dict[str, li
 
     queries = state.get("queries", None)
     query = queries[-1] if queries else state["question"]
-    docs = await rag.retriever.ainvoke(query,config=config)
+    docs = await rag.retriever.ainvoke(query,config=config) # type: ignore
 
     return {"documents": docs}
 
 
-def retrieve_context(query: str) -> str:
-    docs =  rag.retriever.invoke(query)
-    if not docs:
-        return "No relevant documents found."
+# def retrieve_context(query: str) -> str:
+#     docs =  rag.retriever.invoke(query)
+#     if not docs:
+#         return "No relevant documents found."
    
-    context = format_docs(docs)
-    return  context
+#     context = format_docs(docs)
+#     return  context
 
 
 
