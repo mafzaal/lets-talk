@@ -47,6 +47,9 @@ async def generate_query(
         - For subsequent messages, it uses a language model to generate a refined query.
         - The function uses the configuration to set up the prompt and model for query generation.
     """
+
+    
+    
     messages = state["messages"]
     if len(messages) == 1:
         # It's the first user question. We will use the input directly to search.
@@ -92,9 +95,9 @@ async def retrieve(state: InputState, *, config: RunnableConfig) -> dict[str, li
         dict[str, list[Document]]: A dictionary with a 'documents' key containing a list of retrieved documents.
     """
 
-    queries = state.get("queries", [])
+    queries = state.get("queries", None)
     query = queries[-1] if queries else state["question"]
-    docs = await rag.retriever.ainvoke(query)
+    docs = await rag.retriever.ainvoke(query,config=config)
 
     return {"documents": docs}
 
@@ -109,7 +112,7 @@ def retrieve_context(query: str) -> str:
 
 
 
-async def is_rude_question(question: str, config:RunnableConfig) -> bool:
+async def is_rude_question(state: InputState, *, config:RunnableConfig) -> Dict[str, Union[bool, list[BaseMessage]]]:
     """
     Check if the query is rude or negative.
 
@@ -119,6 +122,21 @@ async def is_rude_question(question: str, config:RunnableConfig) -> bool:
         True if the question is rude, False otherwise
     """
 
+    
+    question = state.get("question","") 
+
+    if not question:
+        # Get the last human message from state
+        for msg in reversed(state["messages"]):
+            if isinstance(msg, HumanMessage):
+                last_message = get_message_text(msg)
+                break
+
+    if not question:
+        return {"is_rude": False}
+    
+
+    # Check the tone of the last message
     configuration = Configuration.from_runnable_config(config)
     prompt = ChatPromptTemplate.from_template(configuration.query_tone_check_prompt)
     llm = init_chat_model(configuration.query_tone_check_model,temperature=0)
@@ -127,109 +145,73 @@ async def is_rude_question(question: str, config:RunnableConfig) -> bool:
 
     response = await tone_check_chain.ainvoke({"question": question}, config)
     
+    is_rude = False
     if isinstance(response, str):
-        return response.strip().lower() == "yes"
+        is_rude = response.strip().lower() == "yes"
     elif isinstance(response, list):
         # Check first element if it's a list
-        return str(response[0]).strip().lower() == "yes" if response else False
+        is_rude = str(response[0]).strip().lower() == "yes" if response else False
     else:
         # Handle dictionary or other types
-        return str(response).strip().lower() == "yes"
+        is_rude = str(response).strip().lower() == "yes"
+
+    return {"is_rude": is_rude}
 
 
-
-
-async def check_question_tone(state: InputState, *, config: RunnableConfig) -> Dict[str, Union[bool, list[BaseMessage]]]:
-    """
-    Check the tone of the user's query and adjust the state accordingly.
+# async def check_question_tone(state: InputState, *, config: RunnableConfig) -> Dict[str, Union[bool, list[BaseMessage]]]:
+#     """
+#     Check the tone of the user's query and adjust the state accordingly.
     
-    Args:
-        state: Current state containing messages and context
-    Returns:
-        Updated state with tone information and optional messages
-    """
+#     Args:
+#         state: Current state containing messages and context
+#     Returns:
+#         Updated state with tone information and optional messages
+#     """
 
 
-    last_message = state.get("question","") 
+#     last_message = state.get("question","") 
 
-    if not last_message:
-        # Get the last human message from state
-        for msg in reversed(state["messages"]):
-            if isinstance(msg, HumanMessage):
-                last_message = get_message_text(msg)
-                break
+#     if not last_message:
+#         # Get the last human message from state
+#         for msg in reversed(state["messages"]):
+#             if isinstance(msg, HumanMessage):
+#                 last_message = get_message_text(msg)
+#                 break
 
-    if not last_message:
-        return {"is_rude": False, "messages": []}
+#     if not last_message:
+#         return {"is_rude": False, "messages": []}
     
-    #if isinstance(last_message, HumanMessage):
-    # Check the tone of the last message
-    is_rude = await is_rude_question(str(last_message), config)
 
-    if is_rude:
-        # If the question is rude, respond with a positive message
+#     # Check the tone of the last message
+#     is_rude = await is_rude_question(str(last_message), config)
 
+#     return {"is_rude": is_rude}
+
+async def handle_rude_question(question: str, config: RunnableConfig) -> BaseMessage:
+        """
+        Generate a polite response to a rude question.
+        
+        Args:
+            question: The user's rude question
+            config: Configuration for the model
+        
+        Returns:
+            A polite AI message response
+        """
         configuration = Configuration.from_runnable_config(config)
         
         prompt = ChatPromptTemplate.from_template(configuration.query_rude_answer_prompt)
-        llm = init_chat_model(configuration.query_rude_answer_model,temperature=0)
+        llm = init_chat_model(configuration.query_rude_answer_model, temperature=0.5)
 
         rude_query_answer_chain = prompt | llm 
         
-        response = await rude_query_answer_chain.ainvoke({"question": last_message}, config)
+        return await rude_query_answer_chain.ainvoke({"question": question}, config)
 
-        return {
-            "messages": [response],
-            "is_rude": is_rude
-        }
-        
-       
-    return {"is_rude": is_rude, "messages": [HumanMessage(content=last_message)]}
+
 
 TOOLS = create_tools()
 
-def format_docs_v2(docs):
-    
-    """
-    Format the documents for display.
-    Args:
-        docs: List of documents to format
-    Returns:
-        str: Formatted string representation of the documents
 
-    Format the documents for display in a structured markdown format.
-    Each document is formatted with metadata as key-value pairs followed by the document content.
-    Documents are separated by horizontal rules for better readability.
-        docs: List of documents to format, where each document has metadata and page_content attributes
-        str: A formatted string representation of the documents with metadata displayed as key-value pairs,
-             followed by the document content, with documents separated by horizontal rules
-    Example:
-        >>> docs = [Document(page_content="Hello world", metadata={"source": "file.txt", "page": 1})]
-        >>> format_docs_v2(docs)
-        "**source:** file.txt\n**page:** 1\n\n**content:** Hello world"
-    """
-    # Render all items from metadata in K:V format
-    # and the page content in a single line
-    # with a line break between each document
-    # and a line break between each metadata item
-    # and the page content in a single line
-    
-    formatted_docs = []
-    for doc in docs:
-        # Format all metadata as key-value pairs
-        metadata_parts = []
-        for key, value in doc.metadata.items():
-            metadata_parts.append(f"**{key}:** {value}")
-        
-        # Join metadata items with line breaks
-        metadata_str = "\n".join(metadata_parts)
-        
-        # Add page content with a line break after metadata
-        formatted_doc = f"{metadata_str}\n\n**content:** {doc.page_content}"
-        formatted_docs.append(formatted_doc)
-
-    # Join all documents with double line breaks for separation
-    return "\n\n---\n\n".join(formatted_docs)
 
 # Update the call_model function to include current datetime
 async def call_model(state: Dict[str, Any], * , config:RunnableConfig) -> Dict[str, list[BaseMessage]]:
@@ -249,49 +231,26 @@ async def call_model(state: Dict[str, Any], * , config:RunnableConfig) -> Dict[s
         
         
         # Insert system message with context before the latest user message
+        system_message = SystemMessage(
+            content=configuration.react_agent_prompt.format(
+                system_time=datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
+            )
+        )
 
-
-        document_context = ""
-        docs = state.get("documents", [])
-        if not docs:
-            document_context = format_docs_v2(docs)
-                                       
-        
-        prompt = ChatPromptTemplate.from_messages( 
-            [
-                #MessagesPlaceholder(variable_name="history"), 
-                SystemMessagePromptTemplate.from_template(configuration.response_system_prompt),
-                HumanMessagePromptTemplate.from_template("{question}")
-            ])
-     
-        
         llm = init_chat_model(configuration.react_agent_model,temperature=0).bind_tools(TOOLS)
 
-        chain = prompt | llm 
-
-        response = await chain.ainvoke(
-            {
-                "history": messages,
-                "context": document_context,
-                "system_time": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
-                "question": state["question"],
-            },
-            config,
-        )
-        
-
         # Find the position of the last user message
-        # for i in range(len(messages)-1, -1, -1):
-        #     if isinstance(messages[i], HumanMessage):
-        #         # Insert context right after the last user message
-        #         enhanced_messages = messages[:i+1] + [repsone_system_prompt] + messages[i+1:]
-        #         break
-        # else:
-        #     # No user message found, just append context
-        #     enhanced_messages = messages + [repsone_system_prompt]
+        for i in range(len(messages)-1, -1, -1):
+            if isinstance(messages[i], HumanMessage):
+                # Insert system right after the last user message
+                enhanced_messages = messages[:i+1] + [system_message] + messages[i+1:]
+                break
+        else:
+            # No user message found, just append context
+            enhanced_messages = messages + [system_message, HumanMessage(content=state["question"])]
         
-        # # Get response from the model
-        # response = await model.ainvoke(enhanced_messages,config)
+        # Get response from the model
+        response = await llm.ainvoke(enhanced_messages,config)
 
         return {"messages": [response]}
     except Exception as e:
@@ -360,17 +319,35 @@ async def respond(
 ) -> dict[str, list[BaseMessage]]:
     """Call the LLM powering our "agent"."""
 
-    # check if last message is ai then return
-    if len(state["messages"]) > 1 and isinstance(state["messages"][-1], AIMessage):
+    if state.get("is_rude", False):
+        # Handle rude questions
+        rude_response = await handle_rude_question(state["question"], config)
+        return {"messages": [rude_response]}
+  
+
+    found_tool_call = False
+    # If there's a tool call message anywhere in the messages
+    for message in state["messages"]:
+        if isinstance(message, AIMessage) and getattr(message, "tool_calls", None):
+            # Found a tool call message
+            found_tool_call = True
+            break
+
+    # Check if the last message is an AI message and has tool calls
+    if found_tool_call and state["messages"] and isinstance(state["messages"][-1], AIMessage):
+        # If the last message is an AI message, return it (could be from a tool call response)
         return {"messages": [state["messages"][-1]]}
+        
     
 
     configuration = Configuration.from_runnable_config(config)
     # Feel free to customize the prompt, model, and other logic!
     prompt = ChatPromptTemplate.from_messages(
         [
-            SystemMessagePromptTemplate.from_template(configuration.response_system_prompt),
             MessagesPlaceholder(variable_name="messages"),
+            SystemMessagePromptTemplate.from_template(configuration.response_system_prompt),
+            HumanMessagePromptTemplate.from_template("{question}")
+            
         ]
     )
     model = init_chat_model(configuration.response_model, temperature=0)
@@ -379,16 +356,15 @@ async def respond(
 
     documents = state.get("documents", [])
     contenxt = format_docs(documents)
-    message_value = await prompt.ainvoke(
+
+    response = await chain.ainvoke(
         {
             "messages": state["messages"],
             "context": contenxt,
             "question": state["question"],
             "system_time": datetime.datetime.now(tz=datetime.timezone.utc).isoformat(),
-        },
-        config,
-    )
-    response = await model.ainvoke(message_value, config)
+        }, config
+        )
     # We return a list, because this will get added to the existing list
     return {"messages": [response]}
 
@@ -396,80 +372,35 @@ async def respond(
 
 def build_graph() -> StateGraph:
        
-   
-    # Create an instance of ChatOpenAI
-    # from lets_talk.chains import chat_llm
-    # model = chat_llm
-    # model = model.bind_tools(tools)
-    
-    # Create document search tool if retriever is provided
-    
-    # doc_search_tool = Tool(
-    #     name="TheDataGuy Blog Search",
-    #     description="Search within blog posts of thedataguy.pro. ALWAYS use this tool to retrieve the context.",
-    #     func=lambda query: blog_search_tool(query),
-    #     args_schema=RAGQueryInput
-    # )
-    
-    # Add document search tool to the tool belt if we have upload capability
-    # tools = tools.copy()
-    # tools.append(doc_search_tool)
-    
-    # Create a node for tool execution
+       
     tool_node = ToolNode(TOOLS)
 
     # Initialize the graph with our state type
     builder = StateGraph(state_schema=InputState,config_schema=Configuration)
-    
-    # Define model node factory with bound model
-    # def call_model_node(state):
-    #     return call_model(model, state)
-
-    
-    # Define retrieval node factory with bound retriever
-    # def retrieve_node(state):
-    #     return retrieve_from_blog(state)
-    
-    # def set_answer(state):
-    #     # Get the last message from the state
-    #     last_message = state["messages"][-1]
-        
-    #     # Check if the last message is a response from the model
-    #     if isinstance(last_message, AIMessage):
-    #         # Set the answer in the state
-    #         state["answer"] = last_message.content
-        
-    #     return state
-
-
-
-    builder.add_node("check_question_tone", check_question_tone)
-    
-    builder.add_node("generate_query", generate_query)
+   
+    builder.add_node("is_rude_question", is_rude_question)
+    #builder.add_node("generate_query", generate_query)
     builder.add_node("retrieve", retrieve)
     builder.add_node("agent", call_model)
     builder.add_node("action", tool_node)
     builder.add_node("respond", respond)
     
 
-    builder.set_entry_point("check_question_tone")
+    
     # Add an end node - this is required for the "end" state to be valid
     # uncompiled_graph.add_node("end", lambda state: state)
 
-    builder.add_edge(START, "check_question_tone")
-    builder.add_conditional_edges(
-        "check_question_tone",
-        lambda state: "respond" if state["is_rude"] else "generate_query",
-        {
-            "generate_query": "generate_query",
-            "respond": "respond"
-        }
-    )
+    builder.add_edge(START, "is_rude_question")
+    builder.add_edge(START, "retrieve")
+    builder.add_edge(START, "agent")
 
-    builder.add_edge("generate_query", "retrieve")
-    builder.add_edge("retrieve", "agent")
-    #builder.add_edge("agent", "respond")
+   
 
+    #builder.add_edge("generate_query", "retrieve")
+    builder.add_edge("is_rude_question", "respond")
+    builder.add_edge("retrieve", "respond")
+    builder.add_edge("agent", "respond")
+    
     
     # Add conditional edges from agent
     builder.add_conditional_edges(
@@ -483,7 +414,6 @@ def build_graph() -> StateGraph:
 
     # Complete the loop
     builder.add_edge("action", "agent")
-
     builder.add_edge("respond", END)
     
     return builder

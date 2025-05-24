@@ -4,6 +4,7 @@ from typing import Sequence, TypedDict, Annotated,  NotRequired
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 from langchain_core.documents import Document
+from langgraph.graph import MessagesState
 
 
 def add_queries(existing: Sequence[str], new: Sequence[str]) -> Sequence[str]:
@@ -19,7 +20,7 @@ def add_queries(existing: Sequence[str], new: Sequence[str]) -> Sequence[str]:
     return list(existing) + list(new)
 
 
-class InputState(TypedDict):
+class InputState(MessagesState):
     """
     State definition for the Research Agent using LangGraph.
     
@@ -27,7 +28,7 @@ class InputState(TypedDict):
         messages: List of messages in the conversation
         documents: Optional list of Document objects from RAG retrievals
     """
-    messages: Annotated[list[BaseMessage], add_messages]
+    #messages: Annotated[list[BaseMessage], add_messages]
     question: str
     is_rude: NotRequired[bool]
     documents: NotRequired[list[Document]]

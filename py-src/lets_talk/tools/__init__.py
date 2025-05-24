@@ -22,7 +22,7 @@ def create_tools():
     """
     return [
         #get_current_datetime,
-        #get_blog_posts_tool,
+        get_blog_posts_tool,
         contact_form_tool
     ]
 

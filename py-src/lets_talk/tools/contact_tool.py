@@ -6,8 +6,6 @@ import logging
 import os
 import json
 from datetime import datetime
-from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field
 from langchain_core.tools import tool
 
 # Set up logging

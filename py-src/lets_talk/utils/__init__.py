@@ -99,8 +99,52 @@ def format_docs(docs: Optional[list[Document]]) -> str:
 </documents>"""
 
 
+def format_docs_v2(docs):
+    
+    """
+    Format the documents for display.
+    Args:
+        docs: List of documents to format
+    Returns:
+        str: Formatted string representation of the documents
+
+    Format the documents for display in a structured markdown format.
+    Each document is formatted with metadata as key-value pairs followed by the document content.
+    Documents are separated by horizontal rules for better readability.
+        docs: List of documents to format, where each document has metadata and page_content attributes
+        str: A formatted string representation of the documents with metadata displayed as key-value pairs,
+             followed by the document content, with documents separated by horizontal rules
+    Example:
+        >>> docs = [Document(page_content="Hello world", metadata={"source": "file.txt", "page": 1})]
+        >>> format_docs_v2(docs)
+        "**source:** file.txt\n**page:** 1\n\n**content:** Hello world"
+    """
+    # Render all items from metadata in K:V format
+    # and the page content in a single line
+    # with a line break between each document
+    # and a line break between each metadata item
+    # and the page content in a single line
+    
+    formatted_docs = []
+    for doc in docs:
+        # Format all metadata as key-value pairs
+        metadata_parts = []
+        for key, value in doc.metadata.items():
+            metadata_parts.append(f"**{key}:** {value}")
+        
+        # Join metadata items with line breaks
+        metadata_str = "\n".join(metadata_parts)
+        
+        # Add page content with a line break after metadata
+        formatted_doc = f"{metadata_str}\n\n**content:** {doc.page_content}"
+        formatted_docs.append(formatted_doc)
+
+    # Join all documents with double line breaks for separation
+    return "\n\n---\n\n".join(formatted_docs)
+
 __all__ = [
     "load_chat_model",
     "get_message_text",
     "format_docs",
+    "format_docs_v2",
 ]
