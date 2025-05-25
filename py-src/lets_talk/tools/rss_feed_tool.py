@@ -12,6 +12,8 @@ from pydantic import BaseModel, Field
 from langchain_core.tools import Tool
 from langchain_core.documents import Document
 import feedparser
+import asyncio
+import aiohttp
 
 
 class RSSFeedInput(BaseModel):
@@ -52,83 +54,67 @@ class RSSFeedTool(BaseTool):
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None
     ) -> str:
         """Execute the RSS feed tool asynchronously."""
-        return rss_feed_tool(urls=[self.rss_url], max_results=10,max_description_length=self.max_description_length, query=query)
+        return await rss_feed_tool_async(urls=[self.rss_url], max_results=10, max_description_length=self.max_description_length, query=query)
 
 
 
 
 
-def rss_feed_tool(urls: List[str], query: Optional[str] = None, max_results: int = 10,max_description_length=400) -> str:
+async def fetch_rss(session, url):
+    async with session.get(url) as response:
+        return await response.text()
+
+async def rss_feed_tool_async(
+    urls: List[str], 
+    query: Optional[str] = None, 
+    max_results: int = 10, 
+    max_description_length: int = 400
+) -> str:
     """
-    Fetch and format articles from RSS feeds for LLM context.
-
-    Args:
-        urls: List of RSS feed URLs.
-        query: Optional keyword(s) to filter articles.
-        max_results: Max number of articles to return.
-
-    Returns:
-        String with simplified article summaries.
+    Async version: Fetch and format articles from RSS feeds for LLM context.
     """
     try:
         articles = []
-        for url in urls:
-            feed = feedparser.parse(url)
-
-            # get channel title and link can be used for context
-            channel_title = feed.feed.get('title', 'No Title') if hasattr(feed, 'feed') and not isinstance(feed.feed, list) else 'No Title'
-            channel_link = feed.feed.get('link', 'No Link') if hasattr(feed, 'feed') and not isinstance(feed.feed, list) else 'No Link'
-
-
-            
-            if not feed or 'entries' not in feed or not isinstance(feed.entries, list):
-                return f"Error: Unable to parse RSS feed from {url}. Please check the URL or the feed format."
-            # Skip if no entries in the feed
-            if not feed.get('entries'):
-                return f"No articles found in the RSS feed at {url}."
-            
-            if not feed.entries:
-                continue
-            for entry in feed.entries:
-                title = entry.get('title', 'No title')
-                link = entry.get('link', '')
-                published = entry.get('published', '')
-                tags = entry.get('tags', []) or []
-                categories = [tag['term'] for tag in tags if 'term' in tag]
-
-                if not categories:
-                    categories = entry.get('categories', [])
-
-                description = entry.get('description', '')
-                content = description.strip() if isinstance(description, str) else str(description) if description else ''
-
-                # Simple query filter
-                # title_str = str(title) if title else ''
-                # if query and query.lower() not in (title_str + ' ' + content).lower():
-                #     continue
-
-                articles.append({
-                    'channel_title': channel_title,
-                    'channel_link': channel_link,
-                    'title': title,
-                    'link': link,
-                    'published': published,
-                    'categories': categories,
-                    'content': content
-                })
-
+        async with aiohttp.ClientSession() as session:
+            rss_texts = await asyncio.gather(*(fetch_rss(session, url) for url in urls))
+            for idx, rss_text in enumerate(rss_texts):
+                url = urls[idx]
+                feed = feedparser.parse(rss_text)
+                channel_title = feed.feed.get('title', 'No Title') if hasattr(feed, 'feed') and not isinstance(feed.feed, list) else 'No Title'
+                channel_link = feed.feed.get('link', 'No Link') if hasattr(feed, 'feed') and not isinstance(feed.feed, list) else 'No Link'
+                if not feed or 'entries' not in feed or not isinstance(feed.entries, list):
+                    continue
+                if not feed.get('entries'):
+                    continue
+                if not feed.entries:
+                    continue
+                for entry in feed.entries:
+                    title = entry.get('title', 'No title')
+                    link = entry.get('link', '')
+                    published = entry.get('published', '')
+                    tags = entry.get('tags', []) or []
+                    categories = [tag['term'] for tag in tags if 'term' in tag]
+                    if not categories:
+                        categories = entry.get('categories', [])
+                    description = entry.get('description', '')
+                    content = description.strip() if isinstance(description, str) else str(description) if description else ''
+                    articles.append({
+                        'channel_title': channel_title,
+                        'channel_link': channel_link,
+                        'title': title,
+                        'link': link,
+                        'published': published,
+                        'categories': categories,
+                        'content': content
+                    })
         if not articles:
             return "No articles found in the provided RSS feeds."
-
-        # Limit results
         articles = articles[:max_results]
-
-        # Build LLM context
         results = []
         for i, article in enumerate(articles, 1):
             summary = (
                 f"### [{i}] {article['title']}\n"
-                f"**Channel**: [{article["channel_title"]}]({article["channel_link"]})\n"
+                f"**Channel**: [{article['channel_title']}]({article['channel_link']})\n"
                 f"**Link**: {article['link']}\n"
                 f"**Published**: {article['published']}\n"
             )
@@ -136,10 +122,20 @@ def rss_feed_tool(urls: List[str], query: Optional[str] = None, max_results: int
                 summary += f"**Categories**: {', '.join(article['categories'])}\n"
             summary += f"**Summary**: {article['content'][:max_description_length]}...\n"
             results.append(summary)
-
         return "\n\n".join(results)
     except Exception as e:
         return f"Error fetching RSS feeds: {str(e)}"
+
+def rss_feed_tool(
+    urls: List[str], 
+    query: Optional[str] = None, 
+    max_results: int = 10, 
+    max_description_length: int = 400
+) -> str:
+    """
+    Wrapper to run async RSS fetcher in a thread-safe way.
+    """
+    return asyncio.run(rss_feed_tool_async(urls, query, max_results, max_description_length))
 
 if __name__ == "__main__":
     # Example usage of the RSS feed tool

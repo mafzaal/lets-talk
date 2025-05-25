@@ -1,6 +1,7 @@
 
 db/
 artifacts/
+.langgraph_api/
 
 
 # Byte-compiled / optimized / DLL files

@@ -1,0 +1,11 @@
+{
+    "dockerfile_lines": [],
+    "graphs": {
+      "the_data_guy_chat": "./py-src/lets_talk/agent_v2.py:agent"
+    },
+    "python_version": "3.13",
+    "env": "./.env",
+    "dependencies": [
+      "."
+    ]
+  }

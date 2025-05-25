@@ -4,7 +4,7 @@ from langchain_community.tools.requests.tool import RequestsGetTool
 from langchain_community.utilities.requests import TextRequestsWrapper
 from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import InMemorySaver
-from lets_talk import rag
+import lets_talk.rag as rag
 from lets_talk.utils import format_docs
 from lets_talk.tools import RSSFeedTool,get_current_datetime
 from lets_talk.config import LLM_MODEL,LLM_TEMPERATURE
@@ -71,9 +71,6 @@ requests_tool = RequestsGetTool(
 
 tools =[RSSFeedTool(), get_current_datetime,retrive_documents,requests_tool]
 
-checkpointer = InMemorySaver()
-
-
 model_name = LLM_MODEL
 temperature = LLM_TEMPERATURE
 model = init_chat_model(model_name, temperature=temperature)
@@ -83,7 +80,6 @@ agent = create_react_agent(
     tools=tools,
     prompt=prompt,
     version="v2",
-    checkpointer=checkpointer
 )
 
 

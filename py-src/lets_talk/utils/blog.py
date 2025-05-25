@@ -19,7 +19,7 @@ from langchain.schema.document import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
-
+from langchain_community.document_loaders import UnstructuredMarkdownLoader
 
 from lets_talk.config import (
     DATA_DIR,
@@ -52,7 +52,14 @@ def load_blog_posts(data_dir: str = DATA_DIR,
         glob=glob_pattern, 
         show_progress=show_progress,
         recursive=recursive,
-        loader_cls=TextLoader
+        loader_cls=TextLoader,
+        # loader_cls=UnstructuredMarkdownLoader,
+        # loader_kwargs={
+        #     "encoding": "utf-8",
+        #     "mode": "elements",  # Load as elements for better processing
+        #     "markdown_extensions": ["fenced_code", "tables", "attr_list"]
+        # }
+
         
     )
     

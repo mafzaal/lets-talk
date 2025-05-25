@@ -1,10 +1,11 @@
 [project]
 name = "lets-talk"
 version = "0.1.0"
-description = "Add your description here"
+description = "Let's Talk is AI driven chat for websites"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aiohttp>=3.11.18",
     "arxiv>=2.2.0",
     "chainlit>=2.5.5",
     "feedparser>=6.0.11",
@@ -22,6 +23,7 @@ dependencies = [
     "langchain-text-splitters>=0.3.8",
     "langchain-together>=0.3.0",
     "langgraph>=0.4.3",
+    "langgraph-cli[inmem]>=0.2.10",
     "libmagic>=1.0",
     "pandas>=2.2.3",
     "python-dotenv>=1.1.0",
@@ -31,3 +33,13 @@ dependencies = [
     "unstructured[md]>=0.17.2",
     "websockets>=15.0.1",
 ]
+
+[build-system]
+requires = ["setuptools>=73.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["lets_talk"]
+
+[tool.setuptools.package-dir]
+"lets_talk" = "py-src/lets_talk"
