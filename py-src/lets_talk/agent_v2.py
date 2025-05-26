@@ -3,7 +3,6 @@ from langchain_core.tools import tool
 from langchain_community.tools.requests.tool import RequestsGetTool
 from langchain_community.utilities.requests import TextRequestsWrapper
 from langchain.chat_models import init_chat_model
-from langgraph.checkpoint.memory import InMemorySaver
 import lets_talk.rag as rag
 from lets_talk.utils import format_docs
 from lets_talk.tools import RSSFeedTool,get_current_datetime
@@ -69,17 +68,28 @@ requests_tool = RequestsGetTool(
     description="Use this tool to make HTTP GET requests to retrieve information from the web. Provide a valid URL to fetch data.",
 )
 
-tools =[RSSFeedTool(), get_current_datetime,retrive_documents,requests_tool]
+from lets_talk.config import (RSS_URL)
+tools =[RSSFeedTool(rss_url=RSS_URL), get_current_datetime,retrive_documents,requests_tool]
 
 model_name = LLM_MODEL
 temperature = LLM_TEMPERATURE
 model = init_chat_model(model_name, temperature=temperature)
 
-agent = create_react_agent(
+
+
+
+def create_agent(prompt: str = prompt,
+                 model=model,
+                 tools=tools):
+    """Create and return the agent."""
+    agent = create_react_agent(
     model=model,
     tools=tools,
     prompt=prompt,
     version="v2",
-)
+    )
+
+    return agent
 
 
+agent = create_agent()
