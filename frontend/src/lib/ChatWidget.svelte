@@ -26,9 +26,11 @@
 		}
 	}
 
+    // new Message('human', 'Hello! How can I assist you today?'),
+    // new Message('ai', 'Hi there! I am here to help you with any questions or tasks you have.')
+    
 	const client = new Client();
-	const messages = $state<Array<Message>>([new Message('human', 'Hello! How can I assist you today?'),
-        new Message('ai', 'Hi there! I am here to help you with any questions or tasks you have.')]);
+	const messages = $state<Array<Message>>([]);
 	let userInput = $state<string>('');
 	let loading = $state(false);
 	let assistant_id = $state<string | null>(null);
