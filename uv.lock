@@ -1364,9 +1364,6 @@ dependencies = [
     { name = "chainlit" },
     { name = "feedparser" },
     { name = "grandalf" },
-    { name = "ipykernel" },
-    { name = "ipython" },
-    { name = "ipywidgets" },
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-core" },
@@ -1388,6 +1385,13 @@ dependencies = [
     { name = "websockets" },
 ]
 
+[package.optional-dependencies]
+dev = [
+    { name = "ipykernel" },
+    { name = "ipython" },
+    { name = "ipywidgets" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.18" },
@@ -1395,9 +1399,9 @@ requires-dist = [
     { name = "chainlit", specifier = ">=2.5.5" },
     { name = "feedparser", specifier = ">=6.0.11" },
     { name = "grandalf", specifier = ">=0.8" },
-    { name = "ipykernel", specifier = ">=6.29.5" },
-    { name = "ipython", specifier = ">=9.2.0" },
-    { name = "ipywidgets", specifier = ">=8.1.7" },
+    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29.5" },
+    { name = "ipython", marker = "extra == 'dev'", specifier = ">=9.2.0" },
+    { name = "ipywidgets", marker = "extra == 'dev'", specifier = ">=8.1.7" },
     { name = "langchain", specifier = ">=0.3.25" },
     { name = "langchain-community", specifier = ">=0.3.23" },
     { name = "langchain-core", specifier = ">=0.3.59" },
@@ -1418,6 +1422,7 @@ requires-dist = [
     { name = "unstructured", extras = ["md"], specifier = ">=0.17.2" },
     { name = "websockets", specifier = ">=15.0.1" },
 ]
+provides-extras = ["dev"]
 
 [[package]]
 name = "libmagic"

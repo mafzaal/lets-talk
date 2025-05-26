@@ -157,6 +157,7 @@ cython_debug/
 # VS Code
 .vscode/
 *.code-workspace
+**/node_modules/
 
 # Project specific
 
