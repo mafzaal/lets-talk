@@ -33,3 +33,5 @@ __all__ = [
     'get_blog_posts_tool',
     'contact_form_tool'
 ]
+
+# Makes this directory a Python package

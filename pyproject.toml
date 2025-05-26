@@ -43,7 +43,7 @@ requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["lets_talk"]
+package-dir = {"" = "py-src"}
 
-[tool.setuptools.package-dir]
-"lets_talk" = "py-src/lets_talk"
+[tool.setuptools.packages.find]
+where = ["py-src"]
