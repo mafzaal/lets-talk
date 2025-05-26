@@ -7,5 +7,9 @@
     "env": "./.env",
     "dependencies": [
       "."
-    ]
+    ],
+    "http":{
+      "disable_meta": true,
+      "disable_store": true
+    }
   }

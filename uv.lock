@@ -1363,7 +1363,6 @@ dependencies = [
     { name = "arxiv" },
     { name = "chainlit" },
     { name = "feedparser" },
-    { name = "grandalf" },
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-core" },
@@ -1374,12 +1373,10 @@ dependencies = [
     { name = "langchain-text-splitters" },
     { name = "langchain-together" },
     { name = "langgraph" },
-    { name = "langgraph-cli", extra = ["inmem"] },
     { name = "libmagic" },
     { name = "pandas" },
     { name = "python-dotenv" },
     { name = "qdrant-client" },
-    { name = "ragas" },
     { name = "tqdm" },
     { name = "unstructured", extra = ["md"] },
     { name = "websockets" },
@@ -1387,9 +1384,12 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "grandalf" },
     { name = "ipykernel" },
     { name = "ipython" },
     { name = "ipywidgets" },
+    { name = "langgraph-cli", extra = ["inmem"] },
+    { name = "ragas" },
 ]
 
 [package.metadata]
@@ -1398,7 +1398,7 @@ requires-dist = [
     { name = "arxiv", specifier = ">=2.2.0" },
     { name = "chainlit", specifier = ">=2.5.5" },
     { name = "feedparser", specifier = ">=6.0.11" },
-    { name = "grandalf", specifier = ">=0.8" },
+    { name = "grandalf", marker = "extra == 'dev'", specifier = ">=0.8" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29.5" },
     { name = "ipython", marker = "extra == 'dev'", specifier = ">=9.2.0" },
     { name = "ipywidgets", marker = "extra == 'dev'", specifier = ">=8.1.7" },
@@ -1412,12 +1412,12 @@ requires-dist = [
     { name = "langchain-text-splitters", specifier = ">=0.3.8" },
     { name = "langchain-together", specifier = ">=0.3.0" },
     { name = "langgraph", specifier = ">=0.4.3" },
-    { name = "langgraph-cli", extras = ["inmem"], specifier = ">=0.2.10" },
+    { name = "langgraph-cli", extras = ["inmem"], marker = "extra == 'dev'", specifier = ">=0.2.10" },
     { name = "libmagic", specifier = ">=1.0" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
     { name = "qdrant-client", specifier = ">=1.14.2" },
-    { name = "ragas", specifier = ">=0.2.15" },
+    { name = "ragas", marker = "extra == 'dev'", specifier = ">=0.2.15" },
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "unstructured", extras = ["md"], specifier = ">=0.17.2" },
     { name = "websockets", specifier = ">=15.0.1" },

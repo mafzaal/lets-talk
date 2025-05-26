@@ -9,7 +9,6 @@ dependencies = [
     "arxiv>=2.2.0",
     "chainlit>=2.5.5",
     "feedparser>=6.0.11",
-    "grandalf>=0.8",
     "langchain>=0.3.25",
     "langchain-community>=0.3.23",
     "langchain-core>=0.3.59",
@@ -20,12 +19,10 @@ dependencies = [
     "langchain-text-splitters>=0.3.8",
     "langchain-together>=0.3.0",
     "langgraph>=0.4.3",
-    "langgraph-cli[inmem]>=0.2.10",
     "libmagic>=1.0",
     "pandas>=2.2.3",
     "python-dotenv>=1.1.0",
     "qdrant-client>=1.14.2",
-    "ragas>=0.2.15",
     "tqdm>=4.67.1",
     "unstructured[md]>=0.17.2",
     "websockets>=15.0.1",
@@ -35,7 +32,10 @@ dependencies = [
 dev = [
     "ipykernel>=6.29.5",
     "ipython>=9.2.0",
-    "ipywidgets>=8.1.7"
+    "ipywidgets>=8.1.7",
+    "ragas>=0.2.15",
+    "grandalf>=0.8",
+    "langgraph-cli[inmem]>=0.2.10",
 ]
 
 [build-system]
