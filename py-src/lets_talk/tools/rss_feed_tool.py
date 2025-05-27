@@ -109,6 +109,15 @@ async def rss_feed_tool_async(
                     })
         if not articles:
             return "No articles found in the provided RSS feeds."
+        
+        # build the summary that includs total articles and the query
+        if query:
+            summary = f"Found {len(articles)} articles matching the query '{query}':\n\n"
+        else:
+            summary = f"Found {len(articles)} recent articles:\n\n"
+
+
+
         articles = articles[:max_results]
         results = []
         for i, article in enumerate(articles, 1):

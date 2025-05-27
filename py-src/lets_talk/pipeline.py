@@ -18,7 +18,10 @@ Options:
     --embedding-model MODEL  Embedding model to use (default from config) 
     --no-chunking            Don't split documents into chunks (use whole documents)
     --no-save-stats          Don't save document statistics
+    --data-dir-pattern       Glob pattern to match blog post files within the data directory (default: None)
     --ci                     Run in CI mode (no interactive prompts, exit codes for CI)
+    --blog-base-url          Base URL for the blog posts (default from config)
+    --base-url               Base URL for absolute media links (default from config)
 """
 
 import os
@@ -29,7 +32,7 @@ import json
 import logging
 from pathlib import Path
 from lets_talk.config import (
-    CHUNK_OVERLAP, CHUNK_SIZE, VECTOR_STORAGE_PATH, DATA_DIR,
+    BASE_URL, BLOG_BASE_URL, CHUNK_OVERLAP, CHUNK_SIZE, VECTOR_STORAGE_PATH, DATA_DIR,
     FORCE_RECREATE, OUTPUT_DIR, USE_CHUNKING, SHOULD_SAVE_STATS,
     QDRANT_COLLECTION, EMBEDDING_MODEL
 )
@@ -70,6 +73,12 @@ def parse_args():
                         help="Don't split documents into chunks (use whole documents)")
     parser.add_argument("--no-save-stats", action="store_true",
                         help="Don't save document statistics")
+    parser.add_argument("--data-dir-pattern", default="*.md",
+                        help="Glob pattern to match blog post files within the data directory (default: None)")
+    parser.add_argument("--blog-base-url", default=BLOG_BASE_URL,
+                        help="Base URL for the blog posts (default from config)")
+    parser.add_argument("--base-url", default=BASE_URL,
+                        help="Base URL for absolute media links (default from config)")
     return parser.parse_args()
 
 def save_stats(stats, output_dir="./stats", ci_mode=False):
@@ -122,7 +131,8 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
                       force_recreate=FORCE_RECREATE, output_dir=OUTPUT_DIR, ci_mode=False, 
                       use_chunking=USE_CHUNKING, should_save_stats=SHOULD_SAVE_STATS, 
                       chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP,
-                      collection_name=QDRANT_COLLECTION, embedding_model=EMBEDDING_MODEL):
+                      collection_name=QDRANT_COLLECTION, embedding_model=EMBEDDING_MODEL,
+                      data_dir_pattern:str="*.md", blog_base_url=None, base_url=None):
     """
     Create or update the vector database with blog documents.
     
@@ -138,16 +148,23 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
         chunk_overlap: Overlap between chunks in characters (default from config)
         collection_name: Name of the Qdrant collection (default from config)
         embedding_model: Embedding model to use (default from config)
+        data_dir_pattern: Glob pattern to match blog post files within the data directory (default: None)
+        blog_base_url: Base URL for the blog posts (default from config)
+        base_url: Base URL for absolute media links (default from config)
         
     Returns:
         Tuple of (success status, message, stats, stats_file, stats_file_content)
     """
     try:
         # Load and process documents
-        logger.info(f"Loading blog posts from {data_dir}")
-        documents = blog.load_blog_posts(data_dir)
-        documents = blog.update_document_metadata(documents)
-        
+        logger.info(f"Loading blog posts from {data_dir} with pattern '{data_dir_pattern}'")
+        documents = blog.load_blog_posts(data_dir,glob_pattern=data_dir_pattern) 
+        documents = blog.update_document_metadata(
+            documents, 
+            data_dir_prefix=data_dir,
+            blog_base_url=blog_base_url if blog_base_url is not None else blog.BLOG_BASE_URL,
+            base_url=base_url if base_url is not None else blog.BASE_URL
+        )
         
         # Get stats
         stats = blog.get_document_stats(documents)
@@ -237,6 +254,12 @@ def main():
     if not args.no_chunking:
         logger.info(f"Chunk size: {args.chunk_size if args.chunk_size else CHUNK_SIZE}")
         logger.info(f"Chunk overlap: {args.chunk_overlap if args.chunk_overlap else CHUNK_OVERLAP}")
+    if args.data_dir_pattern:
+        logger.info(f"Data dir pattern: {args.data_dir_pattern}")
+    if args.blog_base_url:
+        logger.info(f"Blog base URL: {args.blog_base_url}")
+    if args.base_url:
+        logger.info(f"Base URL: {args.base_url}")
     logger.info("========================")
     
     try:
@@ -252,7 +275,10 @@ def main():
             chunk_size=args.chunk_size,
             chunk_overlap=args.chunk_overlap,
             collection_name=args.collection_name,
-            embedding_model=args.embedding_model
+            embedding_model=args.embedding_model,
+            data_dir_pattern=args.data_dir_pattern,
+            blog_base_url=args.blog_base_url,
+            base_url=args.base_url
         )
         
         logger.info("\n=== Update Summary ===")

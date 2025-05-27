@@ -22,6 +22,7 @@ from qdrant_client import QdrantClient
 from langchain_community.document_loaders import UnstructuredMarkdownLoader
 
 from lets_talk.config import (
+    BASE_URL,
     DATA_DIR,
     VECTOR_STORAGE_PATH,
     EMBEDDING_MODEL,
@@ -71,6 +72,7 @@ def load_blog_posts(data_dir: str = DATA_DIR,
 def update_document_metadata(documents: List[Document], 
                            data_dir_prefix: str = DATA_DIR,
                            blog_base_url: str = BLOG_BASE_URL,
+                           base_url: str = BASE_URL,
                            remove_suffix: str = "index.md") -> List[Document]:
     """
     Update the metadata of documents to include URL and other information.
@@ -78,20 +80,32 @@ def update_document_metadata(documents: List[Document],
     Args:
         documents: List of Document objects to update
         data_dir_prefix: Prefix to replace in source paths
-        blog_base_url: Base URL for the blog posts
+        blog_base_url: Base URL for the blog posts (default: BLOG_BASE_URL)
+        base_url: Base URL for absolute media links (default: BASE_URL)
         remove_suffix: Suffix to remove from paths (like index.md)
         
     Returns:
         Updated list of Document objects
     """
+
+    # add / at the end of blog_base_url if not present
+    if not blog_base_url.endswith('/'):
+        blog_base_url += '/'
+        
     for doc in documents:
         # Create URL from source path
         doc.metadata["url"] = doc.metadata["source"].replace(data_dir_prefix, blog_base_url)
         
+        
+
         # Remove index.md or other suffix if present
         if remove_suffix and doc.metadata["url"].endswith(remove_suffix):
             doc.metadata["url"] = doc.metadata["url"][:-len(remove_suffix)]
-            
+
+        # Remove .md suffix if present
+        if doc.metadata["url"].endswith(".md"):
+            doc.metadata["url"] = doc.metadata["url"][:-3]
+
         # Extract post title from the directory structure
         path_parts = Path(doc.metadata["source"]).parts
         if len(path_parts) > 1:
@@ -116,7 +130,11 @@ def update_document_metadata(documents: List[Document],
                 doc.metadata["post_title"] = frontmatter_data.get("title", 
                                             path_parts[-2].replace("-", " ").title())
                 
-                def make_absolute_url(url, base_url=blog_base_url):
+                #Handle URL and other metadata fields
+                if not base_url:
+                    base_url = blog_base_url
+                
+                def make_absolute_url(url, base_url=base_url):
                     """Helper function to convert relative URLs to absolute ones."""
                     if url and not (url.startswith("http://") or url.startswith("https://")):
                         return f"{base_url.rstrip('/')}/{url.lstrip('/')}"
@@ -146,8 +164,16 @@ def update_document_metadata(documents: List[Document],
 
         # Add document length as metadata
         doc.metadata["content_length"] = len(doc.page_content)
-    
-    return documents
+
+    # Filter out documents with doc.metadata["published"] == False
+    filtered_documents = []
+    for doc in documents:
+        if "published" in doc.metadata and not doc.metadata["published"]:
+            print(f"Skipping unpublished document: {doc.metadata['post_title']}")
+        else:
+            filtered_documents.append(doc)
+        
+    return filtered_documents
 
 
 def get_document_stats(documents: List[Document]) -> Dict[str, Any]:
