@@ -119,7 +119,7 @@ async def rss_feed_tool_async(
 
 
         articles = articles[:max_results]
-        results = []
+        results = [summary]
         for i, article in enumerate(articles, 1):
             summary = (
                 f"### [{i}] {article['title']}\n"
