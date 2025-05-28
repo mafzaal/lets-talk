@@ -10,19 +10,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration with defaults
+#For embedding pipeline
 DATA_DIR = os.environ.get("DATA_DIR", "data/")
-VECTOR_STORAGE_PATH = os.environ.get("VECTOR_STORAGE_PATH", "./db/vectorstore")
-EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "Snowflake/snowflake-arctic-embed-l")
-QDRANT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "thedataguy_documents")
 BASE_URL = os.environ.get("BASE_URL", "https://thedataguy.pro/")
 BLOG_BASE_URL = os.environ.get("BLOG_BASE_URL", "https://thedataguy.pro/blog/")
-RSS_URL = os.environ.get("RSS_URL", "https://thedataguy.pro/rss.xml")
-LLM_MODEL = os.environ.get("LLM_MODEL", "openai:gpt-4o-mini")
-LLM_TEMPERATURE = float(os.environ.get("TEMPERATURE", "0"))
-SDG_LLM_MODLEL = os.environ.get("SDG_LLM_MODEL", "gpt-4.1")
-EVAL_LLM_MODEL = os.environ.get("EVAL_LLM_MODEL", "gpt-4.1")
-MAX_SEARCH_RESULTS = int(os.environ.get("MAX_SEARCH_RESULTS", "5"))
-
+VECTOR_STORAGE_PATH = os.environ.get("VECTOR_STORAGE_PATH", "./db/vectorstore")
 # Document chunking configuration
 CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "200"))
@@ -33,6 +25,24 @@ OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./stats")
 USE_CHUNKING = os.environ.get("USE_CHUNKING", "True").lower() == "true"
 SHOULD_SAVE_STATS = os.environ.get("SHOULD_SAVE_STATS", "True").lower() == "true"
 CREATE_VECTOR_DB = os.environ.get("CREATE_VECTOR_DB", "True").lower() == "true"
+
+# SDG and Evaluation LLM models
+SDG_LLM_MODLEL = os.environ.get("SDG_LLM_MODEL", "openai:gpt-4.1")
+EVAL_LLM_MODEL = os.environ.get("EVAL_LLM_MODEL", "openai:gpt-4.1")
+
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+#Models for the agent
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "ollama:snowflake-arctic-embed2:latest")
+LLM_MODEL = os.environ.get("LLM_MODEL", "openai:gpt-4o-mini")
+LLM_TEMPERATURE = float(os.environ.get("TEMPERATURE", "0"))
+
+
+QDRANT_URL = os.environ.get("QDRANT_URL", "")
+QDRANT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "lets_talk_documents")
+MAX_SEARCH_RESULTS = int(os.environ.get("MAX_SEARCH_RESULTS", "5"))
+
+# Tool configurations
+RSS_URL = os.environ.get("RSS_URL", "")
 
 
 from dataclasses import dataclass, field, fields

@@ -6,24 +6,22 @@ for the RAG system. It includes functions for loading blog posts from the data d
 processing their metadata, and creating vector embeddings.
 """
 
-import os
-import json
+
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from datetime import datetime
-
 from langchain_community.document_loaders.text import TextLoader
 from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema.document import Document
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
-from langchain_community.document_loaders import UnstructuredMarkdownLoader
+from langchain.embeddings import init_embeddings
 
 from lets_talk.config import (
     BASE_URL,
     DATA_DIR,
+    OLLAMA_BASE_URL,
+    QDRANT_URL,
     VECTOR_STORAGE_PATH,
     EMBEDDING_MODEL,
     QDRANT_COLLECTION,
@@ -272,6 +270,7 @@ def split_documents(documents: List[Document],
 def create_vector_store(documents: List[Document], 
                        storage_path: str = VECTOR_STORAGE_PATH,
                        collection_name: str = QDRANT_COLLECTION,
+                       qdrant_url: str = QDRANT_URL,
                        embedding_model: str = EMBEDDING_MODEL,
                        force_recreate: bool = False) -> Optional[QdrantVectorStore]:
     
@@ -287,9 +286,19 @@ def create_vector_store(documents: List[Document],
         QdrantVectorStore vector store or None if creation fails
     """
 
+    embeddings = init_embeddings(embedding_model,base_url=OLLAMA_BASE_URL)
+
+    if qdrant_url:
+        vector_store = QdrantVectorStore.from_documents(
+            collection_name=collection_name,
+            url=qdrant_url,
+            embedding=embeddings,  # type: ignore
+        )
+        return vector_store
+
     vector_store = QdrantVectorStore.from_documents(
         documents,
-        embedding=HuggingFaceEmbeddings(model_name=embedding_model),
+        embedding=embeddings,  # type: ignore
         collection_name=collection_name,
         path=storage_path,
         force_recreate=force_recreate,
@@ -300,6 +309,7 @@ def create_vector_store(documents: List[Document],
 
 def load_vector_store(storage_path: str = VECTOR_STORAGE_PATH,
                      collection_name: str = QDRANT_COLLECTION,
+                     qdrant_url: str = QDRANT_URL,
                      embedding_model: str = EMBEDDING_MODEL) -> Optional[QdrantVectorStore]:
     """
     Load an existing vector store.
@@ -313,8 +323,19 @@ def load_vector_store(storage_path: str = VECTOR_STORAGE_PATH,
         QdrantVectorStore vector store or None if it doesn't exist
     """
     # Initialize the embedding model
-    embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+    embeddings = init_embeddings(embedding_model,base_url=OLLAMA_BASE_URL)
     
+
+    if qdrant_url:
+        vector_store = QdrantVectorStore.from_existing_collection(
+            collection_name=collection_name,
+            url=qdrant_url,
+            embedding=embeddings,  # type: ignore
+            prefer_grpc= True,  # Use gRPC for better performance
+        )
+        return vector_store
+
+
     # Check if vector store exists
     if not Path(storage_path).exists():
         print(f"Vector store not found at {storage_path}")
@@ -328,7 +349,7 @@ def load_vector_store(storage_path: str = VECTOR_STORAGE_PATH,
         vector_store = QdrantVectorStore(
             client=client,
             collection_name=collection_name,
-            embedding=embeddings,
+            embedding=embeddings, # type: ignore
         )
         print(f"Loaded vector store from {storage_path}")
         return vector_store

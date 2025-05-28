@@ -12,6 +12,7 @@ services:
             interval: 5s
             timeout: 1s
             retries: 5
+        restart: unless-stopped
     langgraph-postgres:
         image: postgres:16
         ports:
@@ -30,6 +31,20 @@ services:
             timeout: 1s
             retries: 5
             interval: 5s
+        restart: unless-stopped
+    langgraph-qdrant:
+        image: qdrant/qdrant
+        ports:
+            - "6333:6333"
+            - "6334:6334"
+        volumes:
+            - qdrant-storage:/qdrant/storage
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:6333/collections"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
     langgraph-api:
         image: the_data_guy_chat
         ports:
@@ -39,21 +54,19 @@ services:
                 condition: service_healthy
             langgraph-postgres:
                 condition: service_healthy
+            langgraph-qdrant:
+                condition: service_started
         env_file:
             - .env
-        volumes:
-          - ./db:/data
+        # volumes:
+        #   - ./db:/data
         environment:
             REDIS_URI: redis://langgraph-redis:6379
-            VECTOR_STORAGE_PATH: /data/vector_store_tdg_5
+            QDRANT_URL: http://langgraph-qdrant:6334
+            OLLAMA_BASE_URL: http://host.docker.internal:11434
+            POSTGRES_URI: ${POSTGRES_URI}
             LANGSMITH_API_KEY: ${LANGSMITH_API_KEY}
             LANGSMITH_PROJECT: the_data_guy_chat
             LANGCHAIN_TRACING_V2: true
-            POSTGRES_URI: ${POSTGRES_URI}
-    qdrant:
-        image: qdrant/qdrant
-        ports:
-            - "6333:6333"
-            - "6334:6334"
-        volumes:
-            - qdrant-storage:/qdrant/storage
+        restart: unless-stopped
+    

@@ -7,12 +7,10 @@ requires-python = ">=3.13"
 dependencies = [
     "aiohttp>=3.11.18",
     "arxiv>=2.2.0",
-    "chainlit>=2.5.5",
     "feedparser>=6.0.11",
     "langchain>=0.3.25",
     "langchain-community>=0.3.23",
     "langchain-core>=0.3.59",
-    "langchain-huggingface>=0.2.0",
     "langchain-ollama>=0.3.2",
     "langchain-openai>=0.3.16",
     "langchain-qdrant>=0.2.0",
@@ -24,7 +22,6 @@ dependencies = [
     "python-dotenv>=1.1.0",
     "qdrant-client>=1.14.2",
     "tqdm>=4.67.1",
-    "unstructured[md]>=0.17.2",
     "websockets>=15.0.1",
 ]
 
@@ -36,6 +33,9 @@ dev = [
     "ragas>=0.2.15",
     "grandalf>=0.8",
     "langgraph-cli[inmem]>=0.2.10",
+    "langchain-huggingface>=0.2.0",
+    "unstructured[md]>=0.17.2",
+    "chainlit>=2.5.5",
 ]
 
 [build-system]

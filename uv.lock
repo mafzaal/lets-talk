@@ -1366,12 +1366,10 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "arxiv" },
-    { name = "chainlit" },
     { name = "feedparser" },
     { name = "langchain" },
     { name = "langchain-community" },
     { name = "langchain-core" },
-    { name = "langchain-huggingface" },
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
     { name = "langchain-qdrant" },
@@ -1383,25 +1381,27 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "qdrant-client" },
     { name = "tqdm" },
-    { name = "unstructured", extra = ["md"] },
     { name = "websockets" },
 ]
 
 [package.optional-dependencies]
 dev = [
+    { name = "chainlit" },
     { name = "grandalf" },
     { name = "ipykernel" },
     { name = "ipython" },
     { name = "ipywidgets" },
+    { name = "langchain-huggingface" },
     { name = "langgraph-cli", extra = ["inmem"] },
     { name = "ragas" },
+    { name = "unstructured", extra = ["md"] },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.18" },
     { name = "arxiv", specifier = ">=2.2.0" },
-    { name = "chainlit", specifier = ">=2.5.5" },
+    { name = "chainlit", marker = "extra == 'dev'", specifier = ">=2.5.5" },
     { name = "feedparser", specifier = ">=6.0.11" },
     { name = "grandalf", marker = "extra == 'dev'", specifier = ">=0.8" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29.5" },
@@ -1410,7 +1410,7 @@ requires-dist = [
     { name = "langchain", specifier = ">=0.3.25" },
     { name = "langchain-community", specifier = ">=0.3.23" },
     { name = "langchain-core", specifier = ">=0.3.59" },
-    { name = "langchain-huggingface", specifier = ">=0.2.0" },
+    { name = "langchain-huggingface", marker = "extra == 'dev'", specifier = ">=0.2.0" },
     { name = "langchain-ollama", specifier = ">=0.3.2" },
     { name = "langchain-openai", specifier = ">=0.3.16" },
     { name = "langchain-qdrant", specifier = ">=0.2.0" },
@@ -1424,7 +1424,7 @@ requires-dist = [
     { name = "qdrant-client", specifier = ">=1.14.2" },
     { name = "ragas", marker = "extra == 'dev'", specifier = ">=0.2.15" },
     { name = "tqdm", specifier = ">=4.67.1" },
-    { name = "unstructured", extras = ["md"], specifier = ">=0.17.2" },
+    { name = "unstructured", extras = ["md"], marker = "extra == 'dev'", specifier = ">=0.17.2" },
     { name = "websockets", specifier = ">=15.0.1" },
 ]
 provides-extras = ["dev"]
