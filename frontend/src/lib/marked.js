@@ -21,6 +21,7 @@ link({ href, title, text }) {
 },
 };
 
+//@ts-ignore
 marked.use({ renderer });
 
 
