@@ -65,6 +65,7 @@ services:
             QDRANT_URL: http://langgraph-qdrant:6334
             OLLAMA_BASE_URL: http://host.docker.internal:11434
             POSTGRES_URI: ${POSTGRES_URI}
+            RSS_URL: https://thedataguy.pro/rss.xml
             LANGSMITH_API_KEY: ${LANGSMITH_API_KEY}
             LANGSMITH_PROJECT: the_data_guy_chat
             LANGCHAIN_TRACING_V2: true

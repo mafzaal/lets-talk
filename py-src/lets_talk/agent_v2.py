@@ -1,11 +1,10 @@
+import logging
 from langgraph.prebuilt import create_react_agent
 from langchain_core.tools import tool
-from langchain_community.tools.requests.tool import RequestsGetTool
-from langchain_community.utilities.requests import TextRequestsWrapper
 from langchain.chat_models import init_chat_model
 import lets_talk.rag as rag
 from lets_talk.utils import format_docs
-from lets_talk.tools import RSSFeedTool,get_current_datetime
+from lets_talk.tools import RSSFeedTool
 from lets_talk.config import LLM_MODEL,LLM_TEMPERATURE
 
 @tool 
@@ -62,18 +61,19 @@ You provide practical, insightful responses to queries about topics covered in T
 Remember, your goal is to help users understand TheDataGuy's insights and apply them to their own projects and challenges, always maintaining a helpful and positive attitude regardless of how the query is phrased.
 """
 
-requests_tool = RequestsGetTool(
-    requests_wrapper=TextRequestsWrapper(headers={}),
-    allow_dangerous_requests=True,
-    description="Use this tool to make HTTP GET requests to retrieve information from the web. Provide a valid URL to fetch data.",
-)
 
 from lets_talk.config import (RSS_URL)
-tools =[RSSFeedTool(rss_url=RSS_URL), get_current_datetime,retrive_documents,requests_tool]
+tools =[retrive_documents]
+
+if RSS_URL:
+    logging.info(f"RSS URL is set to: {RSS_URL}")
+    tools.append(RSSFeedTool(rss_url=RSS_URL))
+
+
 
 model_name = LLM_MODEL
 temperature = LLM_TEMPERATURE
-model = init_chat_model(model_name, temperature=temperature)
+model = init_chat_model(model_name, temperature=temperature,stream=True)
 
 
 

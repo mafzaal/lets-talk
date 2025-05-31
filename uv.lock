@@ -1366,6 +1366,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "arxiv" },
+    { name = "beautifulsoup4" },
     { name = "feedparser" },
     { name = "langchain" },
     { name = "langchain-community" },
@@ -1401,6 +1402,7 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.18" },
     { name = "arxiv", specifier = ">=2.2.0" },
+    { name = "beautifulsoup4", specifier = ">=4.13.4" },
     { name = "chainlit", marker = "extra == 'dev'", specifier = ">=2.5.5" },
     { name = "feedparser", specifier = ">=6.0.11" },
     { name = "grandalf", marker = "extra == 'dev'", specifier = ">=0.8" },

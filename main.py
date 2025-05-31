@@ -44,7 +44,7 @@ def main():
         
     elif args.command == "update":
         # Import here to avoid loading heavy dependencies if not needed
-        from py_src.pipeline import create_vector_database
+        from lets_talk.pipeline import create_vector_database
         force_flag = "--force-recreate" if args.force else ""
         print(f"Updating vector database (force={args.force})")
         create_vector_database(force_recreate=args.force)

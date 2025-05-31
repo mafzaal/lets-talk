@@ -42,4 +42,7 @@ def get_current_datetime() -> str:
         "timezone": str(datetime.datetime.now().astimezone().tzinfo)
     }
     
-    return f"Current date and time information: {result}"
+    # Convert to string representation that's easier for LLMs to parse
+    result_str = "\n".join([f"{key}: {value}" for key, value in result.items()])
+    
+    return f"Current date and time information: {result_str}"
