@@ -7,170 +7,77 @@ sdk: docker
 pinned: false
 ---
 
-# Welcome to TheDataGuy Chat! 👋
+# Let’s Talk: Interactive AI Chat for Technical Blogs 🐨
 
-This is a Q&A chatbot powered by [TheDataGuy blog](https://thedataguy.pro/blog/) blog posts. Ask questions about topics covered in the blog, such as:
+Have you ever wished you could ask follow-up questions while reading technical content? Meet **Let’s Talk** – an AI-driven chat component designed to make technical blog content more interactive and accessible.
 
-- RAGAS and RAG evaluation
-- Building research agents
-- Metric-driven development
-- Data science best practices
+---
 
-You can also use the Contact form feature to send messages directly to the blog author.
+## The Problem: Content Navigation Challenges
 
-## How it works
+Technical blogs often present challenges for readers:
 
-Under the hood, this application uses:
+- Difficulty finding specific information across multiple posts
+- Limited ability to explore topics in depth
+- One-way communication without follow-up capabilities
+- Reduced information retention
 
-1. **Snowflake Arctic Embeddings**: To convert text into vector representations
-   - Base model: `Snowflake/snowflake-arctic-embed-l`
-   - Fine-tuned model: `mafzaal/thedataguy_arctic_ft` (custom-tuned using blog-specific query-context pairs)
+## What Can You Do With Let’s Talk?
 
-2. **Qdrant Vector Database**: To store and search for similar content
-   - Efficiently indexes blog post content for fast semantic search
-   - Supports real-time updates when new blog posts are published
+- **Ask questions about blog topics** – Get concise answers about RAG systems, LLMs, and more
+- **Request code examples** – Receive practical code snippets for your use case
+- **Explore concepts deeper** – Get clarification without searching multiple articles
+- **Receive personalized guidance** – Information tailored to your background
 
-3. **GPT-4o-mini**: To generate helpful responses based on retrieved content
-   - Primary model: OpenAI `gpt-4o-mini` for production inference
-   - Evaluation model: OpenAI `gpt-4.1` for complex tasks including synthetic data generation and evaluation
+## Under the Hood: Technical Implementation
 
-4. **LangChain**: For building the RAG workflow
-   - Orchestrates the retrieval and generation components
-   - Provides flexible components for LLM application development
-   - Structured for easy maintenance and future enhancements
+Let’s Talk combines several AI technologies:
 
-5. **Chainlit**: For the chat interface
-   - Offers an interactive UI with message threading
-   - Supports file uploads and custom components
+- **Document Ingestion:** Supports ingesting documents from both the file system and websites
+- **Advanced Text Processing:** Utilizes recursive text splitting and semantic chunking for optimal context management
+- **Retrievers:** Includes BM25, multiple query retrievers, and semantic search for flexible information retrieval
+- **Advanced Embedding Technology:** Leverages powerful models like [Snowflake/snowflake-arctic-embed-l-v2.0](https://huggingface.co/Snowflake/snowflake-arctic-embed-l-v2.0) with flexible support for custom embedding models from any provider
+- **Vector Database:** Qdrant for efficient content indexing
+- **Language Models:** GPT-4o-mini for production, with GPT-4.1 for evaluation, plus support for integrating other LLMs and providers
+- **Orchestration:** LangChain and LangGraph for the complete RAG workflow
+- **Interface:** Chainlit for prototyping, with future Svelte component integration
 
-## Technology Stack
+## Try It For Yourself!
 
-### Core Components
-- **Vector Database**: Qdrant (stores embeddings via `pipeline.py`)
-- **Embedding Model**: Snowflake Arctic Embeddings
-- **LLM**: OpenAI GPT-4o-mini
-- **Framework**: LangChain + Chainlit
-- **Development Language**: Python 3.13
+Let's Talk is available in multiple implementations:
 
-### Advanced Features
-- **Evaluation**: Ragas metrics for evaluating RAG performance:
-  - Faithfulness
-  - Context Relevancy
-  - Answer Relevancy
-  - Topic Adherence
-- **Synthetic Data Generation**: For training and testing
-- **Vector Store Updates**: Automated pipeline to update when new blog content is published
-- **Fine-tuned Embeddings**: Custom embeddings tuned for technical content
+- **Live on [TheDataGuy.PRO](https://thedataguy.pro/)** - Our initial implementation
+- **[D365 Stuff Chat](https://huggingface.co/spaces/mafzaal/d365stuff-chat)** - Powering the [D365 Stuff Blog](https://www.d365stuff.co/)
+- **[Hugging Face Spaces](https://huggingface.co/spaces/mafzaal/lets_talk)** - Try the prototype directly
 
-## Project Structure
+Ask questions about RAG evaluation, research agents, data strategy, or any other topics from my blog to see Let's Talk in action!
 
-```
-lets-talk/
-├── data/                  # Raw blog post content
-├── py-src/                # Python source code
-│   ├── lets_talk/         # Core application modules
-│   │   ├── agent.py       # Agent implementation
-│   │   ├── config.py      # Configuration settings
-│   │   ├── models.py      # Data models
-│   │   ├── prompts.py     # LLM prompt templates
-│   │   ├── rag.py         # RAG implementation
-│   │   ├── rss_tool.py    # RSS feed integration
-│   │   └── tools.py       # Tool implementations
-│   ├── app.py             # Main application entry point
-│   └── pipeline.py        # Data processing pipeline
-├── db/                    # Vector database storage
-├── evals/                 # Evaluation datasets and results
-└── notebooks/             # Jupyter notebooks for analysis
-```
-
-## Environment Setup
-
-The application requires the following environment variables:
-
-```
-OPENAI_API_KEY=your_openai_api_key
-VECTOR_STORAGE_PATH=./db/vector_store_tdg
-LLM_MODEL=gpt-4o-mini
-EMBEDDING_MODEL=Snowflake/snowflake-arctic-embed-l
-CHUNK_SIZE=1000
-CHUNK_OVERLAP=200
-```
-
-Additional configuration options for vector database creation:
-
-```
-# Vector Database Creation Configuration
-FORCE_RECREATE=False      # Whether to force recreation of the vector store
-OUTPUT_DIR=./stats        # Directory to save stats and artifacts
-USE_CHUNKING=True         # Whether to split documents into chunks
-SHOULD_SAVE_STATS=True    # Whether to save statistics about the documents
-```
-
-## Running Locally
-
-### Using Docker
-
-```bash
-docker build -t lets-talk .
-docker run -p 7860:7860 \
-    --env-file ./.env \
-    lets-talk
-```
-
-### Using Python
-
-```bash
-# Install dependencies
-uv init && uv sync
-
-# Run the application
-chainlit run py-src/app.py --host 0.0.0.0 --port 7860
-```
-
-## Deployment
-
-The application is designed to be deployed on:
-
-- **Development**: Hugging Face Spaces ([Live Demo](https://huggingface.co/spaces/mafzaal/lets_talk))
-- **Production**: Azure Container Apps (planned)
-
-## Evaluation
-
-This project includes extensive evaluation capabilities using the Ragas framework:
-
-- **Synthetic Data Generation**: For creating test datasets
-- **Metric Evaluation**: Measuring faithfulness, relevance, and more
-- **Fine-tuning Analysis**: Comparing different embedding models
-
-## Features
-
-### RAG-based Q&A
-- Semantic search across blog content
-- Contextual responses with relevant information
-- Support for follow-up questions
-
-### Contact Form
-- Send messages directly to the blog author
-- Input validation for name, email, subject, and message
-- Secure storage of contact submissions
-- Easy retrieval of user communications
 
 ## Future Enhancements
 
-- **Agentic Reasoning**: Adding more sophisticated agent capabilities
-- **Web UI Integration**: Custom Svelte component for the blog
-- **CI/CD**: GitHub Actions workflow for automated deployment
-- **Monitoring**: LangSmith integration for observability
+Planned improvements include:
 
-## License
+- Advanced reasoning capabilities
+- More immersive user experience with custom Svelte UI integration
+- Automated content updates
+- Expanded knowledge sources
 
-This project is available under the MIT License.
+## Open Source and Available
 
-## Acknowledgements
+Let’s Talk is fully open source! You can find the code repository on [GitHub](https://github.com/mafzaal/lets-talk).
 
-- [TheDataGuy blog](https://thedataguy.pro/blog/) for the content
-- [Ragas](https://docs.ragas.io/) for evaluation framework
-- [LangChain](https://python.langchain.com/docs/tutorials/) for RAG components
-- [Chainlit](https://docs.chainlit.io/) for the chat interface
+If you find this project useful:
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+- ⭐ Star the repository to show your support
+- 🔄 Fork it to contribute your own improvements
+- 🔗 Share it with others who might benefit
+
+Looking to add a similar chat component to your technical blog or documentation? Feel free to reach out – I’m happy to assist with integration and customization for your specific needs.
+
+---
+
+## Conclusion
+
+Let’s Talk represents a shift from static content consumption to interactive knowledge exploration, creating a personalized learning experience for every reader.
+
+Have questions about Let’s Talk or suggestions for its improvement? Leave a comment via Let’s Talk or reach out directly. I’d love to hear your feedback!
