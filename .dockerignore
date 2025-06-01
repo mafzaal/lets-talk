@@ -64,3 +64,4 @@ tests/
 py-src/notebooks/
 lets_talk.egg-info/
 frontend/
+output/

@@ -5,7 +5,11 @@ from langchain.chat_models import init_chat_model
 import lets_talk.rag as rag
 from lets_talk.utils import format_docs
 from lets_talk.tools import RSSFeedTool
-from lets_talk.config import LLM_MODEL,LLM_TEMPERATURE
+from lets_talk.config import AGENT_PROMPT, AGENT_PROMPT_FILE, BASE_URL, BLOG_BASE_URL, LLM_MODEL,LLM_TEMPERATURE
+
+# initialize logging
+logger = logging.getLogger(__name__)
+
 
 @tool 
 def retrive_documents(query: str) -> str:
@@ -21,77 +25,94 @@ def retrive_documents(query: str) -> str:
     Returns:
         Formatted text containing the retrieved document content
     """
-    docs = rag.retriever.invoke(query) # type: ignore
-    return format_docs(docs)
+    logger.info(f"Retrieving documents for query: {query}")
+    try:
+        docs = rag.retriever.invoke(query) # type: ignore
+        logger.info(f"Retrieved {len(docs) if docs else 0} documents for query: {query}")
+        return format_docs(docs)
+    except Exception as e:
+        logger.error(f"Error retrieving documents for query '{query}': {e}")
+        return f"An error occurred while retrieving documents: {e}"
 
 
-prompt = """
-You are TheDataGuy Chat, a specialized assistant powered by content from Muhammad Afzaal (TheDataGuy)'s blog at thedataguy.pro. You are expert in data science, AI evaluation, RAG systems, research agents, and metric-driven development.
+@tool 
+def retrieve_page_by_url(url: str) -> str:
+    """Retrieve a specific page by URL from the knowledge base.
+    Use this tool when you have a specific URL and want to retrieve its content.
+    Args:
+        url: The URL of the page to retrieve
+    Returns:
+        The content of the page at the specified URL
+    """
+    logger.info(f"Retrieving page for URL: {url}")
+    try:
+        if url.startswith(BASE_URL) or url.startswith(BLOG_BASE_URL):
+            # search rag.all_docs metadata for the url
+            for doc in rag.all_docs: # type: ignore
+                if doc.metadata.get("url") == url or doc.metadata.get("source") == url:
+                    logger.info(f"Found document for URL: {url}")
+                    return format_docs([doc]) # type: ignore
+            logger.warning(f"No content found for the URL: {url}")
+            return f"No content found for the URL: {url}. Please ensure the URL is correct and exists in the knowledge base."
+        else:
+            logger.warning(f"External URL not supported: {url}")
+            return f"External URLs are not supported in this version. Please use URLs from the blog or knowledge base .i.e {BASE_URL} or {BLOG_BASE_URL}."
+    except Exception as e:
+        logger.error(f"Error retrieving page for URL '{url}': {e}")
+        return f"An error occurred while retrieving the page: {e}"
 
-## Your Purpose
-You provide practical, insightful responses to queries about topics covered in TheDataGuy's blog posts, including:
-- RAGAS and evaluation frameworks for LLM applications
-- RAG (Retrieval-Augmented Generation) systems and their implementation
-- Building and evaluating AI research agents
-- Metric-Driven Development for technology projects
-- Data strategy and its importance for business success
-- Technical concepts in AI, LLM applications, and data science
-
-## Tools Usage
-- Always use the 'retrive_documents' tool to search for information from blog posts or articles
-- Use this tool before answering questions about specific content, examples, or details from TheDataGuy's blog
-- When using the retrieval tool, provide clear and specific search queries related to the user's question
-
-## Response Guidelines
-1. Generate clear, concise responses in markdown format
-2. Include relevant links to blog posts to help users find more information
-3. For code examples, use appropriate syntax highlighting
-4. When practical, provide actionable steps or implementations
-5. Maintain a helpful, informative tone consistent with TheDataGuy's writing style
-6. When providing links, use the URL format from the context: [title or description](URL)
-7. When discussing a series of blog posts, mention related posts when appropriate
-8. When faced with rude queries or negative comments, respond with graceful, upbeat positivity and redirect the conversation toward helpful topics
-
-## Special Cases
-- If the context is unrelated to the query, respond with "I don't know" and suggest relevant topics that are covered in the blog
-- If asked about topics beyond the blog's scope, politely explain your focus areas and suggest checking thedataguy.pro for the latest content
-- Use real-world examples to illustrate complex concepts, similar to those in the blog posts
-- For rude or impolite queries, maintain a positive and professional tone, never responding with rudeness, and gently steer the conversation back to productive topics
-
-Remember, your goal is to help users understand TheDataGuy's insights and apply them to their own projects and challenges, always maintaining a helpful and positive attitude regardless of how the query is phrased.
-
-To find the most relevant information, always use the 'retrive_documents' tool first to search for blog posts or articles that can help answer the user's question.
-"""
+    
 
 
 from lets_talk.config import (RSS_URL)
-tools =[retrive_documents]
+tools =[retrive_documents, retrieve_page_by_url]
 
 if RSS_URL:
-    logging.info(f"RSS URL is set to: {RSS_URL}")
+    logger.info(f"RSS URL is set to: {RSS_URL}")
     tools.append(RSSFeedTool(rss_url=RSS_URL))
 
+# Initialize the chat model with the specified model name and temperature
+model = init_chat_model(LLM_MODEL, temperature=LLM_TEMPERATURE)
+
+# read `agent_prompt.md` from current directory
+import os
+from lets_talk.config import AGENT_PROMPT
+
+agent_system_prompt = AGENT_PROMPT
 
 
-model_name = LLM_MODEL
-temperature = LLM_TEMPERATURE
-model = init_chat_model(model_name, temperature=temperature,stream=True)
+def read_file(file_path):
+    """Read and return the contents of a file."""
+    with open(file_path, 'r') as file:
+        return file.read()
+
+if os.path.exists(AGENT_PROMPT_FILE):
+    logger.info("Reading agent prompt from %s", AGENT_PROMPT_FILE)
+    agent_system_prompt = read_file(AGENT_PROMPT_FILE)
+    logger.info("Agent prompt loaded successfully.")
+else:
+    logger.warning("Agent prompt file %s not found. Using default prompt.", AGENT_PROMPT_FILE)
 
 
 
 
-def create_agent(prompt: str = prompt,
-                 model=model,
-                 tools=tools):
+def create_agent(prompt: str = AGENT_PROMPT,
+                 model = model,
+                 tools = tools):
     """Create and return the agent."""
+    logger.info("Creating agent with provided prompt, model, and tools.")
+
     agent = create_react_agent(
-    model=model,
-    tools=tools,
-    prompt=prompt,
-    version="v2",
+        model = model,
+        tools = tools,
+        prompt = prompt,
+        version="v2",
     )
 
+    logger.info("Agent created successfully.")
     return agent
 
 
-agent = create_agent()
+logger.info("Initializing agent instance.")
+agent = create_agent(prompt=agent_system_prompt, model=model, tools=tools)
+logger.info("Agent instance initialized and ready.")

@@ -10,41 +10,67 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration with defaults
-#For embedding pipeline
+# DATA INPUT
 DATA_DIR = os.environ.get("DATA_DIR", "data/")
 DATA_DIR_PATTERN = os.environ.get("DATA_DIR_PATTERN", "*.md")
 WEB_URLS = (os.environ.get("WEB_URLS", "https://thedataguy.pro/analytics/,https://thedataguy.pro/projects/,https://thedataguy.pro/about/,https://thedataguy.pro/contact/")).split(",")
 BASE_URL = os.environ.get("BASE_URL", "https://thedataguy.pro/")
 BLOG_BASE_URL = os.environ.get("BLOG_BASE_URL", "https://thedataguy.pro/blog/")
-VECTOR_STORAGE_PATH = os.environ.get("VECTOR_STORAGE_PATH", "./db/vectorstore")
+INDEX_ONLY_PUBLISHED_POSTS = os.environ.get("INDEX_ONLY_PUBLISHED_POSTS", "True").lower() == "true"
+# For RSS configurations
+RSS_URL = os.environ.get("RSS_URL", "")
+
+# For output directory to start data
+
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./output")
+AGENT_PROMPT_FILE = os.environ.get("AGENT_PROMPT_FILE", f"{OUTPUT_DIR}/agent_prompt.md")
+AGENT_PROMPT = os.environ.get("AGENT_PROMPT", "# Let's Talk Agent\nYou are a helpful assistant that can answer questions based on the provided knowledge base. You can also retrieve specific pages by URL.\n\n## Instructions\n- Use the tools provided to retrieve documents or pages.\n- If you encounter a rude or derogatory query, respond with a polite and respectful answer.\n- Always check the tone of the query before responding.\n- If you need to refine the query, use the query refinement tool.\n\n## Tools\n1. Retrieve Documents: Use this tool to search for relevant documents in the knowledge base.\n2. Retrieve Page by URL: Use this tool to retrieve a specific page by its URL.")
+
+#OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./stats")
+
+#For embedding storage
+VECTOR_STORAGE_PATH = os.environ.get("VECTOR_STORAGE_PATH", f"{OUTPUT_DIR}/vectorstore")
+FORCE_RECREATE = os.environ.get("FORCE_RECREATE", "False").lower() == "true"
+# For Qdrant vector database
+QDRANT_URL = os.environ.get("QDRANT_URL", "")
+QDRANT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "lets_talk_documents")
+
+
 # Document chunking configuration
+# Chunking and retrieval strategies
+USE_CHUNKING = os.environ.get("USE_CHUNKING", "True").lower() == "true"
+CHUNKING_STRATEGY = os.environ.get("CHUNKING_STRATEGY", "semantic") # Options: "semantic", "text_splitter"
+# Chunking parameters for text_splitter strategy
 CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "200"))
+# Retrieval parameters
+BM25_RETRIEVAL = os.environ.get("BM25_RETRIEVAL", "True").lower() == "true"
+MULTI_QUERY_RETRIEVAL = os.environ.get("MULTI_QUERY_RETRIEVAL", "True").lower() == "true"
+PARENT_DOCUMENT_RETRIEVAL = os.environ.get("PARENT_DOCUMENT_RETRIEVAL", "True").lower() == "true"
+PARENT_DOCUMENT_CHILD_CHUNK_SIZE = int(os.environ.get("PARENT_DOCUMENT_CHILD_CHUNK_SIZE", "200"))
+MAX_SEARCH_RESULTS = int(os.environ.get("MAX_SEARCH_RESULTS", "4"))
 
 # Vector database creation configuration
-FORCE_RECREATE = os.environ.get("FORCE_RECREATE", "False").lower() == "true"
-OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./stats")
-USE_CHUNKING = os.environ.get("USE_CHUNKING", "True").lower() == "true"
 SHOULD_SAVE_STATS = os.environ.get("SHOULD_SAVE_STATS", "True").lower() == "true"
 CREATE_VECTOR_DB = os.environ.get("CREATE_VECTOR_DB", "True").lower() == "true"
 
+
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "ollama:snowflake-arctic-embed2:latest")
+
+LLM_MODEL = os.environ.get("LLM_MODEL", "openai:gpt-4o-mini")
+LLM_TEMPERATURE = float(os.environ.get("LLM_TEMPERATURE", "0.1"))
 # SDG and Evaluation LLM models
 SDG_LLM_MODLEL = os.environ.get("SDG_LLM_MODEL", "openai:gpt-4.1")
 EVAL_LLM_MODEL = os.environ.get("EVAL_LLM_MODEL", "openai:gpt-4.1")
 
+# Models for the agent
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-#Models for the agent
-EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "ollama:snowflake-arctic-embed2:latest")
-LLM_MODEL = os.environ.get("LLM_MODEL", "openai:gpt-4o-mini")
-LLM_TEMPERATURE = float(os.environ.get("LLM_TEMPERATURE", "0.1"))
 
 
-QDRANT_URL = os.environ.get("QDRANT_URL", "")
-QDRANT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "lets_talk_documents")
-MAX_SEARCH_RESULTS = int(os.environ.get("MAX_SEARCH_RESULTS", "5"))
 
-# Tool configurations
-RSS_URL = os.environ.get("RSS_URL", "")
+
+
+
 
 
 from dataclasses import dataclass, field, fields

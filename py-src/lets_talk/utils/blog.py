@@ -20,6 +20,7 @@ from langchain.embeddings import init_embeddings
 from lets_talk.config import (
     BASE_URL,
     DATA_DIR,
+    INDEX_ONLY_PUBLISHED_POSTS,
     OLLAMA_BASE_URL,
     QDRANT_URL,
     VECTOR_STORAGE_PATH,
@@ -71,7 +72,8 @@ def update_document_metadata(documents: List[Document],
                            data_dir_prefix: str = DATA_DIR,
                            blog_base_url: str = BLOG_BASE_URL,
                            base_url: str = BASE_URL,
-                           remove_suffix: str = "index.md") -> List[Document]:
+                           remove_suffix: str = "index.md",
+                           index_only_published_posts : bool= INDEX_ONLY_PUBLISHED_POSTS) -> List[Document]:
     """
     Update the metadata of documents to include URL and other information.
     
@@ -163,10 +165,10 @@ def update_document_metadata(documents: List[Document],
         # Add document length as metadata
         doc.metadata["content_length"] = len(doc.page_content)
 
-    # Filter out documents with doc.metadata["published"] == False
+    # Filter out documents with doc.metadata["published"] == False if index_only_published_posts is True
     filtered_documents = []
     for doc in documents:
-        if "published" in doc.metadata and not doc.metadata["published"]:
+        if index_only_published_posts and "published" in doc.metadata and not doc.metadata["published"]:
             print(f"Skipping unpublished document: {doc.metadata['post_title']}")
         else:
             filtered_documents.append(doc)
