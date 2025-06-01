@@ -12,6 +12,8 @@ load_dotenv()
 # Configuration with defaults
 #For embedding pipeline
 DATA_DIR = os.environ.get("DATA_DIR", "data/")
+DATA_DIR_PATTERN = os.environ.get("DATA_DIR_PATTERN", "*.md")
+WEB_URLS = (os.environ.get("WEB_URLS", "https://thedataguy.pro/analytics/,https://thedataguy.pro/projects/,https://thedataguy.pro/about/,https://thedataguy.pro/contact/")).split(",")
 BASE_URL = os.environ.get("BASE_URL", "https://thedataguy.pro/")
 BLOG_BASE_URL = os.environ.get("BLOG_BASE_URL", "https://thedataguy.pro/blog/")
 VECTOR_STORAGE_PATH = os.environ.get("VECTOR_STORAGE_PATH", "./db/vectorstore")
@@ -34,7 +36,7 @@ OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 #Models for the agent
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "ollama:snowflake-arctic-embed2:latest")
 LLM_MODEL = os.environ.get("LLM_MODEL", "openai:gpt-4o-mini")
-LLM_TEMPERATURE = float(os.environ.get("TEMPERATURE", "0"))
+LLM_TEMPERATURE = float(os.environ.get("LLM_TEMPERATURE", "0.1"))
 
 
 QDRANT_URL = os.environ.get("QDRANT_URL", "")
