@@ -112,6 +112,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -162,3 +164,4 @@ cython_debug/
 # Project specific
 
 output/
+start-docker.sh

@@ -18,7 +18,7 @@ services:
         ports:
             - "5433:5432"
         env_file:
-            - .env
+            - .env.prod
         environment:
             POSTGRES_DB: ${POSTGRES_DB}
             POSTGRES_USER: ${POSTGRES_USER}
@@ -57,17 +57,13 @@ services:
             langgraph-qdrant:
                 condition: service_started
         env_file:
-            - .env
-        # volumes:
-        #   - ./db:/data
+            - .env.prod
+        volumes:
+           - ${DATA_DIR_HOST}:${DATA_DIR}
+           - ${OUTPUT_DIR_HOST}:${OUTPUT_DIR}
         environment:
             REDIS_URI: redis://langgraph-redis:6379
             QDRANT_URL: http://langgraph-qdrant:6334
-            OLLAMA_BASE_URL: http://host.docker.internal:11434
-            POSTGRES_URI: ${POSTGRES_URI}
-            RSS_URL: https://thedataguy.pro/rss.xml
-            LANGSMITH_API_KEY: ${LANGSMITH_API_KEY}
-            LANGSMITH_PROJECT: the_data_guy_chat
-            LANGCHAIN_TRACING_V2: true
+            POSTGRES_URI:  postgres://${POSTGRES_USER}:${POSTGRES_USER}@langgraph-postgres:5432/${POSTGRES_DB}?sslmode=disable
         restart: unless-stopped
     
