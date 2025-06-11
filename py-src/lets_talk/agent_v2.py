@@ -3,6 +3,7 @@ from langgraph.prebuilt import create_react_agent
 from langchain_core.tools import tool
 from langchain.chat_models import init_chat_model
 import lets_talk.rag as rag
+from lets_talk.tools.datetime_tool import get_current_datetime
 from lets_talk.utils import format_docs
 from lets_talk.tools import RSSFeedTool
 from lets_talk.config import AGENT_PROMPT, AGENT_PROMPT_FILE, BASE_URL, BLOG_BASE_URL, LLM_MODEL,LLM_TEMPERATURE
@@ -12,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @tool 
-def retrive_documents(query: str) -> str:
+def retrieve_documents(query: str) -> str:
     """Retrieve relevant documents from the knowledge base to answer user questions.
     
     Use this tool when you need to search for specific information, facts, or content
@@ -65,7 +66,7 @@ def retrieve_page_by_url(url: str) -> str:
 
 
 from lets_talk.config import (RSS_URL)
-tools =[retrive_documents, retrieve_page_by_url]
+tools =[retrieve_documents, retrieve_page_by_url, get_current_datetime]
 
 if RSS_URL:
     logger.info(f"RSS URL is set to: {RSS_URL}")

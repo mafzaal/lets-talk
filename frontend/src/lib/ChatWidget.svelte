@@ -91,7 +91,7 @@
 			inputMessages.push(userMsg.toJSON());
 			const streamResponse = client.runs.stream(thread_id, assistant_id, {
 				input: { messages: inputMessages },
-				streamMode: 'messages-tuple'
+				streamMode: 'events',
 			});
 
 			userInput = '';
@@ -99,17 +99,30 @@
 			let aiMsg = new Message('ai', '');
 			messages.push(aiMsg);
 			for await (const chunk of streamResponse) {
-				if (chunk?.event === 'messages') {
-					// Handle the message event
-					const [msg, _] = chunk.data;
+				
+				console.log(chunk);
 
-					//@ts-ignore
-					if (msg.type === 'AIMessageChunk') {
-						//@ts-ignore
-						aiMsg.content += msg.content;
-					}
+				if(chunk?.data?.event === 'on_chat_model_stream')
+				{
+					
+					aiMsg.content += chunk?.data?.data?.chunk?.content || '';
+					// Handle the message event
+					
 				}
-				scrollToBottom();
+				
+				 
+
+				// if (chunk?.event === 'messages') {
+				// 	// Handle the message event
+				// 	const [msg, _] = chunk.data;
+
+				// 	//@ts-ignore
+				// 	if (msg.type === 'AIMessageChunk') {
+				// 		//@ts-ignore
+				// 		aiMsg.content += msg.content;
+				// 	}
+				// }
+				// scrollToBottom();
 			}
 		} catch (err) {
 			console.error(err);
