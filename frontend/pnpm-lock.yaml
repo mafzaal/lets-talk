@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@langchain/langgraph-sdk':
-        specifier: ^0.0.78
-        version: 0.0.78(@langchain/core@0.3.57)
+        specifier: ^0.0.84
+        version: 0.0.84(@langchain/core@0.3.57)
       marked:
         specifier: ^15.0.12
         version: 15.0.12
@@ -252,8 +252,8 @@ packages:
     peerDependencies:
       '@langchain/core': '>=0.2.31 <0.4.0'
 
-  '@langchain/langgraph-sdk@0.0.78':
-    resolution: {integrity: sha512-skkUDmEhClWzlsr8jRaS1VpXVBISm5OFd0MUtS1jKRL5pn08K+IJRvHnlzgum9x7Dste9KXGcIGVoR7cNKJQrw==}
+  '@langchain/langgraph-sdk@0.0.84':
+    resolution: {integrity: sha512-l0PFQyJ+6m6aclORNPPWlcRwgKcXVXsPaJCbCUYFABR3yf4cOpsjhUNR0cJ7+2cS400oieHjGRdGGyO/hbSjhg==}
     peerDependencies:
       '@langchain/core': '>=0.2.31 <0.4.0'
       react: ^18 || ^19
@@ -1115,7 +1115,7 @@ snapshots:
       '@langchain/core': 0.3.57
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@0.0.78(@langchain/core@0.3.57)':
+  '@langchain/langgraph-sdk@0.0.84(@langchain/core@0.3.57)':
     dependencies:
       '@types/json-schema': 7.0.15
       p-queue: 6.6.2
@@ -1128,7 +1128,7 @@ snapshots:
     dependencies:
       '@langchain/core': 0.3.57
       '@langchain/langgraph-checkpoint': 0.0.18(@langchain/core@0.3.57)
-      '@langchain/langgraph-sdk': 0.0.78(@langchain/core@0.3.57)
+      '@langchain/langgraph-sdk': 0.0.84(@langchain/core@0.3.57)
       uuid: 10.0.0
       zod: 3.25.58
     optionalDependencies:
