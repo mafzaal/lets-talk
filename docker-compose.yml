@@ -46,7 +46,7 @@ services:
             timeout: 5s
             retries: 5
     langgraph-api:
-        image: the_data_guy_chat
+        image: ghcr.io/mafzaal/lets-talk:main #the_data_guy_chat
         ports:
             - "8123:8000"
         depends_on:

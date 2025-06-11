@@ -19,7 +19,7 @@ updates:
 
   # Backend Python dependencies
   - package-ecosystem: "uv"
-    directory: "/backend"
+    directory: "/"
     schedule:
       interval: "weekly"
     labels:
