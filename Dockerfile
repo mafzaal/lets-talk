@@ -1,40 +1,25 @@
-
-# Get a distribution that has uv already installed
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
-
-# Add user - this is the user that will run the app
-# If you do not set user, the app will run as root (undesirable)
-RUN useradd -m -u 1000 user
-USER user
-
-# Set the home directory and path
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH        
-
-ENV UVICORN_WS_PROTOCOL=websockets
+FROM langchain/langgraph-api:3.13
 
 
-# Set the working directory
-WORKDIR $HOME/app
 
-COPY --chown=user ./pyproject.toml $HOME/app
-COPY --chown=user ./uv.lock $HOME/app
+# -- Adding local package . --
+ADD . /deps/lets-talk
+# -- End of local package . --
 
-# Install the dependencies
-# RUN uv sync --frozen
-RUN uv sync
+# -- Installing all local dependencies --
+RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir -c /api/constraints.txt -e /deps/*
+# -- End of local dependencies install --
+ENV LANGGRAPH_HTTP='{"disable_meta": true, "disable_store": true}'
+ENV LANGSERVE_GRAPHS='{"the_data_guy_chat": "/deps/lets-talk/py-src/lets_talk/agent_v2.py:agent"}'
 
-# Copy the app to the container
-COPY --chown=user ./py-src/ $HOME/app
-COPY --chown=user ./.chainlit/ $HOME/app
-COPY --chown=user ./chainlit.md $HOME/app
 
-#TODO: Fix this to download 
-#copy posts to container
-COPY --chown=user ./data/ $HOME/app/data
 
-# Expose the port
-EXPOSE 7860
+# -- Ensure user deps didn't inadvertently overwrite langgraph-api
+RUN mkdir -p /api/langgraph_api /api/langgraph_runtime /api/langgraph_license &&     touch /api/langgraph_api/__init__.py /api/langgraph_runtime/__init__.py /api/langgraph_license/__init__.py
+RUN PYTHONDONTWRITEBYTECODE=1 pip install --no-cache-dir --no-deps -e /api
+# -- End of ensuring user deps didn't inadvertently overwrite langgraph-api --
+# -- Removing pip from the final image ~<:===~~~ --
+RUN pip uninstall -y pip setuptools wheel &&     rm -rf /usr/local/lib/python*/site-packages/pip* /usr/local/lib/python*/site-packages/setuptools* /usr/local/lib/python*/site-packages/wheel* &&     find /usr/local/bin -name "pip*" -delete
+# -- End of pip removal --
 
-# Run the app
-CMD ["uv", "run", "chainlit", "run", "app.py", "--host", "0.0.0.0", "--port", "7860"]
+WORKDIR /deps/lets-talk

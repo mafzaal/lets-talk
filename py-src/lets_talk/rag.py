@@ -156,7 +156,8 @@ def build_retriever(
         logger.info("No additional retrievers added. Returning base retriever.")
         return retriever
     
-    retriever_list.append(retriever)  # type: ignore
+    #retriever_list.append(retriever)  # type: ignore
+    
     equal_weighting = [1/len(retriever_list)] * len(retriever_list)
     logger.info("Creating EnsembleRetriever with %d retrievers", len(retriever_list))
     ensemble_retriever = EnsembleRetriever(
