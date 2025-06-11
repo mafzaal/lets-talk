@@ -16,8 +16,8 @@ importers:
         version: 15.0.12
     devDependencies:
       '@langchain/langgraph':
-        specifier: ^0.2.74
-        version: 0.2.74(@langchain/core@0.3.57)(zod-to-json-schema@3.24.5(zod@3.25.58))
+        specifier: ^0.3.1
+        version: 0.3.1(@langchain/core@0.3.57)(zod-to-json-schema@3.24.5(zod@3.25.58))
       '@sveltejs/adapter-static':
         specifier: ^3.0.8
         version: 3.0.8(@sveltejs/kit@2.21.4(@sveltejs/vite-plugin-svelte@5.1.0(svelte@5.33.19)(vite@6.3.5(jiti@2.4.2)(lightningcss@1.30.1)))(svelte@5.33.19)(vite@6.3.5(jiti@2.4.2)(lightningcss@1.30.1)))
@@ -246,8 +246,8 @@ packages:
     resolution: {integrity: sha512-jz28qCTKJmi47b6jqhQ6vYRTG5jRpqhtPQjriRTB5wR8mgvzo6xKs0fG/kExS3ZvM79ytD1npBvgf8i19xOo9Q==}
     engines: {node: '>=18'}
 
-  '@langchain/langgraph-checkpoint@0.0.17':
-    resolution: {integrity: sha512-6b3CuVVYx+7x0uWLG+7YXz9j2iBa+tn2AXvkLxzEvaAsLE6Sij++8PPbS2BZzC+S/FPJdWsz6I5bsrqL0BYrCA==}
+  '@langchain/langgraph-checkpoint@0.0.18':
+    resolution: {integrity: sha512-IS7zJj36VgY+4pf8ZjsVuUWef7oTwt1y9ylvwu0aLuOn1d0fg05Om9DLm3v2GZ2Df6bhLV1kfWAM0IAl9O5rQQ==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': '>=0.2.31 <0.4.0'
@@ -263,8 +263,8 @@ packages:
       react:
         optional: true
 
-  '@langchain/langgraph@0.2.74':
-    resolution: {integrity: sha512-oHpEi5sTZTPaeZX1UnzfM2OAJ21QGQrwReTV6+QnX7h8nDCBzhtipAw1cK616S+X8zpcVOjgOtJuaJhXa4mN8w==}
+  '@langchain/langgraph@0.3.1':
+    resolution: {integrity: sha512-BFa6DmKthPG1znkUhTBBqdza4dojs7QGg6o9V9aptIkWWdBF/UhRbjPvCx6ldkmU2oJRNWZ1BlkiP6RflxxPwA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': '>=0.2.36 <0.3.0 || >=0.3.40 < 0.4.0'
@@ -985,9 +985,6 @@ packages:
     peerDependencies:
       zod: ^3.24.1
 
-  zod@3.25.34:
-    resolution: {integrity: sha512-lZHvSc2PpWdcfpHlyB33HA9nqP16GpC9IpiG4lYq9jZCJVLZNnWd6Y1cj79bcLSBKTkxepfpjckPv5Y5VOPlwA==}
-
   zod@3.25.58:
     resolution: {integrity: sha512-DVLmMQzSZwNYzQoMaM3MQWnxr2eq+AtM9Hx3w1/Yl0pH8sLTSjN4jGP7w6f7uand6Hw44tsnSu1hz1AOA6qI2Q==}
 
@@ -1113,7 +1110,7 @@ snapshots:
     transitivePeerDependencies:
       - openai
 
-  '@langchain/langgraph-checkpoint@0.0.17(@langchain/core@0.3.57)':
+  '@langchain/langgraph-checkpoint@0.0.18(@langchain/core@0.3.57)':
     dependencies:
       '@langchain/core': 0.3.57
       uuid: 10.0.0
@@ -1127,13 +1124,13 @@ snapshots:
     optionalDependencies:
       '@langchain/core': 0.3.57
 
-  '@langchain/langgraph@0.2.74(@langchain/core@0.3.57)(zod-to-json-schema@3.24.5(zod@3.25.58))':
+  '@langchain/langgraph@0.3.1(@langchain/core@0.3.57)(zod-to-json-schema@3.24.5(zod@3.25.58))':
     dependencies:
       '@langchain/core': 0.3.57
-      '@langchain/langgraph-checkpoint': 0.0.17(@langchain/core@0.3.57)
+      '@langchain/langgraph-checkpoint': 0.0.18(@langchain/core@0.3.57)
       '@langchain/langgraph-sdk': 0.0.78(@langchain/core@0.3.57)
       uuid: 10.0.0
-      zod: 3.25.34
+      zod: 3.25.58
     optionalDependencies:
       zod-to-json-schema: 3.24.5(zod@3.25.58)
     transitivePeerDependencies:
@@ -1725,7 +1722,5 @@ snapshots:
   zod-to-json-schema@3.24.5(zod@3.25.58):
     dependencies:
       zod: 3.25.58
-
-  zod@3.25.34: {}
 
   zod@3.25.58: {}
