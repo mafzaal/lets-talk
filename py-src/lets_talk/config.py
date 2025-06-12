@@ -13,18 +13,18 @@ load_dotenv()
 # DATA INPUT
 DATA_DIR = os.environ.get("DATA_DIR", "data/")
 DATA_DIR_PATTERN = os.environ.get("DATA_DIR_PATTERN", "*.md")
-WEB_URLS = (os.environ.get("WEB_URLS", "https://thedataguy.pro/analytics/,https://thedataguy.pro/projects/,https://thedataguy.pro/about/,https://thedataguy.pro/contact/")).split(",")
-BASE_URL = os.environ.get("BASE_URL", "https://thedataguy.pro/")
-BLOG_BASE_URL = os.environ.get("BLOG_BASE_URL", "https://thedataguy.pro/blog/")
+WEB_URLS = (os.environ.get("WEB_URLS", "")).split(",")
+BASE_URL = os.environ.get("BASE_URL", "")
+BLOG_BASE_URL = os.environ.get("BLOG_BASE_URL", "")
 INDEX_ONLY_PUBLISHED_POSTS = os.environ.get("INDEX_ONLY_PUBLISHED_POSTS", "True").lower() == "true"
 # For RSS configurations
 RSS_URL = os.environ.get("RSS_URL", "")
 
 # For output directory to start data
 
-OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./output")
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "output/")
 AGENT_PROMPT_FILE = os.environ.get("AGENT_PROMPT_FILE", f"{OUTPUT_DIR}/agent_prompt.md")
-AGENT_PROMPT = os.environ.get("AGENT_PROMPT", "# Let's Talk Agent\nYou are a helpful assistant that can answer questions based on the provided knowledge base. You can also retrieve specific pages by URL.\n\n## Instructions\n- Use the tools provided to retrieve documents or pages.\n- If you encounter a rude or derogatory query, respond with a polite and respectful answer.\n- Always check the tone of the query before responding.\n- If you need to refine the query, use the query refinement tool.\n\n## Tools\n1. Retrieve Documents: Use this tool to search for relevant documents in the knowledge base.\n2. Retrieve Page by URL: Use this tool to retrieve a specific page by its URL.")
+AGENT_PROMPT = os.environ.get("AGENT_PROMPT", "")
 
 #OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./stats")
 
