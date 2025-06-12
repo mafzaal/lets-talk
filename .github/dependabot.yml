@@ -24,7 +24,7 @@ updates:
     schedule:
       interval: "weekly"
     target-branch: "dev"
-    versioning-strategy: "auto"
+    
     labels:
       - "dependencies"
       - "backend"
@@ -36,7 +36,7 @@ updates:
     schedule:
       interval: "monthly"
     target-branch: "dev"
-    versioning-strategy: "auto"
+    
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
