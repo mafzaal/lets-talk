@@ -6,6 +6,7 @@ updates:
     directory: "/frontend"
     schedule:
       interval: "weekly"
+    target-branch: "dev"
     versioning-strategy: "auto"
     labels:
       - "dependencies"
@@ -22,6 +23,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    target-branch: "dev"
+    versioning-strategy: "auto"
     labels:
       - "dependencies"
       - "backend"
@@ -32,6 +35,9 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    target-branch: "dev"
+    versioning-strategy: "auto"
+    open-pull-requests-limit: 10
     labels:
       - "dependencies"
       - "docker"
@@ -41,6 +47,9 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    target-branch: "dev"
+    versioning-strategy: "auto"
+    open-pull-requests-limit: 10
     labels:
       - "dependencies"
       - "ci"
