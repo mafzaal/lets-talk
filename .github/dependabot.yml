@@ -48,7 +48,6 @@ updates:
     schedule:
       interval: "monthly"
     target-branch: "dev"
-    versioning-strategy: "auto"
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
