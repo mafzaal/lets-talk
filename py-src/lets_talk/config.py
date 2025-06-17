@@ -28,7 +28,7 @@ AGENT_PROMPT = os.environ.get("AGENT_PROMPT", "")
 #OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./stats")
 
 #For embedding storage
-VECTOR_STORAGE_PATH = os.environ.get("VECTOR_STORAGE_PATH", f"{OUTPUT_DIR}/vectorstore")
+VECTOR_STORAGE_PATH = os.environ.get("VECTOR_STORAGE_PATH", "")
 FORCE_RECREATE = os.environ.get("FORCE_RECREATE", "False").lower() == "true"
 # For Qdrant vector database
 QDRANT_URL = os.environ.get("QDRANT_URL", "")
@@ -79,11 +79,30 @@ EVAL_LLM_MODEL = os.environ.get("EVAL_LLM_MODEL", "openai:gpt-4.1")
 # Models for the agent
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
+# Pipeline-specific configurations
+# Output directory for statistics and artifacts
+STATS_OUTPUT_DIR = os.environ.get("STATS_OUTPUT_DIR", f"{OUTPUT_DIR}/stats")
 
+# Incremental indexing threshold configuration
+INCREMENTAL_FALLBACK_THRESHOLD = float(os.environ.get("INCREMENTAL_FALLBACK_THRESHOLD", "0.8"))
 
+# Output filenames configuration
+BLOG_STATS_FILENAME = os.environ.get("BLOG_STATS_FILENAME", "blog_stats_latest.json")
+BLOG_DOCS_FILENAME = os.environ.get("BLOG_DOCS_FILENAME", "blog_docs.csv")
+HEALTH_REPORT_FILENAME = os.environ.get("HEALTH_REPORT_FILENAME", "health_report.json")
+CI_SUMMARY_FILENAME = os.environ.get("CI_SUMMARY_FILENAME", "ci_summary.json")
+BUILD_INFO_FILENAME = os.environ.get("BUILD_INFO_FILENAME", "vector_store_build_info.json")
 
+# Default values configuration
+DEFAULT_INDEXED_TIMESTAMP = float(os.environ.get("DEFAULT_INDEXED_TIMESTAMP", "0.0"))
 
+# Logging configuration
+LOG_FORMAT = os.environ.get("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+LOGGER_NAME = os.environ.get("LOGGER_NAME", "blog-pipeline")
 
+# Default metadata CSV filename (used when building path)
+DEFAULT_METADATA_CSV_FILENAME = os.environ.get("DEFAULT_METADATA_CSV_FILENAME", "blog_metadata.csv")
 
 
 from dataclasses import dataclass, field, fields

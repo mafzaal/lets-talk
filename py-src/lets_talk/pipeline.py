@@ -35,7 +35,11 @@ from typing import List, Dict, Any, Tuple
 from lets_talk.config import (
     BASE_URL, BLOG_BASE_URL, CHUNK_OVERLAP, CHUNK_SIZE, VECTOR_STORAGE_PATH, DATA_DIR,
     FORCE_RECREATE, OUTPUT_DIR, USE_CHUNKING, SHOULD_SAVE_STATS,
-    QDRANT_COLLECTION, EMBEDDING_MODEL, METADATA_CSV_FILE
+    QDRANT_COLLECTION, EMBEDDING_MODEL, METADATA_CSV_FILE, DATA_DIR_PATTERN,
+    CHECKSUM_ALGORITHM, STATS_OUTPUT_DIR, INCREMENTAL_FALLBACK_THRESHOLD,
+    BLOG_STATS_FILENAME, BLOG_DOCS_FILENAME, HEALTH_REPORT_FILENAME,
+    CI_SUMMARY_FILENAME, BUILD_INFO_FILENAME, DEFAULT_INDEXED_TIMESTAMP,
+    LOG_FORMAT, LOG_LEVEL, LOGGER_NAME, DEFAULT_METADATA_CSV_FILENAME
 )
 
 # Import the blog utilities module
@@ -43,11 +47,11 @@ import lets_talk.utils.blog as blog
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=getattr(logging, LOG_LEVEL.upper()),
+    format=LOG_FORMAT,
     handlers=[logging.StreamHandler()]
 )
-logger = logging.getLogger("blog-pipeline")
+logger = logging.getLogger(LOGGER_NAME)
 
 def parse_args():
     """Parse command-line arguments"""
@@ -56,8 +60,8 @@ def parse_args():
                         help="Force recreation of the vector store")
     parser.add_argument("--data-dir", default=DATA_DIR,
                         help=f"Directory containing blog posts (default: {DATA_DIR})")
-    parser.add_argument("--output-dir", default="./stats",
-                        help="Directory to save stats and artifacts (default: ./stats)")
+    parser.add_argument("--output-dir", default=STATS_OUTPUT_DIR,
+                        help=f"Directory to save stats and artifacts (default: {STATS_OUTPUT_DIR})")
     parser.add_argument("--vector-storage-path", default=VECTOR_STORAGE_PATH,
                         help=f"Path to store the vector database (default: {VECTOR_STORAGE_PATH})")
     parser.add_argument("--collection-name", default=QDRANT_COLLECTION,
@@ -74,8 +78,8 @@ def parse_args():
                         help="Don't split documents into chunks (use whole documents)")
     parser.add_argument("--no-save-stats", action="store_true",
                         help="Don't save document statistics")
-    parser.add_argument("--data-dir-pattern", default="*.md",
-                        help="Glob pattern to match blog post files within the data directory (default: None)")
+    parser.add_argument("--data-dir-pattern", default=DATA_DIR_PATTERN,
+                        help=f"Glob pattern to match blog post files within the data directory (default: {DATA_DIR_PATTERN})")
     parser.add_argument("--blog-base-url", default=BLOG_BASE_URL,
                         help="Base URL for the blog posts (default from config)")
     parser.add_argument("--base-url", default=BASE_URL,
@@ -91,11 +95,11 @@ def parse_args():
     parser.add_argument("--incremental-with-fallback", action="store_true",
                         help="Try incremental, fallback to full rebuild if needed")
     parser.add_argument("--metadata-file", default=None,
-                        help="Custom path for metadata CSV file (default: output_dir/blog_metadata.csv)")
+                        help=f"Custom path for metadata CSV file (default: output_dir/{DEFAULT_METADATA_CSV_FILENAME})")
     parser.add_argument("--dry-run", action="store_true",
                         help="Show what would be processed without actually doing it")
-    parser.add_argument("--checksum-algorithm", default="sha256",
-                        help="Checksum algorithm to use (sha256, md5)")
+    parser.add_argument("--checksum-algorithm", default=CHECKSUM_ALGORITHM,
+                        help=f"Checksum algorithm to use (default: {CHECKSUM_ALGORITHM})")
     
     # Performance optimization options
     parser.add_argument("--batch-size", type=int, default=None,
@@ -134,7 +138,7 @@ def save_stats(stats, output_dir="./stats", ci_mode=False):
     # Create filename with timestamp or use fixed name for CI
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     if ci_mode:
-        filename = f"{output_dir}/blog_stats_latest.json"
+        filename = f"{output_dir}/{BLOG_STATS_FILENAME}"
         # Also create a timestamped version for historical tracking
         history_filename = f"{output_dir}/blog_stats_{timestamp}.json"
     else:
@@ -158,8 +162,8 @@ def save_stats(stats, output_dir="./stats", ci_mode=False):
     import pandas as pd
     docs_df = pd.DataFrame(stats["documents"])
 
-    docs_df.to_csv(f"{output_dir}/blog_docs.csv", index=False)
-    logger.info(f"Saved document details to {output_dir}/blog_docs.csv")    
+    docs_df.to_csv(f"{output_dir}/{BLOG_DOCS_FILENAME}", index=False)
+    logger.info(f"Saved document details to {output_dir}/{BLOG_DOCS_FILENAME}")    
 
     return filename, basic_stats
 
@@ -200,7 +204,7 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
     
     # Set default metadata CSV path if not provided
     if metadata_csv_path is None:
-        metadata_csv_path = os.path.join(output_dir, "blog_metadata.csv")
+        metadata_csv_path = os.path.join(output_dir, DEFAULT_METADATA_CSV_FILENAME)
     
     try:
         # Load and process documents
@@ -321,7 +325,7 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
                     "embedding_model": embedding_model,
                     "vector_store_size_bytes": get_directory_size(storage_path),
                 }
-                build_info_path = Path(output_dir) / "vector_store_build_info.json"
+                build_info_path = Path(output_dir) / BUILD_INFO_FILENAME
                 with open(build_info_path, "w") as f:
                     json.dump(build_info, f, indent=2)
                 logger.info(f"Build info saved to {build_info_path}")
@@ -475,7 +479,7 @@ def determine_indexing_mode(args):
     if args.metadata_file:
         metadata_csv_path = args.metadata_file
     else:
-        metadata_csv_path = os.path.join(args.output_dir, "blog_metadata.csv")
+        metadata_csv_path = os.path.join(args.output_dir, DEFAULT_METADATA_CSV_FILENAME)
     
     # Determine indexing mode
     if args.force_recreate:
@@ -582,8 +586,8 @@ def process_incremental_indexing(documents, metadata_csv_path,
         }
     
     # Check if incremental with fallback should fall back to full rebuild
-    if indexing_mode == "incremental_with_fallback" and total_to_process > len(documents) * 0.8:
-        logger.info("More than 80% of documents changed, falling back to full rebuild")
+    if indexing_mode == "incremental_with_fallback" and total_to_process > len(documents) * INCREMENTAL_FALLBACK_THRESHOLD:
+        logger.info(f"More than {INCREMENTAL_FALLBACK_THRESHOLD*100}% of documents changed, falling back to full rebuild")
         return {
             "mode": "full",
             "new": documents,
@@ -633,7 +637,7 @@ def update_documents_metadata_after_indexing(all_documents: List[blog.Document],
         else:
             # This document was unchanged, preserve existing metadata
             # but ensure it has the required fields
-            doc.metadata.setdefault("indexed_timestamp", 0.0)
+            doc.metadata.setdefault("indexed_timestamp", DEFAULT_INDEXED_TIMESTAMP)
             doc.metadata.setdefault("index_status", "indexed")  # Assume previously indexed
 
 def main():
@@ -670,7 +674,7 @@ def main():
                 logger.error(f"  • {error}")
         
         # Save health report
-        health_report_path = os.path.join(args.output_dir, "health_report.json")
+        health_report_path = os.path.join(args.output_dir, HEALTH_REPORT_FILENAME)
         os.makedirs(args.output_dir, exist_ok=True)
         with open(health_report_path, 'w') as f:
             json.dump(health_report, f, indent=2)
@@ -755,7 +759,7 @@ def main():
         
         # In CI mode, create a summary file that GitHub Actions can use to set outputs
         if args.ci and stats:
-            ci_summary_path = Path(args.output_dir) / "ci_summary.json"
+            ci_summary_path = Path(args.output_dir) / CI_SUMMARY_FILENAME
             ci_summary = {
                 "status": "success" if success else "failure",
                 "message": message,
