@@ -614,3 +614,220 @@ def process_blog_posts(data_dir: str = DATA_DIR,
     return result
 
 
+def add_documents_to_vector_store(vector_store: QdrantVectorStore, 
+                                   documents: List[Document]) -> bool:
+    """
+    Add new documents to an existing vector store.
+    
+    Args:
+        vector_store: Existing QdrantVectorStore instance
+        documents: List of Document objects to add
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    if not documents:
+        return True
+    
+    try:
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Add documents to the vector store
+        vector_store.add_documents(documents)
+        logger.info(f"Successfully added {len(documents)} documents to vector store")
+        return True
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error adding documents to vector store: {e}")
+        return False
+
+
+def remove_documents_from_vector_store(vector_store: QdrantVectorStore, 
+                                       document_sources: List[str]) -> bool:
+    """
+    Remove documents from the vector store based on their source paths.
+    
+    Args:
+        vector_store: Existing QdrantVectorStore instance
+        document_sources: List of source paths to remove
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    if not document_sources:
+        return True
+    
+    try:
+        # Import logger here to avoid circular imports
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Delete by metadata filter (source field)
+        for source in document_sources:
+            # Create a filter to find documents with this source
+            filter_condition = models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="metadata.source",
+                        match=models.MatchValue(value=source)
+                    )
+                ]
+            )
+            
+            # Delete documents matching the filter
+            vector_store.client.delete(
+                collection_name=vector_store.collection_name,
+                points_selector=models.FilterSelector(filter=filter_condition)
+            )
+        
+        logger.info(f"Successfully removed documents for {len(document_sources)} sources from vector store")
+        return True
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error removing documents from vector store: {e}")
+        return False
+
+
+def update_vector_store_incrementally(storage_path: str,
+                                     collection_name: str,
+                                     embedding_model: str,
+                                     qdrant_url: str,
+                                     new_docs: List[Document],
+                                     modified_docs: List[Document],
+                                     deleted_sources: List[str]) -> bool:
+    """
+    Update vector store incrementally by adding new/modified docs and removing deleted ones.
+    
+    Args:
+        storage_path: Path to the vector store
+        collection_name: Name of the collection
+        embedding_model: Name of the embedding model
+        qdrant_url: Qdrant server URL (if using remote)
+        new_docs: List of new documents to add
+        modified_docs: List of modified documents to update
+        deleted_sources: List of source paths to remove
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Load existing vector store
+        vector_store = load_vector_store(
+            storage_path=storage_path,
+            collection_name=collection_name,
+            qdrant_url=qdrant_url,
+            embedding_model=embedding_model
+        )
+        
+        if vector_store is None:
+            logger.error("Could not load existing vector store for incremental update")
+            return False
+        
+        # Remove deleted documents first
+        if deleted_sources:
+            logger.info(f"Removing {len(deleted_sources)} deleted documents from vector store")
+            success = remove_documents_from_vector_store(vector_store, deleted_sources)
+            if not success:
+                logger.error("Failed to remove deleted documents")
+                return False
+        
+        # Remove old versions of modified documents
+        if modified_docs:
+            modified_sources = [doc.metadata.get("source", "") for doc in modified_docs]
+            logger.info(f"Removing old versions of {len(modified_sources)} modified documents")
+            success = remove_documents_from_vector_store(vector_store, modified_sources)
+            if not success:
+                logger.error("Failed to remove old versions of modified documents")
+                return False
+        
+        # Add new and modified documents
+        all_docs_to_add = new_docs + modified_docs
+        if all_docs_to_add:
+            logger.info(f"Adding {len(all_docs_to_add)} documents to vector store ({len(new_docs)} new, {len(modified_docs)} modified)")
+            success = add_documents_to_vector_store(vector_store, all_docs_to_add)
+            if not success:
+                logger.error("Failed to add new/modified documents")
+                return False
+        
+        # Close the vector store connection
+        if hasattr(vector_store, 'client') and vector_store.client:
+            vector_store.client.close()
+        
+        logger.info("Incremental vector store update completed successfully")
+        return True
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error during incremental vector store update: {e}")
+        return False
+
+
+def save_document_metadata_csv(documents: List[Document], 
+                              metadata_csv_path: str,
+                              include_unchanged: bool = True) -> bool:
+    """
+    Save document metadata to CSV file.
+    
+    Args:
+        documents: List of Document objects
+        metadata_csv_path: Path to save the CSV file
+        include_unchanged: Whether to include unchanged documents in the CSV
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Extract metadata for CSV
+        metadata_records = []
+        
+        for doc in documents:
+            metadata = doc.metadata.copy()
+            
+            # Ensure required fields exist
+            metadata.setdefault("content_checksum", "")
+            metadata.setdefault("file_modified_time", 0.0)
+            metadata.setdefault("indexed_timestamp", 0.0)
+            metadata.setdefault("index_status", "pending")
+            metadata.setdefault("chunk_count", 1)
+            
+            metadata_records.append(metadata)
+        
+        # Convert to DataFrame and save
+        df = pd.DataFrame(metadata_records)
+        
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(metadata_csv_path), exist_ok=True)
+        
+        # Save to CSV
+        df.to_csv(metadata_csv_path, index=False)
+        logger.info(f"Saved metadata for {len(documents)} documents to {metadata_csv_path}")
+        return True
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error saving metadata CSV: {e}")
+        return False
+
+
+# Import required modules for vector store operations
+try:
+    from qdrant_client import models
+    import logging
+    _logger = logging.getLogger(__name__)
+except ImportError as e:
+    import logging
+    _logger = logging.getLogger(__name__)
+    _logger.warning(f"Could not import qdrant dependencies: {e}")
+
+

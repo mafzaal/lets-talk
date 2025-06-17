@@ -259,9 +259,13 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
             documents_for_processing = blog.split_documents(documents_for_processing, **chunking_params)
 
         # Determine vector store creation strategy
-        create_vector_store = (not Path.exists(Path(storage_path))) or force_recreate or processing_result["mode"] == "full"
+        create_vector_store = (
+            (not Path.exists(Path(storage_path))) or 
+            force_recreate or 
+            processing_result["mode"] == "full"
+        )
         
-        if create_vector_store:
+        if create_vector_store and processing_result["mode"] != "incremental":
             logger.info("Creating vector store...")
             if documents_for_processing:
                 vector_store = blog.create_vector_store(
@@ -279,6 +283,11 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
                 for doc in docs_to_process:
                     doc.metadata["indexed_timestamp"] = current_time
                     doc.metadata["index_status"] = "indexed"
+                
+                # Save updated metadata to CSV
+                success_metadata = blog.save_document_metadata_csv(documents, metadata_csv_path)
+                if not success_metadata:
+                    logger.warning("Failed to save updated metadata CSV")
             
             logger.info(f"Vector store successfully created at {storage_path}")
             
@@ -301,27 +310,111 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
                 
             return True, f"Vector store successfully created at {storage_path} ({processing_result['mode']} mode, processed {len(docs_to_process)} documents)", stats, stats_file, stats_content
         elif processing_result["mode"] == "incremental" and documents_for_processing:
-            # TODO: Implement incremental vector store updates
-            # For now, fall back to full recreation if there are changes
-            logger.warning("Incremental vector store updates not yet implemented, falling back to full recreation")
+            # Implement incremental vector store updates
+            logger.info("Performing incremental vector store update")
             
-            vector_store = blog.create_vector_store(
-                documents if use_chunking else documents_for_processing, 
-                storage_path=storage_path, 
-                collection_name=collection_name,
-                embedding_model=embedding_model,
-                force_recreate=True  # Force recreate for now
+            # Extract the categories of documents
+            new_docs = processing_result["new"]
+            modified_docs = processing_result["modified"]
+            deleted_sources = processing_result["deleted_sources"]
+            
+            # Apply chunking to new and modified documents if enabled
+            docs_to_add = new_docs + modified_docs
+            if use_chunking and docs_to_add:
+                logger.info(f"Chunking {len(docs_to_add)} new/modified documents...")
+                # Use provided chunk_size and chunk_overlap or default from config
+                chunking_params = {}
+                if chunk_size is not None:
+                    chunking_params['chunk_size'] = chunk_size
+                if chunk_overlap is not None:
+                    chunking_params['chunk_overlap'] = chunk_overlap
+                    
+                docs_to_add = blog.split_documents(docs_to_add, **chunking_params)
+                
+                # Update the chunk count in original documents metadata
+                for doc in new_docs + modified_docs:
+                    source = doc.metadata.get("source", "")
+                    chunks_for_doc = [d for d in docs_to_add if d.metadata.get("source", "") == source]
+                    doc.metadata["chunk_count"] = len(chunks_for_doc)
+            
+            # Import QDRANT_URL from config
+            from lets_talk.config import QDRANT_URL
+            
+            # Check if vector store exists
+            vector_store_exists = (
+                (QDRANT_URL and True) or  # Remote Qdrant assumed to exist
+                (Path(storage_path).exists())  # Local Qdrant path exists
             )
-            vector_store.client.close() # type: ignore
             
-            # Update indexed timestamps
+            if not vector_store_exists:
+                logger.warning("Vector store doesn't exist, falling back to full creation")
+                # Create new vector store with all documents
+                vector_store = blog.create_vector_store(
+                    documents if use_chunking else documents_for_processing, 
+                    storage_path=storage_path, 
+                    collection_name=collection_name,
+                    embedding_model=embedding_model,
+                    force_recreate=True
+                )
+                mode_description = "incremental (created new store)"
+            else:
+                # Perform incremental update using the chunked documents
+                if use_chunking:
+                    # When chunking, all new+modified docs are in docs_to_add
+                    success = blog.update_vector_store_incrementally(
+                        storage_path=storage_path,
+                        collection_name=collection_name,
+                        embedding_model=embedding_model,
+                        qdrant_url=QDRANT_URL,
+                        new_docs=docs_to_add,  # All chunks from new+modified docs
+                        modified_docs=[],  # Empty since included above
+                        deleted_sources=deleted_sources
+                    )
+                else:
+                    # When not chunking, separate new and modified docs
+                    success = blog.update_vector_store_incrementally(
+                        storage_path=storage_path,
+                        collection_name=collection_name,
+                        embedding_model=embedding_model,
+                        qdrant_url=QDRANT_URL,
+                        new_docs=new_docs,
+                        modified_docs=modified_docs,
+                        deleted_sources=deleted_sources
+                    )
+                
+                if not success:
+                    logger.error("Incremental update failed, falling back to full recreation")
+                    vector_store = blog.create_vector_store(
+                        documents if use_chunking else documents_for_processing, 
+                        storage_path=storage_path, 
+                        collection_name=collection_name,
+                        embedding_model=embedding_model,
+                        force_recreate=True
+                    )
+                    mode_description = "incremental (failed, recreated)"
+                else:
+                    vector_store = None  # We don't need to return the vector store for incremental
+                    mode_description = "incremental"
+            
+            # Update indexed timestamps and status for all documents
             import time
             current_time = time.time()
-            for doc in documents:
-                doc.metadata["indexed_timestamp"] = current_time
-                doc.metadata["index_status"] = "indexed"
             
-            return True, f"Vector store updated at {storage_path} (incremental mode with fallback, processed {len(docs_to_process)} documents)", stats, stats_file, stats_content
+            # Update metadata properly for all documents
+            update_documents_metadata_after_indexing(
+                documents, new_docs, modified_docs, current_time
+            )
+            
+            # Save updated metadata to CSV
+            success_metadata = blog.save_document_metadata_csv(documents, metadata_csv_path)
+            if not success_metadata:
+                logger.warning("Failed to save updated metadata CSV")
+            
+            # Close vector store connection if needed
+            if vector_store and hasattr(vector_store, 'client') and vector_store.client:
+                vector_store.client.close()
+            
+            return True, f"Vector store updated at {storage_path} ({mode_description}, processed {len(docs_to_process)} documents)", stats, stats_file, stats_content
         else:
             logger.info(f"Vector store already exists at {storage_path}")
             return True, f"Vector store already exists at {storage_path} (use --force-recreate to rebuild)", stats, stats_file, stats_content
@@ -479,6 +572,40 @@ def process_incremental_indexing(documents, metadata_csv_path,
         "deleted_sources": deleted_sources,
         "total_to_process": total_to_process
     }
+
+def update_documents_metadata_after_indexing(all_documents: List[blog.Document], 
+                                            new_docs: List[blog.Document],
+                                            modified_docs: List[blog.Document],
+                                            current_time: float) -> None:
+    """
+    Update metadata for processed documents after successful indexing.
+    
+    Args:
+        all_documents: List of all documents (new, modified, unchanged)
+        new_docs: List of new documents that were processed
+        modified_docs: List of modified documents that were processed  
+        current_time: Timestamp to use for indexed_timestamp
+    """
+    # Create a set of processed document sources for efficient lookup
+    processed_sources = set()
+    
+    for doc in new_docs + modified_docs:
+        source = doc.metadata.get("source", "")
+        processed_sources.add(source)
+    
+    # Update metadata for all documents
+    for doc in all_documents:
+        source = doc.metadata.get("source", "")
+        
+        if source in processed_sources:
+            # This document was processed (new or modified)
+            doc.metadata["indexed_timestamp"] = current_time
+            doc.metadata["index_status"] = "indexed"
+        else:
+            # This document was unchanged, preserve existing metadata
+            # but ensure it has the required fields
+            doc.metadata.setdefault("indexed_timestamp", 0.0)
+            doc.metadata.setdefault("index_status", "indexed")  # Assume previously indexed
 
 def main():
     """Main function to update blog data"""
