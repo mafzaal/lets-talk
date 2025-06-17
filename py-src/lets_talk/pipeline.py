@@ -97,6 +97,24 @@ def parse_args():
     parser.add_argument("--checksum-algorithm", default="sha256",
                         help="Checksum algorithm to use (sha256, md5)")
     
+    # Performance optimization options
+    parser.add_argument("--batch-size", type=int, default=None,
+                        help="Batch size for processing documents (default from config)")
+    parser.add_argument("--disable-batch-processing", action="store_true",
+                        help="Disable batch processing optimizations")
+    parser.add_argument("--disable-performance-monitoring", action="store_true",
+                        help="Disable performance monitoring")
+    parser.add_argument("--disable-adaptive-chunking", action="store_true",
+                        help="Disable adaptive chunking optimization")
+    parser.add_argument("--max-backup-files", type=int, default=None,
+                        help="Maximum number of backup files to keep (default from config)")
+    
+    # System diagnostics options
+    parser.add_argument("--health-check", action="store_true",
+                        help="Perform comprehensive system health check")
+    parser.add_argument("--health-check-only", action="store_true",
+                        help="Only perform health check and exit")
+    
     return parser.parse_args()
 
 def save_stats(stats, output_dir="./stats", ci_mode=False):
@@ -309,7 +327,7 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
                 logger.info(f"Build info saved to {build_info_path}")
                 
             return True, f"Vector store successfully created at {storage_path} ({processing_result['mode']} mode, processed {len(docs_to_process)} documents)", stats, stats_file, stats_content
-        elif processing_result["mode"] == "incremental" and documents_for_processing:
+        elif processing_result["mode"] == "incremental" and (documents_for_processing or processing_result.get("deleted_sources", [])):
             # Implement incremental vector store updates
             logger.info("Performing incremental vector store update")
             
@@ -361,26 +379,34 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
                 # Perform incremental update using the chunked documents
                 if use_chunking:
                     # When chunking, all new+modified docs are in docs_to_add
-                    success = blog.update_vector_store_incrementally(
+                    success = blog.update_vector_store_incrementally_with_rollback(
                         storage_path=storage_path,
                         collection_name=collection_name,
                         embedding_model=embedding_model,
                         qdrant_url=QDRANT_URL,
                         new_docs=docs_to_add,  # All chunks from new+modified docs
                         modified_docs=[],  # Empty since included above
-                        deleted_sources=deleted_sources
+                        deleted_sources=deleted_sources,
+                        metadata_csv_path=metadata_csv_path,
+                        all_documents=documents
                     )
+                    success_result = success[0]
+                    error_message = success[1] if not success[0] else ""
                 else:
                     # When not chunking, separate new and modified docs
-                    success = blog.update_vector_store_incrementally(
+                    success = blog.update_vector_store_incrementally_with_rollback(
                         storage_path=storage_path,
                         collection_name=collection_name,
                         embedding_model=embedding_model,
                         qdrant_url=QDRANT_URL,
                         new_docs=new_docs,
                         modified_docs=modified_docs,
-                        deleted_sources=deleted_sources
+                        deleted_sources=deleted_sources,
+                        metadata_csv_path=metadata_csv_path,
+                        all_documents=documents
                     )
+                    success_result = success[0]
+                    error_message = success[1] if not success[0] else ""
                 
                 if not success:
                     logger.error("Incremental update failed, falling back to full recreation")
@@ -414,7 +440,10 @@ def create_vector_database(data_dir=DATA_DIR, storage_path=VECTOR_STORAGE_PATH,
             if vector_store and hasattr(vector_store, 'client') and vector_store.client:
                 vector_store.client.close()
             
-            return True, f"Vector store updated at {storage_path} ({mode_description}, processed {len(docs_to_process)} documents)", stats, stats_file, stats_content
+            # Calculate total operations performed
+            total_operations = len(new_docs) + len(modified_docs) + len(deleted_sources)
+            
+            return True, f"Vector store updated at {storage_path} ({mode_description}, processed {total_operations} operations)", stats, stats_file, stats_content
         else:
             logger.info(f"Vector store already exists at {storage_path}")
             return True, f"Vector store already exists at {storage_path} (use --force-recreate to rebuild)", stats, stats_file, stats_content
@@ -611,6 +640,46 @@ def main():
     """Main function to update blog data"""
     args = parse_args()
     
+    # Handle health check only mode
+    if args.health_check_only:
+        logger.info("=== System Health Check Only ===")
+        metadata_csv_path = args.metadata_file or os.path.join(args.output_dir, METADATA_CSV_FILE)
+        health_report = blog.comprehensive_system_health_check(
+            storage_path=args.vector_storage_path,
+            collection_name=args.collection_name,
+            qdrant_url="",  # Will be determined by the function
+            embedding_model=args.embedding_model,
+            metadata_csv_path=metadata_csv_path
+        )
+        
+        logger.info(f"Overall System Health: {health_report['overall_status'].upper()}")
+        
+        # Print detailed health report
+        for check_name, check_result in health_report['checks'].items():
+            status_emoji = "✅" if check_result['status'] == 'healthy' else "⚠️" if check_result['status'] == 'warning' else "❌"
+            logger.info(f"{status_emoji} {check_name.replace('_', ' ').title()}: {check_result['status']}")
+        
+        if health_report['recommendations']:
+            logger.info("\nRecommendations:")
+            for rec in health_report['recommendations']:
+                logger.info(f"  • {rec}")
+        
+        if health_report['errors']:
+            logger.error("\nErrors:")
+            for error in health_report['errors']:
+                logger.error(f"  • {error}")
+        
+        # Save health report
+        health_report_path = os.path.join(args.output_dir, "health_report.json")
+        os.makedirs(args.output_dir, exist_ok=True)
+        with open(health_report_path, 'w') as f:
+            json.dump(health_report, f, indent=2)
+        logger.info(f"Health report saved to: {health_report_path}")
+        
+        # Exit with appropriate code
+        exit_code = 0 if health_report['overall_status'] in ['healthy', 'warning'] else 1
+        sys.exit(exit_code)
+    
     # Determine indexing mode and metadata file path
     indexing_mode, metadata_csv_path = determine_indexing_mode(args)
     
@@ -659,6 +728,23 @@ def main():
             metadata_csv_path=metadata_csv_path,
             dry_run=args.dry_run
         )
+        
+        # Perform health check if requested
+        if args.health_check:
+            logger.info("\n=== Performing System Health Check ===")
+            health_report = blog.comprehensive_system_health_check(
+                storage_path=args.vector_storage_path,
+                collection_name=args.collection_name,
+                qdrant_url="",
+                embedding_model=args.embedding_model,
+                metadata_csv_path=metadata_csv_path
+            )
+            
+            logger.info(f"System Health Status: {health_report['overall_status'].upper()}")
+            if health_report['recommendations']:
+                logger.info("Health Check Recommendations:")
+                for rec in health_report['recommendations']:
+                    logger.info(f"  • {rec}")
         
         logger.info("\n=== Update Summary ===")
         if stats:

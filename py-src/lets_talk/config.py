@@ -59,6 +59,15 @@ INCREMENTAL_MODE = os.environ.get("INCREMENTAL_MODE", "auto")  # Options: "auto"
 CHECKSUM_ALGORITHM = os.environ.get("CHECKSUM_ALGORITHM", "sha256")  # Options: "sha256", "md5"
 AUTO_DETECT_CHANGES = os.environ.get("AUTO_DETECT_CHANGES", "True").lower() == "true"
 
+# Performance optimization configuration
+BATCH_SIZE = int(os.environ.get("BATCH_SIZE", "50"))  # Number of documents to process per batch
+ENABLE_BATCH_PROCESSING = os.environ.get("ENABLE_BATCH_PROCESSING", "True").lower() == "true"
+ENABLE_PERFORMANCE_MONITORING = os.environ.get("ENABLE_PERFORMANCE_MONITORING", "True").lower() == "true"
+ADAPTIVE_CHUNKING = os.environ.get("ADAPTIVE_CHUNKING", "True").lower() == "true"
+MAX_BACKUP_FILES = int(os.environ.get("MAX_BACKUP_FILES", "3"))  # Number of backup files to keep
+BATCH_PAUSE_SECONDS = float(os.environ.get("BATCH_PAUSE_SECONDS", "0.1"))  # Pause between batches
+MAX_CONCURRENT_OPERATIONS = int(os.environ.get("MAX_CONCURRENT_OPERATIONS", "5"))  # Max concurrent operations
+
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "ollama:snowflake-arctic-embed2:latest")
 
 LLM_MODEL = os.environ.get("LLM_MODEL", "openai:gpt-4o-mini")

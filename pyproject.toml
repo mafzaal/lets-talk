@@ -21,6 +21,7 @@ dependencies = [
     "langgraph>=0.4.3",
     "libmagic>=1.0",
     "pandas>=2.2.3",
+    "psutil>=7.0.0",
     "python-dotenv>=1.1.0",
     "qdrant-client>=1.14.2",
     "rank-bm25>=0.2.2",
