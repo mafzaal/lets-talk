@@ -6,9 +6,11 @@ for the RAG system. It includes functions for loading blog posts from the data d
 processing their metadata, and creating vector embeddings.
 """
 
-
+import hashlib
+import os
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
+import pandas as pd
 from langchain_community.document_loaders.text import TextLoader
 from langchain_community.document_loaders import DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -28,8 +30,178 @@ from lets_talk.config import (
     QDRANT_COLLECTION,
     BLOG_BASE_URL,
     CHUNK_SIZE,
-    CHUNK_OVERLAP
+    CHUNK_OVERLAP,
+    METADATA_CSV_FILE,
+    CHECKSUM_ALGORITHM
 )
+
+# Checksum and metadata management functions
+
+def calculate_content_checksum(content: str, algorithm: str = CHECKSUM_ALGORITHM) -> str:
+    """
+    Calculate checksum of document content.
+    
+    Args:
+        content: The text content to hash
+        algorithm: Hash algorithm to use (sha256, md5)
+        
+    Returns:
+        Hexadecimal string representation of the hash
+    """
+    if algorithm.lower() == "md5":
+        hash_obj = hashlib.md5()
+    elif algorithm.lower() == "sha256":
+        hash_obj = hashlib.sha256()
+    else:
+        raise ValueError(f"Unsupported hash algorithm: {algorithm}")
+    
+    hash_obj.update(content.encode('utf-8'))
+    return hash_obj.hexdigest()
+
+
+def get_file_modification_time(file_path: str) -> float:
+    """
+    Get file modification timestamp.
+    
+    Args:
+        file_path: Path to the file
+        
+    Returns:
+        File modification time as timestamp
+    """
+    try:
+        return os.path.getmtime(file_path)
+    except OSError:
+        return 0.0
+
+
+def add_checksum_metadata(documents: List[Document]) -> List[Document]:
+    """
+    Add checksum and timing metadata to documents.
+    
+    Args:
+        documents: List of Document objects to process
+        
+    Returns:
+        Updated list of Document objects with checksum metadata
+    """
+    for doc in documents:
+        # Calculate content checksum
+        doc.metadata["content_checksum"] = calculate_content_checksum(doc.page_content)
+        
+        # Get file modification time
+        source_path = doc.metadata.get("source", "")
+        doc.metadata["file_modified_time"] = get_file_modification_time(source_path)
+        
+        # Add indexing timestamp (will be updated when actually indexed)
+        doc.metadata["indexed_timestamp"] = 0.0
+        
+        # Initialize indexing status
+        doc.metadata["index_status"] = "pending"
+        
+        # Placeholder for chunk count (will be updated after chunking)
+        doc.metadata["chunk_count"] = 1
+    
+    return documents
+
+
+def load_existing_metadata(metadata_csv_path: str) -> Dict[str, Dict]:
+    """
+    Load existing metadata from CSV into a lookup dictionary.
+    
+    Args:
+        metadata_csv_path: Path to the metadata CSV file
+        
+    Returns:
+        Dictionary with source paths as keys and metadata as values
+    """
+    if not os.path.exists(metadata_csv_path):
+        return {}
+    
+    try:
+        df = pd.read_csv(metadata_csv_path)
+        metadata_dict = {}
+        
+        for _, row in df.iterrows():
+            source = row.get('source', '')
+            if source:
+                metadata_dict[source] = row.to_dict()
+        
+        return metadata_dict
+    except Exception as e:
+        print(f"Error loading metadata CSV: {e}")
+        return {}
+
+
+def detect_document_changes(current_docs: List[Document], 
+                          existing_metadata: Dict[str, Dict]) -> Dict[str, Any]:
+    """
+    Categorize documents based on changes compared to existing metadata.
+    
+    Args:
+        current_docs: List of current Document objects
+        existing_metadata: Dictionary of existing document metadata
+        
+    Returns:
+        Dictionary with categories: new, modified, unchanged (List[Document]), deleted_sources (List[str])
+    """
+    new_docs = []
+    modified_docs = []
+    unchanged_docs = []
+    current_sources = set()
+    
+    for doc in current_docs:
+        source = doc.metadata.get("source", "")
+        current_sources.add(source)
+        
+        if source not in existing_metadata:
+            # New document
+            new_docs.append(doc)
+        else:
+            existing_doc = existing_metadata[source]
+            current_checksum = doc.metadata.get("content_checksum", "")
+            existing_checksum = existing_doc.get("content_checksum", "")
+            
+            if current_checksum != existing_checksum:
+                # Modified document
+                modified_docs.append(doc)
+            else:
+                # Unchanged document
+                unchanged_docs.append(doc)
+    
+    # Find deleted documents (in metadata but not in current docs)
+    existing_sources = set(existing_metadata.keys())
+    deleted_sources = list(existing_sources - current_sources)
+    
+    return {
+        "new": new_docs,
+        "modified": modified_docs,
+        "unchanged": unchanged_docs,
+        "deleted_sources": deleted_sources
+    }
+
+
+def should_process_document(doc: Document, existing_metadata: Dict[str, Dict]) -> bool:
+    """
+    Determine if a document needs processing based on checksum comparison.
+    
+    Args:
+        doc: Document object to check
+        existing_metadata: Dictionary of existing document metadata
+        
+    Returns:
+        True if document should be processed, False otherwise
+    """
+    source = doc.metadata.get("source", "")
+    
+    if source not in existing_metadata:
+        return True  # New document
+    
+    current_checksum = doc.metadata.get("content_checksum", "")
+    existing_checksum = existing_metadata[source].get("content_checksum", "")
+    
+    return current_checksum != existing_checksum
+
 
 def load_blog_posts(data_dir: str = DATA_DIR, 
                    glob_pattern: str = "*.md", 
@@ -172,6 +344,9 @@ def update_document_metadata(documents: List[Document],
             print(f"Skipping unpublished document: {doc.metadata['post_title']}")
         else:
             filtered_documents.append(doc)
+    
+    # Add checksum metadata to all filtered documents
+    filtered_documents = add_checksum_metadata(filtered_documents)
         
     return filtered_documents
 
@@ -210,8 +385,11 @@ def get_document_stats(documents: List[Document]) -> Dict[str, Any]:
             "reading_time": doc.metadata.get("reading_time", ""),
             "published": doc.metadata.get("published", ""),
             "post_slug": doc.metadata.get("post_slug", ""),
-
-
+            "content_checksum": doc.metadata.get("content_checksum", ""),
+            "file_modified_time": doc.metadata.get("file_modified_time", 0.0),
+            "indexed_timestamp": doc.metadata.get("indexed_timestamp", 0.0),
+            "chunk_count": doc.metadata.get("chunk_count", 1),
+            "index_status": doc.metadata.get("index_status", "pending"),
         })
     
     stats["documents"] = doc_info
@@ -241,6 +419,8 @@ def display_document_stats(stats: Dict[str, Any]):
         print(f"Cover Video: {doc['cover_video']}")
         print(f"Reading Time: {doc['reading_time']}")
         print(f"Published: {doc['published']}")
+        print(f"Content Checksum: {doc['content_checksum'][:16]}...")  # Show first 16 chars
+        print(f"Index Status: {doc['index_status']}")
         print("-" * 40)
 
 
@@ -264,7 +444,26 @@ def split_documents(documents: List[Document],
         length_function=len,
     )
     
+    # Track original documents and their chunk counts
+    source_to_chunk_count = {}
+    
     split_docs = text_splitter.split_documents(documents)
+    
+    # Count chunks per source document
+    for doc in split_docs:
+        source = doc.metadata.get("source", "")
+        source_to_chunk_count[source] = source_to_chunk_count.get(source, 0) + 1
+    
+    # Update chunk_count in the original documents' metadata
+    for doc in documents:
+        source = doc.metadata.get("source", "")
+        doc.metadata["chunk_count"] = source_to_chunk_count.get(source, 1)
+    
+    # Also update chunk_count in split documents
+    for doc in split_docs:
+        source = doc.metadata.get("source", "")
+        doc.metadata["chunk_count"] = source_to_chunk_count.get(source, 1)
+    
     print(f"Split {len(documents)} documents into {len(split_docs)} chunks")
     return split_docs
 
@@ -292,9 +491,10 @@ def create_vector_store(documents: List[Document],
 
     if qdrant_url:
         vector_store = QdrantVectorStore.from_documents(
+            documents,
+            embedding=embeddings,  # type: ignore
             collection_name=collection_name,
             url=qdrant_url,
-            embedding=embeddings,  # type: ignore
         )
         return vector_store
 

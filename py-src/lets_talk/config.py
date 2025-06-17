@@ -1,4 +1,3 @@
-
 """Define the configurable parameters for the agent."""
 
 from __future__ import annotations
@@ -54,6 +53,11 @@ MAX_SEARCH_RESULTS = int(os.environ.get("MAX_SEARCH_RESULTS", "4"))
 SHOULD_SAVE_STATS = os.environ.get("SHOULD_SAVE_STATS", "True").lower() == "true"
 CREATE_VECTOR_DB = os.environ.get("CREATE_VECTOR_DB", "True").lower() == "true"
 
+# Incremental indexing configuration
+METADATA_CSV_FILE = os.environ.get("METADATA_CSV_FILE", "blog_metadata.csv")
+INCREMENTAL_MODE = os.environ.get("INCREMENTAL_MODE", "auto")  # Options: "auto", "incremental", "full"
+CHECKSUM_ALGORITHM = os.environ.get("CHECKSUM_ALGORITHM", "sha256")  # Options: "sha256", "md5"
+AUTO_DETECT_CHANGES = os.environ.get("AUTO_DETECT_CHANGES", "True").lower() == "true"
 
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "ollama:snowflake-arctic-embed2:latest")
 
