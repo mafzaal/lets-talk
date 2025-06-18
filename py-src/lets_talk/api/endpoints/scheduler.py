@@ -1,122 +1,27 @@
-# ./src/agent/webapp.py
-from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
+"""Scheduler management API endpoints."""
 from typing import Dict, Any, List, Optional
-from datetime import datetime
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, Depends
 from pathlib import Path
-import json
 import os
-import logging
 
-# Import scheduler components
-from lets_talk.scheduler import (
-    PipelineScheduler, 
+from lets_talk.api.dependencies import get_scheduler
+from lets_talk.api.models.scheduler import (
+    CronJobRequest, IntervalJobRequest, OneTimeJobRequest,
+    SchedulerStats, SchedulerHealthResponse
+)
+from lets_talk.api.models.common import JobResponse
+from lets_talk.core.scheduler.manager import PipelineScheduler
+from lets_talk.core.scheduler.config import (
     create_default_scheduler_config,
     load_scheduler_config_from_file,
     save_scheduler_config_to_file
 )
-from lets_talk.config import OUTPUT_DIR, LOGGER_NAME
+from lets_talk.shared.config import OUTPUT_DIR
 
-# Set up logging
-logger = logging.getLogger(f"{LOGGER_NAME}.webapp")
-
-# Global scheduler instance
-scheduler_instance: Optional[PipelineScheduler] = None
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup code - initialize scheduler in background mode
-    global scheduler_instance
-    try:
-        scheduler_instance = PipelineScheduler(
-            scheduler_type="background",
-            max_workers=4,
-            executor_type="thread",
-            enable_persistence=True
-        )
-        scheduler_instance.start()
-        logger.info("Pipeline scheduler started successfully")
-    except Exception as e:
-        logger.error(f"Failed to start scheduler: {e}")
-        scheduler_instance = None
-    
-    yield
-    
-    # Shutdown code
-    if scheduler_instance:
-        try:
-            scheduler_instance.shutdown()
-            logger.info("Pipeline scheduler shut down successfully")
-        except Exception as e:
-            logger.error(f"Error shutting down scheduler: {e}")
-
-# Pydantic models for request/response
-class JobConfig(BaseModel):
-    data_dir: Optional[str] = None
-    storage_path: Optional[str] = None
-    force_recreate: bool = False
-    ci_mode: bool = True
-    use_chunking: bool = True
-    should_save_stats: bool = True
-    chunk_size: int = 1000
-    chunk_overlap: int = 200
-    collection_name: Optional[str] = None
-    embedding_model: Optional[str] = None
-    data_dir_pattern: str = "*.md"
-    blog_base_url: Optional[str] = None
-    base_url: Optional[str] = None
-    incremental_mode: str = "auto"
-    dry_run: bool = False
-
-class CronJobRequest(BaseModel):
-    job_id: str
-    hour: Optional[int] = None
-    minute: int = 0
-    day_of_week: Optional[str] = None
-    cron_expression: Optional[str] = None
-    config: Optional[JobConfig] = None
-
-class IntervalJobRequest(BaseModel):
-    job_id: str
-    minutes: Optional[int] = None
-    hours: Optional[int] = None
-    days: Optional[int] = None
-    config: Optional[JobConfig] = None
-
-class OneTimeJobRequest(BaseModel):
-    job_id: str
-    run_date: datetime
-    config: Optional[JobConfig] = None
-
-class JobResponse(BaseModel):
-    id: str
-    name: str
-    next_run_time: Optional[str]
-    trigger: str
-
-class SchedulerStats(BaseModel):
-    jobs_executed: int
-    jobs_failed: int
-    jobs_missed: int
-    last_execution: Optional[str]
-    last_error: Optional[Dict[str, Any]]
-    active_jobs: int
-    scheduler_running: bool
-
-def get_scheduler() -> PipelineScheduler:
-    """Dependency to get the scheduler instance."""
-    if scheduler_instance is None:
-        raise HTTPException(status_code=503, detail="Scheduler is not available")
-    return scheduler_instance
-
-app = FastAPI(lifespan=lifespan)
+router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 
 
-
-# Pipeline Scheduler Management Endpoints
-
-@app.get("/scheduler/status", response_model=SchedulerStats)
+@router.get("/status", response_model=SchedulerStats)
 async def get_scheduler_status(scheduler: PipelineScheduler = Depends(get_scheduler)):
     """Get current scheduler status and statistics."""
     stats = scheduler.get_job_stats()
@@ -136,20 +41,22 @@ async def get_scheduler_status(scheduler: PipelineScheduler = Depends(get_schedu
         scheduler_running=scheduler_running
     )
 
-@app.get("/scheduler/jobs", response_model=List[JobResponse])
+
+@router.get("/jobs", response_model=List[JobResponse])
 async def list_jobs(scheduler: PipelineScheduler = Depends(get_scheduler)):
     """List all scheduled jobs."""
     jobs = scheduler.list_jobs()
     return [JobResponse(**job) for job in jobs]
 
-@app.post("/scheduler/jobs/cron")
+
+@router.post("/jobs/cron")
 async def create_cron_job(
     job_request: CronJobRequest,
     scheduler: PipelineScheduler = Depends(get_scheduler)
 ):
     """Create a new cron-based scheduled job."""
     try:
-        pipeline_config = job_request.config.dict() if job_request.config else {}
+        pipeline_config = job_request.config.model_dump() if job_request.config else {}
         
         job_id = scheduler.add_cron_job(
             job_id=job_request.job_id,
@@ -164,7 +71,8 @@ async def create_cron_job(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/scheduler/jobs/interval")
+
+@router.post("/jobs/interval")
 async def create_interval_job(
     job_request: IntervalJobRequest,
     scheduler: PipelineScheduler = Depends(get_scheduler)
@@ -185,7 +93,8 @@ async def create_interval_job(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/scheduler/jobs/onetime")
+
+@router.post("/jobs/onetime")
 async def create_onetime_job(
     job_request: OneTimeJobRequest,
     scheduler: PipelineScheduler = Depends(get_scheduler)
@@ -204,7 +113,8 @@ async def create_onetime_job(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.delete("/scheduler/jobs/{job_id}")
+
+@router.delete("/jobs/{job_id}")
 async def remove_job(job_id: str, scheduler: PipelineScheduler = Depends(get_scheduler)):
     """Remove a scheduled job."""
     try:
@@ -213,7 +123,8 @@ async def remove_job(job_id: str, scheduler: PipelineScheduler = Depends(get_sch
     except Exception as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@app.post("/scheduler/jobs/{job_id}/run")
+
+@router.post("/jobs/{job_id}/run")
 async def run_job_now(job_id: str, scheduler: PipelineScheduler = Depends(get_scheduler)):
     """Trigger immediate execution of a scheduled job."""
     try:
@@ -222,7 +133,8 @@ async def run_job_now(job_id: str, scheduler: PipelineScheduler = Depends(get_sc
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/scheduler/presets")
+
+@router.get("/presets")
 async def get_preset_schedules():
     """Get common preset schedule configurations."""
     presets = {
@@ -260,11 +172,12 @@ async def get_preset_schedules():
     }
     return presets
 
-@app.post("/scheduler/presets/{preset_name}")
+
+@router.post("/presets/{preset_name}")
 async def create_preset_job(
     preset_name: str,
     job_id: str,
-    config: Optional[JobConfig] = None,
+    config: Optional[Dict[str, Any]] = None,
     scheduler: PipelineScheduler = Depends(get_scheduler)
 ):
     """Create a job using a preset schedule configuration."""
@@ -274,7 +187,7 @@ async def create_preset_job(
         raise HTTPException(status_code=404, detail=f"Preset '{preset_name}' not found")
     
     preset = presets[preset_name]
-    pipeline_config = config.dict() if config else {}
+    pipeline_config = config or {}
     
     try:
         if preset["type"] == "cron":
@@ -312,7 +225,8 @@ async def create_preset_job(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/scheduler/config/export")
+
+@router.get("/config/export")
 async def export_scheduler_config(scheduler: PipelineScheduler = Depends(get_scheduler)):
     """Export current scheduler configuration."""
     try:
@@ -321,7 +235,8 @@ async def export_scheduler_config(scheduler: PipelineScheduler = Depends(get_sch
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/scheduler/config/import")
+
+@router.post("/config/import")
 async def import_scheduler_config(
     config: Dict[str, Any],
     scheduler: PipelineScheduler = Depends(get_scheduler)
@@ -333,12 +248,14 @@ async def import_scheduler_config(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/scheduler/config/default")
+
+@router.get("/config/default")
 async def get_default_config():
     """Get default scheduler configuration."""
     return create_default_scheduler_config()
 
-@app.post("/scheduler/config/save")
+
+@router.post("/config/save")
 async def save_config_to_file(
     config: Dict[str, Any],
     filename: Optional[str] = None
@@ -353,7 +270,8 @@ async def save_config_to_file(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/scheduler/config/load")
+
+@router.get("/config/load")
 async def load_config_from_file(
     filename: Optional[str] = None,
     scheduler: PipelineScheduler = Depends(get_scheduler)
@@ -372,79 +290,8 @@ async def load_config_from_file(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# Pipeline Execution Endpoints
 
-@app.post("/pipeline/run")
-async def run_pipeline(
-    background_tasks: BackgroundTasks,
-    config: Optional[JobConfig] = None
-):
-    """Run the pipeline immediately with optional configuration."""
-    pipeline_config = config.model_dump() if config else {}
-    pipeline_config["job_id"] = f"manual_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    
-    # Use background task to avoid blocking the API
-    from lets_talk.simple_pipeline_job import simple_pipeline_job
-    background_tasks.add_task(simple_pipeline_job, pipeline_config)
-    
-    return {"message": "Pipeline execution started", "job_id": pipeline_config["job_id"]}
-
-@app.get("/pipeline/reports")
-async def list_pipeline_reports():
-    """List available pipeline execution reports."""
-    try:
-        reports_dir = Path(OUTPUT_DIR)
-        if not reports_dir.exists():
-            return {"reports": []}
-        
-        report_files = list(reports_dir.glob("job_report_*.json"))
-        reports = []
-        
-        for file_path in sorted(report_files, key=lambda x: x.stat().st_mtime, reverse=True):
-            try:
-                with open(file_path, 'r') as f:
-                    report = json.load(f)
-                    report["filename"] = file_path.name
-                    reports.append(report)
-            except Exception as e:
-                logger.error(f"Failed to load report {file_path}: {e}")
-        
-        return {"reports": reports}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/pipeline/reports/{report_filename}")
-async def get_pipeline_report(report_filename: str):
-    """Get details of a specific pipeline execution report."""
-    try:
-        report_path = Path(OUTPUT_DIR) / report_filename
-        if not report_path.exists():
-            raise HTTPException(status_code=404, detail="Report not found")
-        
-        with open(report_path, 'r') as f:
-            report = json.load(f)
-        
-        return report
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-# Health Check Endpoints
-
-@app.get("/health")
-async def health_check():
-    """Basic health check endpoint."""
-    scheduler_status = "stopped"
-    if scheduler_instance and scheduler_instance.scheduler and hasattr(scheduler_instance.scheduler, 'running'):
-        scheduler_status = "running" if scheduler_instance.scheduler.running else "stopped"
-    
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "scheduler_status": scheduler_status,
-        "version": "1.0.0"
-    }
-
-@app.get("/scheduler/health")
+@router.get("/health", response_model=SchedulerHealthResponse)
 async def scheduler_health_check(scheduler: PipelineScheduler = Depends(get_scheduler)):
     """Detailed scheduler health check."""
     try:
@@ -455,22 +302,22 @@ async def scheduler_health_check(scheduler: PipelineScheduler = Depends(get_sche
         if scheduler.scheduler and hasattr(scheduler.scheduler, 'running'):
             scheduler_running = scheduler.scheduler.running
         
-        health_status = {
-            "scheduler_running": scheduler_running,
-            "total_jobs": len(jobs),
-            "jobs_executed": stats["jobs_executed"],
-            "jobs_failed": stats["jobs_failed"],
-            "jobs_missed": stats["jobs_missed"],
-            "last_execution": stats["last_execution"],
-            "healthy": True
-        }
+        health_status = SchedulerHealthResponse(
+            scheduler_running=scheduler_running,
+            total_jobs=len(jobs),
+            jobs_executed=stats["jobs_executed"],
+            jobs_failed=stats["jobs_failed"],
+            jobs_missed=stats["jobs_missed"],
+            last_execution=stats["last_execution"],
+            healthy=True
+        )
         
         # Consider scheduler unhealthy if too many failures
         if stats["jobs_failed"] > 0 and stats["jobs_executed"] > 0:
             failure_rate = stats["jobs_failed"] / (stats["jobs_executed"] + stats["jobs_failed"])
             if failure_rate > 0.5:  # More than 50% failure rate
-                health_status["healthy"] = False
-                health_status["warning"] = "High job failure rate detected"
+                health_status.healthy = False
+                health_status.warning = "High job failure rate detected"
         
         return health_status
     except Exception as e:

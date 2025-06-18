@@ -1,3 +1,4 @@
+"""Shared prompt templates for the application."""
 
 # Create RAG prompt template
 RESPONSE_SYSTEM_PROMPT = """\
@@ -51,7 +52,6 @@ REACT_AGENT_PROMPT = """\
 You are a helpful AI assistant. Your task is to use the provided tools to answer the user's query.
 System time: {system_time}
 """
-
 
 
 TONE_CHECK_PROMPT = """\
@@ -113,4 +113,3 @@ Respond using concise sentences or short paragraphs, maintaining a respectful an
 - Always maintain a positive and empathetic approach, even when the input is challenging. 💖
 - Aim to uplift and provide encouragement, transforming the interaction into a positive experience. ✨
 """
-

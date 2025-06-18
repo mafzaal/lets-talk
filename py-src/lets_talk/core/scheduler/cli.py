@@ -43,13 +43,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # Import our scheduler module
-from lets_talk.scheduler import (
-    PipelineScheduler, 
+from lets_talk.core.scheduler.manager import PipelineScheduler
+from lets_talk.core.scheduler.config import (
     create_default_scheduler_config,
     load_scheduler_config_from_file,
     save_scheduler_config_to_file
 )
-from lets_talk.config import OUTPUT_DIR, LOGGER_NAME
+from lets_talk.shared.config import OUTPUT_DIR, LOGGER_NAME
 import logging
 
 # Set up logging
@@ -113,7 +113,7 @@ class SchedulerCLI:
                 # Blocking mode - scheduler.start() will block here
                 pass
             except KeyboardInterrupt:
-                print("\nShutting down scheduler...")
+                print("\\nShutting down scheduler...")
         
         # Cleanup
         if self.scheduler:
@@ -175,13 +175,13 @@ class SchedulerCLI:
             jobs = temp_scheduler.list_jobs()
             stats = temp_scheduler.get_job_stats()
             
-            print(f"\nJobs: {len(jobs)}")
+            print(f"\\nJobs: {len(jobs)}")
             for job in jobs:
                 print(f"  - {job['id']}: {job['name']}")
                 print(f"    Next run: {job['next_run_time'] or 'Not scheduled'}")
                 print(f"    Trigger: {job['trigger']}")
             
-            print(f"\nJob Statistics:")
+            print(f"\\nJob Statistics:")
             print(f"  Executed: {stats['jobs_executed']}")
             print(f"  Failed: {stats['jobs_failed']}")
             print(f"  Missed: {stats['jobs_missed']}")
@@ -474,7 +474,7 @@ def main():
             return 1
             
     except KeyboardInterrupt:
-        print("\nOperation cancelled")
+        print("\\nOperation cancelled")
         return 130
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)

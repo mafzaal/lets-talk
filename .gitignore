@@ -166,3 +166,4 @@ cython_debug/
 output/
 start-docker.sh
 data/
+!py-src/**/data

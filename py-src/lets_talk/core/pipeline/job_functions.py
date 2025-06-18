@@ -25,7 +25,7 @@ def pipeline_job_function(job_config: Dict[str, Any]):
     
     try:
         # Import logging configuration at runtime to avoid import issues
-        from lets_talk.config import LOG_LEVEL, LOG_FORMAT, LOGGER_NAME
+        from lets_talk.shared.config import LOG_LEVEL, LOG_FORMAT, LOGGER_NAME
         import logging
         
         logger = logging.getLogger(f"{LOGGER_NAME}.scheduler_job")
@@ -36,7 +36,7 @@ def pipeline_job_function(job_config: Dict[str, Any]):
         import importlib
         
         # Import configuration constants
-        config_module = importlib.import_module('lets_talk.config')
+        config_module = importlib.import_module('lets_talk.shared.config')
         DATA_DIR = getattr(config_module, 'DATA_DIR')
         VECTOR_STORAGE_PATH = getattr(config_module, 'VECTOR_STORAGE_PATH')
         FORCE_RECREATE = getattr(config_module, 'FORCE_RECREATE')
@@ -50,8 +50,8 @@ def pipeline_job_function(job_config: Dict[str, Any]):
         DEFAULT_METADATA_CSV_FILENAME = getattr(config_module, 'DEFAULT_METADATA_CSV_FILENAME')
         
         # Import pipeline function
-        pipeline_module = importlib.import_module('lets_talk.pipeline')
-        create_vector_database = getattr(pipeline_module, 'create_vector_database')
+        pipeline_module = importlib.import_module('lets_talk.core.pipeline.engine')
+        run_pipeline = getattr(pipeline_module, 'run_pipeline')
         
         # Extract pipeline parameters with defaults
         data_dir = job_config.get('data_dir', DATA_DIR)
@@ -77,7 +77,7 @@ def pipeline_job_function(job_config: Dict[str, Any]):
             metadata_csv_path = os.path.join(output_dir, DEFAULT_METADATA_CSV_FILENAME)
         
         # Execute the pipeline
-        success, message, stats, stats_file, stats_content = create_vector_database(
+        success, message, stats, stats_file, stats_content = run_pipeline(
             data_dir=data_dir,
             storage_path=storage_path,
             force_recreate=force_recreate,
@@ -126,7 +126,7 @@ def pipeline_job_function(job_config: Dict[str, Any]):
         
         # Get OUTPUT_DIR safely
         try:
-            from lets_talk.config import OUTPUT_DIR as DEFAULT_OUTPUT_DIR
+            from lets_talk.shared.config import OUTPUT_DIR as DEFAULT_OUTPUT_DIR
             output_dir = job_config.get('output_dir', DEFAULT_OUTPUT_DIR)
         except ImportError:
             output_dir = job_config.get('output_dir', './output')
@@ -140,7 +140,7 @@ def _save_job_report(job_id: str, success: bool, message: str,
                     output_dir: Optional[str] = None):
     """Save a report of job execution."""
     if output_dir is None:
-        from lets_talk.config import OUTPUT_DIR
+        from lets_talk.shared.config import OUTPUT_DIR
         output_dir = OUTPUT_DIR
         
     report = {

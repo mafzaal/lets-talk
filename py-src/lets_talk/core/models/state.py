@@ -1,6 +1,6 @@
+"""State definitions for agents and workflows."""
 
-
-from typing import Sequence, TypedDict, Annotated,  NotRequired
+from typing import Sequence, TypedDict, Annotated, NotRequired
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 from langchain_core.documents import Document
@@ -27,14 +27,14 @@ class InputState(MessagesState):
     Attributes:
         messages: List of messages in the conversation
         documents: Optional list of Document objects from RAG retrievals
+        queries: User queries for document retrieval
+        is_rude: Flag indicating if the conversation contains rude content
     """
     
-    
     is_rude: NotRequired[bool]
-
-    #retrieved documents
-    documents: NotRequired[list[Document]]
-
-    #user messages
-    queries: NotRequired[Annotated[list[str], add_queries]]
     
+    # Retrieved documents
+    documents: NotRequired[list[Document]]
+    
+    # User messages/queries
+    queries: NotRequired[Annotated[list[str], add_queries]]

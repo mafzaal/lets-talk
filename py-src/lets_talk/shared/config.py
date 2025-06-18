@@ -1,8 +1,11 @@
-"""Define the configurable parameters for the agent."""
+"""Configuration settings for the application."""
 
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass, field, fields
+from typing import Annotated, Any, Literal, Optional, Type, TypeVar
+from langchain_core.runnables import RunnableConfig, ensure_config
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -20,12 +23,9 @@ INDEX_ONLY_PUBLISHED_POSTS = os.environ.get("INDEX_ONLY_PUBLISHED_POSTS", "True"
 RSS_URL = os.environ.get("RSS_URL", "")
 
 # For output directory to start data
-
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "output/")
 AGENT_PROMPT_FILE = os.environ.get("AGENT_PROMPT_FILE", f"{OUTPUT_DIR}/agent_prompt.md")
 AGENT_PROMPT = os.environ.get("AGENT_PROMPT", "")
-
-#OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "./stats")
 
 #For embedding storage
 VECTOR_STORAGE_PATH = os.environ.get("VECTOR_STORAGE_PATH", "")
@@ -33,7 +33,6 @@ FORCE_RECREATE = os.environ.get("FORCE_RECREATE", "False").lower() == "true"
 # For Qdrant vector database
 QDRANT_URL = os.environ.get("QDRANT_URL", "")
 QDRANT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "lets_talk_documents")
-
 
 # Document chunking configuration
 # Chunking and retrieval strategies
@@ -105,10 +104,7 @@ LOGGER_NAME = os.environ.get("LOGGER_NAME", "blog-pipeline")
 DEFAULT_METADATA_CSV_FILENAME = os.environ.get("DEFAULT_METADATA_CSV_FILENAME", "blog_metadata.csv")
 
 
-from dataclasses import dataclass, field, fields
-from typing import Annotated, Any, Literal, Optional, Type, TypeVar
-from langchain_core.runnables import RunnableConfig, ensure_config
-from lets_talk import prompts
+T = TypeVar("T", bound="Configuration")
 
 
 @dataclass(kw_only=True)
@@ -116,7 +112,7 @@ class Configuration:
     """The configuration for the agent."""
 
     response_system_prompt: str = field(
-        default=prompts.RESPONSE_SYSTEM_PROMPT,
+        default="",  # Will be set from prompts module
         metadata={"description": "The system prompt used for generating responses."},
     )
 
@@ -128,7 +124,7 @@ class Configuration:
     )
 
     query_system_prompt: str = field(
-        default=prompts.QUERY_SYSTEM_PROMPT,
+        default="",  # Will be set from prompts module
         metadata={
             "description": "The system prompt used for processing and refining queries."
         },
@@ -141,9 +137,8 @@ class Configuration:
         },
     )
 
-
     query_tone_check_prompt: str = field(
-        default=prompts.TONE_CHECK_PROMPT,
+        default="",  # Will be set from prompts module
         metadata={
             "description": "The system prompt used for checking the tone of queries."
         },
@@ -157,7 +152,7 @@ class Configuration:
     )
 
     query_rude_answer_prompt: str = field(
-        default=prompts.RUDE_QUERY_ANSWER_PROMPT,
+        default="",  # Will be set from prompts module
         metadata={
             "description": "The system prompt used for answering rude or derogatory queries."
         },
@@ -171,7 +166,7 @@ class Configuration:
     )
 
     react_agent_prompt: str = field(
-        default=prompts.REACT_AGENT_PROMPT,
+        default="",  # Will be set from prompts module
         metadata={
             "description": "The system prompt used for the React agent."
         },
@@ -184,20 +179,18 @@ class Configuration:
         },
     )
 
-
-
     @classmethod
     def from_runnable_config(
         cls: Type[T], config: Optional[RunnableConfig] = None
     ) -> T:
-        """Create an IndexConfiguration instance from a RunnableConfig object.
+        """Create a Configuration instance from a RunnableConfig object.
 
         Args:
             cls (Type[T]): The class itself.
             config (Optional[RunnableConfig]): The configuration object to use.
 
         Returns:
-            T: An instance of IndexConfiguration with the specified configuration.
+            T: An instance of Configuration with the specified configuration.
         """
         config = ensure_config(config)
         configurable = config.get("configurable") or {}
@@ -205,4 +198,20 @@ class Configuration:
         return cls(**{k: v for k, v in configurable.items() if k in _fields})
 
 
-T = TypeVar("T", bound=Configuration)
+def load_configuration_with_prompts() -> Configuration:
+    """Load configuration with prompt templates."""
+    from lets_talk.shared.prompts.templates import (
+        RESPONSE_SYSTEM_PROMPT,
+        QUERY_SYSTEM_PROMPT,
+        TONE_CHECK_PROMPT,
+        RUDE_QUERY_ANSWER_PROMPT,
+        REACT_AGENT_PROMPT,
+    )
+    
+    return Configuration(
+        response_system_prompt=RESPONSE_SYSTEM_PROMPT,
+        query_system_prompt=QUERY_SYSTEM_PROMPT,
+        query_tone_check_prompt=TONE_CHECK_PROMPT,
+        query_rude_answer_prompt=RUDE_QUERY_ANSWER_PROMPT,
+        react_agent_prompt=REACT_AGENT_PROMPT,
+    )
