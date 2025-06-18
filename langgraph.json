@@ -9,7 +9,6 @@
       "."
     ],
     "http":{
-      "disable_meta": true,
-      "disable_store": true
+      "app": "./py-src/lets_talk//webapp.py:app"
     }
   }

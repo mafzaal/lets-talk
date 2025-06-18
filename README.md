@@ -52,6 +52,29 @@ Let's Talk is available in multiple implementations:
 
 Ask questions about RAG evaluation, research agents, data strategy, or any other topics from my blog to see Let's Talk in action!
 
+## Pipeline Scheduling and Management 🕐
+
+Let's Talk now includes a comprehensive pipeline scheduling system built with FastAPI:
+
+- **Automated Content Updates:** Schedule regular pipeline runs to keep your content up-to-date
+- **Flexible Scheduling:** Support for cron expressions, intervals, and one-time runs
+- **REST API Management:** Full API for creating, monitoring, and managing scheduled jobs
+- **Real-time Monitoring:** Health checks, execution statistics, and error tracking
+- **Preset Configurations:** Common scheduling patterns (daily, weekly, hourly)
+
+### Quick Start with Pipeline Scheduling
+
+```bash
+# Start the FastAPI scheduler server
+./start_scheduler_api.sh
+
+# Or manually with uvicorn
+uv run uvicorn lets_talk.webapp:app --host 0.0.0.0 --port 8000
+```
+
+Visit `http://localhost:8000/docs` for the interactive API documentation.
+
+For complete documentation, see [Pipeline Scheduling API Guide](docs/PIPELINE_SCHEDULING_API.md).
 
 ## Future Enhancements
 

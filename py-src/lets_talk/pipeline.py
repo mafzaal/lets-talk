@@ -2,7 +2,7 @@
 Blog Data Update Script
 
 This script updates the blog data vector store when new posts are added.
-It can be scheduled to run periodically or manually executed.
+It can be manually executed.
 
 Usage:
     python pipeline.py [--force-recreate] [--data-dir DATA_DIR] [--output-dir OUTPUT_DIR] 
@@ -27,6 +27,7 @@ Options:
 import os
 import sys
 import argparse
+import time
 from datetime import datetime
 import json
 import logging

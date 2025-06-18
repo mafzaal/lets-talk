@@ -1,0 +1,37 @@
+{
+  "jobs": [
+    {
+      "job_id": "daily_incremental_update",
+      "type": "cron",
+      "hour": 2,
+      "minute": 0,
+      "config": {
+        "incremental_mode": "auto",
+        "force_recreate": false,
+        "ci_mode": true
+      }
+    },
+    {
+      "job_id": "weekly_full_rebuild",
+      "type": "cron",
+      "day_of_week": "sun",
+      "hour": 1,
+      "minute": 0,
+      "conevalsfig": {
+        "incremental_mode": "full",
+        "force_recreate": true,
+        "ci_mode": true
+      }
+    },
+    {
+      "job_id": "hourly_health_check",
+      "type": "interval",
+      "hours": 1,
+      "config": {
+        "incremental_mode": "auto",
+        "dry_run": true,
+        "ci_mode": true
+      }
+    }
+  ]
+}
