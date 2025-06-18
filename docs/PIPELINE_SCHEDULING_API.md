@@ -1,10 +1,46 @@
 # Pipeline Scheduling with FastAPI
 
-This document describes the comprehensive pipeline scheduling functionality added to the FastAPI application.
+This document describes the comprehensive pipeline scheduling functionality in the FastAPI application.
 
 ## Overview
 
-The FastAPI application now includes a complete pipeline scheduling system that allows you to:
+The FastAPI application includes a complete pipeline scheduling system that allows you to:
+
+- Schedule pipeline runs using cron expressions or intervals
+- Manage scheduled jobs through REST API endpoints
+- Monitor job execution and health status
+- Use preset configurations for common scheduling patterns
+- Export/import job configurations
+- Run pipelines immediately on demand
+
+## Getting Started
+
+### Starting the API Server
+
+```bash
+# Start the server
+cd py-src && uv run python lets_talk/main.py
+
+# Or use uvicorn directly
+cd py-src && uv run uvicorn lets_talk.api.main:app --host 0.0.0.0 --port 8000
+
+# Access API documentation
+# Visit http://localhost:8000/docs
+```
+
+### Using the New Architecture
+
+```python
+# Import the FastAPI app
+from lets_talk.api.main import app
+
+# Use scheduler manager
+from lets_talk.core.scheduler.manager import PipelineScheduler
+
+# Access API models
+from lets_talk.api.models.scheduler import CreateJobRequest
+from lets_talk.api.models.pipeline import PipelineRequest
+```
 
 - Schedule pipeline runs using cron expressions or intervals
 - Manage scheduled jobs through REST API endpoints

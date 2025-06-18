@@ -21,16 +21,25 @@ Successfully implemented a robust, production-ready pipeline scheduler using APS
 
 ```
 lets_talk/
-├── scheduler.py           # Main scheduler class
-├── scheduler_cli.py       # CLI interface
-├── simple_pipeline_job.py # Simplified job function
-└── pipeline_job.py        # Original job function (has import issues)
+├── core/
+│   └── scheduler/
+│       ├── manager.py         # Main scheduler class
+│       ├── cli.py             # CLI interface
+│       └── config.py          # Configuration utilities
+├── core/
+│   └── pipeline/
+│       ├── jobs.py            # Pipeline job implementations
+│       ├── job_functions.py   # Standalone job functions
+│       └── engine.py          # Pipeline execution engine
+└── api/
+    └── endpoints/
+        └── scheduler.py       # FastAPI scheduler endpoints
 ```
 
 ### Scheduler Class
 
 ```python
-from lets_talk.scheduler import PipelineScheduler
+from lets_talk.core.scheduler.manager import PipelineScheduler
 
 # Create scheduler
 scheduler = PipelineScheduler(

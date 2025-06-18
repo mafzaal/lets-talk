@@ -7,7 +7,7 @@ This implementation adds comprehensive pipeline scheduling functionality to the 
 ## Files Created
 
 ### 1. **Core Implementation**
-- `py-src/lets_talk/webapp.py` - Enhanced FastAPI application with pipeline scheduling endpoints
+- `py-src/lets_talk/api/main.py` - Enhanced FastAPI application with pipeline scheduling endpoints
 - `docs/PIPELINE_SCHEDULING_API.md` - Complete documentation for the scheduling API
 
 ### 2. **Examples and Testing**
@@ -76,7 +76,7 @@ This implementation adds comprehensive pipeline scheduling functionality to the 
 ./start_scheduler_api.sh
 
 # Or manually
-uv run uvicorn lets_talk.webapp:app --host 0.0.0.0 --port 8000
+uv run uvicorn lets_talk.api.main:app --host 0.0.0.0 --port 8000
 ```
 
 ### 2. Creating Scheduled Jobs

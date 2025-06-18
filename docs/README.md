@@ -1,47 +1,89 @@
 # Documentation Index
 
-This directory contains comprehensive documentation for the blog pipeline system.
+This directory contains comprehensive documentation for the Let's Talk system.
 
-## Pipeline Documentation
+## Core Documentation
 
 ### 📖 Main Guides
 
+- **[Architecture Documentation](ARCHITECTURE.md)** - Complete system architecture overview
+- **[Migration Guide](MIGRATION_GUIDE.md)** - Migrate from legacy to new structure
 - **[Pipeline Usage Guide](PIPELINE_USAGE_GUIDE.md)** - Comprehensive guide for using the pipeline
 - **[Pipeline Quick Reference](PIPELINE_QUICK_REFERENCE.md)** - Quick commands and common scenarios
+- **[Pipeline Scheduling API](PIPELINE_SCHEDULING_API.md)** - FastAPI scheduling endpoints
+- **[Scheduler Documentation](SCHEDULER.md)** - Complete scheduler documentation
 - **[Pipeline Configuration Template](PIPELINE_CONFIG_TEMPLATE.env)** - Environment variables template
 
 ### 📋 Technical Reports
 
 - **[Incremental Indexing Final Report](INCREMENTAL_INDEXING_FINAL_REPORT.md)** - Detailed technical implementation report
+- **[Scheduler Implementation Report](SCHEDULER_IMPLEMENTATION_REPORT.md)** - Scheduler implementation details
 
 ## Quick Start
 
-1. **First Time Setup**:
-   ```bash
-   # Copy and customize configuration
-   cp docs/PIPELINE_CONFIG_TEMPLATE.env .env
-   
-   # Edit .env with your settings
-   nano .env
-   
-   # Create initial vector store
-   uv run python py-src/lets_talk/pipeline.py --force-recreate
-   ```
+### 1. First Time Setup
 
-2. **Daily Usage**:
-   ```bash
-   # Update with incremental indexing
-   uv run python py-src/lets_talk/pipeline.py --auto-incremental
-   ```
+```bash
+# Copy and customize configuration
+cp docs/PIPELINE_CONFIG_TEMPLATE.env .env
 
-3. **Troubleshooting**:
-   ```bash
-   # Health check
-   uv run python py-src/lets_talk/pipeline.py --health-check-only
-   
-   # See what would be processed
-   uv run python py-src/lets_talk/pipeline.py --dry-run --incremental
-   ```
+# Edit .env with your settings
+nano .env
+
+# Create initial vector store
+cd py-src && uv run python -m lets_talk.core.pipeline.engine --force-recreate
+```
+
+### 2. Start the Application
+
+```bash
+# Start the FastAPI server
+cd py-src && uv run python lets_talk/main.py
+
+# Or start Chainlit interface
+chainlit run py-src/app.py --host 0.0.0.0 --port 7860
+```
+
+### 3. Daily Usage
+
+```bash
+# Update with incremental indexing
+cd py-src && uv run python -m lets_talk.core.pipeline.engine --auto-incremental
+
+# Use scheduler for automation
+cd py-src && uv run python -m lets_talk.core.scheduler.cli start --daemon
+```
+
+### 4. Development
+
+```bash
+# Use programmatic API
+cd py-src && uv run python -c "
+from lets_talk.core.pipeline.engine import run_pipeline
+from lets_talk.agents import create_rag_agent
+from lets_talk.shared.config import load_configuration_with_prompts
+
+# Run pipeline
+result = run_pipeline(data_dir='data/', force_recreate=False)
+
+# Create agents
+config = load_configuration_with_prompts()
+agent = create_rag_agent(config)
+"
+```
+
+### 5. Troubleshooting
+
+```bash
+# Health check
+cd py-src && uv run python -m lets_talk.core.pipeline.engine --health-check-only
+
+# See what would be processed
+cd py-src && uv run python -m lets_talk.core.pipeline.engine --dry-run --incremental
+
+# Check imports
+cd py-src && uv run python -c "import lets_talk; print('All imports working')"
+```
 
 ## Documentation Structure
 

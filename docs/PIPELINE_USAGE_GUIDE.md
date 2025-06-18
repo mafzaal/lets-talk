@@ -1,6 +1,6 @@
 # Pipeline Usage Guide
 
-This guide provides comprehensive documentation for using the `pipeline.py` script to manage your blog data vector store.
+This guide provides comprehensive documentation for using the pipeline engine to manage your blog data vector store.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ This guide provides comprehensive documentation for using the `pipeline.py` scri
 
 ## Overview
 
-The pipeline script (`pipeline.py`) is the main tool for creating and updating your blog data vector store. It processes markdown blog posts, creates embeddings, and stores them in a Qdrant vector database for efficient retrieval.
+The pipeline engine (`lets_talk.core.pipeline.engine`) is the main tool for creating and updating your blog data vector store. It processes markdown blog posts, creates embeddings, and stores them in a Qdrant vector database for efficient retrieval.
 
 ### Key Features
 
@@ -34,16 +34,29 @@ The pipeline script (`pipeline.py`) is the main tool for creating and updating y
 
 ```bash
 # Create vector store from all documents
-uv run python lets_talk/pipeline.py
+cd py-src && uv run python -m lets_talk.core.pipeline.engine
 
 # Force recreation of the vector store
-uv run python lets_talk/pipeline.py --force-recreate
+cd py-src && uv run python -m lets_talk.core.pipeline.engine --force-recreate
 
 # Run with custom data directory
-uv run python lets_talk/pipeline.py --data-dir /path/to/blog/posts
+cd py-src && uv run python -m lets_talk.core.pipeline.engine --data-dir /path/to/blog/posts
 
 # Dry run to see what would be processed
-uv run python lets_talk/pipeline.py --dry-run
+cd py-src && uv run python -m lets_talk.core.pipeline.engine --dry-run
+```
+
+### Using the API
+
+```python
+from lets_talk.core.pipeline.engine import run_pipeline
+
+# Run pipeline programmatically
+success, message, stats, stats_file, stats_content = run_pipeline(
+    data_dir="data/",
+    force_recreate=False,
+    output_dir="output/"
+)
 ```
 
 ### First Time Setup
@@ -403,13 +416,20 @@ export EMBEDDING_MODEL="ollama:snowflake-arctic-embed2:latest"
 
 ```bash
 # Check configuration
-uv run python -c "from lets_talk.config import *; print(f'Data dir: {DATA_DIR}')"
+cd py-src && uv run python -c "from lets_talk.shared.config import *; print(f'Data dir: {DATA_DIR}')"
 
 # Verify imports
-uv run python -c "from lets_talk.pipeline import parse_args; print('Import successful')"
+cd py-src && uv run python -c "from lets_talk.core.pipeline.engine import run_pipeline; print('Import successful')"
 
 # Test health check
-uv run python lets_talk/pipeline.py --health-check-only --output-dir /tmp/test
+cd py-src && uv run python -m lets_talk.core.pipeline.engine --health-check-only --output-dir /tmp/test
+
+# Use programmatic API
+cd py-src && uv run python -c "
+from lets_talk.core.pipeline.engine import run_pipeline
+result = run_pipeline(data_dir='data/', dry_run=True)
+print(f'Success: {result[0]}, Message: {result[1]}')
+"
 ```
 
 ### Log Analysis

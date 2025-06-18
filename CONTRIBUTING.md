@@ -39,16 +39,20 @@ TheDataGuy Chat is a Q&A chatbot powered by the content from [TheDataGuy blog](h
 
 3. Install dependencies:
    ```bash
-   uv init && uv sync
+   uv sync
    ```
 
 4. Build the vector store:
    ```bash
-   ./scripts/build-vector-store.sh
+   cd py-src && uv run python -m lets_talk.core.pipeline.engine
    ```
 
 5. Run the application:
    ```bash
+   # Start the API server
+   cd py-src && uv run python lets_talk/main.py
+   
+   # Or for Chainlit interface
    chainlit run py-src/app.py --host 0.0.0.0 --port 7860
    ```
 
@@ -71,16 +75,33 @@ lets-talk/
 ├── data/                  # Raw blog post content
 ├── py-src/                # Python source code
 │   ├── lets_talk/         # Core application modules
-│   │   ├── agent.py       # Agent implementation
-│   │   ├── config.py      # Configuration settings
-│   │   ├── models.py      # Data models
-│   │   ├── prompts.py     # LLM prompt templates
-│   │   ├── rag.py         # RAG implementation
-│   │   ├── rss_tool.py    # RSS feed integration
-│   │   ├── tools.py       # Tool implementations
-│   │   └── utils/         # Utility functions
-│   ├── app.py             # Main application entry point
-│   ├── pipeline.py        # Data processing pipeline
+│   │   ├── agents/        # AI agent implementations
+│   │   │   ├── base.py    # Abstract base agent
+│   │   │   ├── factory.py # Agent factory pattern
+│   │   │   ├── rag_agent.py   # RAG agent
+│   │   │   └── react_agent.py # ReAct agent
+│   │   ├── api/           # FastAPI application
+│   │   │   ├── main.py    # FastAPI app
+│   │   │   ├── dependencies.py # Shared dependencies
+│   │   │   ├── endpoints/ # API routers
+│   │   │   └── models/    # Request/response models
+│   │   ├── core/          # Core business logic
+│   │   │   ├── models/    # Domain models and state
+│   │   │   ├── pipeline/  # Pipeline execution
+│   │   │   ├── rag/       # RAG retrieval logic
+│   │   │   └── scheduler/ # Job scheduling
+│   │   ├── tools/         # External integrations
+│   │   │   ├── datetime/  # Date/time utilities
+│   │   │   └── external/  # External services
+│   │   ├── utils/         # Utility functions
+│   │   │   ├── blog/      # Blog processing
+│   │   │   └── formatters.py # Document formatting
+│   │   └── shared/        # Shared components
+│   │       ├── config.py  # Configuration
+│   │       ├── constants.py # Constants
+│   │       ├── exceptions.py # Custom exceptions
+│   │       └── prompts/   # LLM templates
+│   ├── app.py             # Chainlit entry point
 │   └── notebooks/         # Jupyter notebooks for analysis
 ├── db/                    # Vector database storage
 ├── evals/                 # Evaluation datasets and results
@@ -94,8 +115,47 @@ When new blog posts are published on TheDataGuy.pro, follow these steps to add t
 1. Add the markdown content to the `data/` directory in a new folder named after the post slug
 2. Run the vector store update script:
    ```bash
-   python py-src/pipeline.py --force-recreate
+   cd py-src && uv run python -m lets_talk.core.pipeline.engine --force-recreate
    ```
+
+## Development Workflow
+
+### Working with Agents
+
+```python
+# Create and use agents
+from lets_talk.agents import create_rag_agent, create_react_agent
+from lets_talk.shared.config import load_configuration_with_prompts
+
+config = load_configuration_with_prompts()
+agent = create_rag_agent(config)
+```
+
+### API Development
+
+```python
+# Add new endpoints
+from lets_talk.api.main import app
+from fastapi import APIRouter
+
+router = APIRouter(prefix="/new-feature")
+
+@router.get("/test")
+async def test_endpoint():
+    return {"message": "Hello from new endpoint"}
+
+app.include_router(router)
+```
+
+### Pipeline Development
+
+```python
+# Extend pipeline functionality
+from lets_talk.core.pipeline.engine import run_pipeline
+from lets_talk.shared.config import Configuration
+
+result = run_pipeline(data_dir="data/", force_recreate=True)
+```
 
 ## Workflow
 

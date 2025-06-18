@@ -28,9 +28,9 @@ if ! command -v uv &> /dev/null; then
     exit 1
 fi
 
-# Check if the webapp module exists
-if [ ! -f "py-src/lets_talk/webapp.py" ]; then
-    echo -e "${RED}❌ webapp.py not found. Make sure you're in the project root directory.${NC}"
+# Check if the API main module exists
+if [ ! -f "py-src/lets_talk/api/main.py" ]; then
+    echo -e "${RED}❌ api/main.py not found. Make sure you're in the project root directory.${NC}"
     exit 1
 fi
 
@@ -72,7 +72,7 @@ echo ""
 export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$(pwd)/py-src"
 
 # Start uvicorn with the FastAPI app
-exec uv run uvicorn lets_talk.webapp:app \
+exec uv run uvicorn lets_talk.api.main:app \
     --host "$HOST" \
     --port "$PORT" \
     --workers "$WORKERS" \

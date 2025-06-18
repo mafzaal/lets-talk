@@ -13,28 +13,28 @@ export QDRANT_COLLECTION="blog_documents"
 export EMBEDDING_MODEL="ollama:snowflake-arctic-embed2:latest"
 
 # Create initial vector store
-uv run python lets_talk/pipeline.py --force-recreate
+uv run python -m lets_talk.core.pipeline.cli --force-recreate
 ```
 
 ### Daily Operations
 ```bash
 # Update with new/changed posts (recommended)
-uv run python lets_talk/pipeline.py --auto-incremental
+uv run python -m lets_talk.core.pipeline.cli --auto-incremental
 
 # Check what would be processed
-uv run python lets_talk/pipeline.py --dry-run --incremental
+uv run python -m lets_talk.core.pipeline.cli --dry-run --incremental
 
 # Force full rebuild
-uv run python lets_talk/pipeline.py --force-recreate
+uv run python -m lets_talk.core.pipeline.cli --force-recreate
 ```
 
 ### System Checks
 ```bash
 # Health check only
-uv run python lets_talk/pipeline.py --health-check-only
+uv run python -m lets_talk.core.pipeline.cli --health-check-only
 
 # Process with health check
-uv run python lets_talk/pipeline.py --auto-incremental --health-check
+uv run python -m lets_talk.core.pipeline.cli --auto-incremental --health-check
 ```
 
 ## Common Environment Variables
@@ -77,7 +77,7 @@ export DATA_DIR="data/"
 export VECTOR_STORAGE_PATH="db/vector_store_v1"
 
 # 2. Create vector store
-uv run python lets_talk/pipeline.py --force-recreate --health-check
+uv run python -m lets_talk.core.pipeline.cli --force-recreate --health-check
 
 # 3. Verify output
 ls -la stats/
@@ -87,43 +87,43 @@ cat stats/blog_stats_latest.json
 ### Scenario 2: Regular Updates
 ```bash
 # Daily/CI pipeline
-uv run python lets_talk/pipeline.py --ci --auto-incremental --health-check
+uv run python -m lets_talk.core.pipeline.cli --ci --auto-incremental --health-check
 
 # Development updates
-uv run python lets_talk/pipeline.py --auto-incremental
+uv run python -m lets_talk.core.pipeline.cli --auto-incremental
 ```
 
 ### Scenario 3: Troubleshooting
 ```bash
 # 1. Dry run to see what would change
-uv run python lets_talk/pipeline.py --dry-run --incremental
+uv run python -m lets_talk.core.pipeline.cli --dry-run --incremental
 
 # 2. Health check
-uv run python lets_talk/pipeline.py --health-check-only
+uv run python -m lets_talk.core.pipeline.cli --health-check-only
 
 # 3. Debug mode
 export LOG_LEVEL="DEBUG"
-uv run python lets_talk/pipeline.py --auto-incremental
+uv run python -m lets_talk.core.pipeline.cli --auto-incremental
 
 # 4. Force recreation if needed
-uv run python lets_talk/pipeline.py --force-recreate
+uv run python -m lets_talk.core.pipeline.cli --force-recreate
 ```
 
 ### Scenario 4: Custom Processing
 ```bash
 # Custom chunk sizes for better retrieval
-uv run python lets_talk/pipeline.py \
+uv run python -m lets_talk.core.pipeline.cli \
   --chunk-size 2000 \
   --chunk-overlap 400 \
   --auto-incremental
 
 # Process different file types
-uv run python lets_talk/pipeline.py \
+uv run python -m lets_talk.core.pipeline.cli \
   --data-dir-pattern "*.txt" \
   --auto-incremental
 
 # No chunking for short documents
-uv run python lets_talk/pipeline.py \
+uv run python -m lets_talk.core.pipeline.cli \
   --no-chunking \
   --auto-incremental
 ```
@@ -168,7 +168,7 @@ ls -la $(dirname $VECTOR_STORAGE_PATH)
 curl -f $QDRANT_URL/collections || echo "Qdrant not accessible"
 
 # Force recreation
-uv run python lets_talk/pipeline.py --force-recreate
+uv run python -m lets_talk.core.pipeline.cli --force-recreate
 ```
 
 ### Problem: "Memory errors"
@@ -181,7 +181,7 @@ export CHUNK_SIZE="500"
 export CHUNK_OVERLAP="50"
 
 # Try no chunking
-uv run python lets_talk/pipeline.py --no-chunking
+uv run python -m lets_talk.core.pipeline.cli --no-chunking
 ```
 
 ### Problem: "All documents being reprocessed"
@@ -193,7 +193,7 @@ ls -la stats/blog_metadata.csv
 head -5 stats/blog_metadata.csv
 
 # Run health check
-uv run python lets_talk/pipeline.py --health-check-only
+uv run python -m lets_talk.core.pipeline.cli --health-check-only
 ```
 
 ## Performance Tips
@@ -220,7 +220,7 @@ uv run python lets_talk/pipeline.py --health-check-only
 - name: Update Vector Store
   run: |
     export VECTOR_STORAGE_PATH="db/vector_store"
-    uv run python py-src/lets_talk/pipeline.py --ci --auto-incremental --health-check
+    uv run python -m lets_talk.core.pipeline.cli --ci --auto-incremental --health-check
 ```
 
 ### Docker

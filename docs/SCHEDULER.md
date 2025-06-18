@@ -30,22 +30,22 @@ The scheduler can be managed via the command-line interface:
 
 ```bash
 # Start scheduler with default configuration
-python -m lets_talk.scheduler_cli start
+cd py-src && uv run python -m lets_talk.core.scheduler.cli start
 
 # Start scheduler in daemon mode
-python -m lets_talk.scheduler_cli start --daemon
+cd py-src && uv run python -m lets_talk.core.scheduler.cli start --daemon
 
 # Show scheduler status and jobs
-python -m lets_talk.scheduler_cli status
+cd py-src && uv run python -m lets_talk.core.scheduler.cli status
 
 # Add a daily job at 2 AM
-python -m lets_talk.scheduler_cli add-job --type cron --id daily_update --hour 2 --minute 0
+cd py-src && uv run python -m lets_talk.core.scheduler.cli add-job --type cron --id daily_update --hour 2 --minute 0
 
 # Add an hourly interval job
-python -m lets_talk.scheduler_cli add-job --type interval --id hourly_check --hours 1
+cd py-src && uv run python -m lets_talk.core.scheduler.cli add-job --type interval --id hourly_check --hours 1
 
 # Remove a job
-python -m lets_talk.scheduler_cli remove-job --id daily_update
+cd py-src && uv run python -m lets_talk.core.scheduler.cli remove-job --id daily_update
 
 # Run a job immediately
 python -m lets_talk.scheduler_cli run-now --id daily_update
@@ -72,7 +72,7 @@ python pipeline.py --schedule --schedule-config /path/to/config.json
 ### 3. Programmatic Usage
 
 ```python
-from lets_talk.scheduler import PipelineScheduler
+from lets_talk.core.scheduler.manager import PipelineScheduler
 from datetime import datetime
 
 # Create scheduler

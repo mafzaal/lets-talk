@@ -102,10 +102,10 @@ MAX_CONCURRENT_OPERATIONS = 5
 
 ```bash
 # Basic incremental indexing
-python pipeline.py --incremental --data-dir data --output-dir artifacts
+python -m lets_talk.core.pipeline.cli --incremental --data-dir data --output-dir artifacts
 
 # Advanced options
-python pipeline.py \
+python -m lets_talk.core.pipeline.cli \
   --incremental \
   --batch-size 25 \
   --metadata-file custom_metadata.csv \
@@ -113,10 +113,10 @@ python pipeline.py \
   --health-check
 
 # Health check only
-python pipeline.py --health-check-only --output-dir artifacts
+python -m lets_talk.core.pipeline.cli --health-check-only --output-dir artifacts
 
 # Performance monitoring
-python pipeline.py --incremental --enable-performance-monitoring
+python -m lets_talk.core.pipeline.cli --incremental --enable-performance-monitoring
 ```
 
 ## Testing and Validation
@@ -237,25 +237,25 @@ python pipeline.py --incremental --enable-performance-monitoring
 ### Basic Incremental Indexing
 ```bash
 # First time - creates vector store and metadata
-python pipeline.py --force-recreate --data-dir data --output-dir artifacts
+python -m lets_talk.core.pipeline.cli --force-recreate --data-dir data --output-dir artifacts
 
 # Subsequent runs - only processes changes
-python pipeline.py --incremental --data-dir data --output-dir artifacts
+python -m lets_talk.core.pipeline.cli --incremental --data-dir data --output-dir artifacts
 ```
 
 ### Advanced Usage
 ```bash
 # Dry run to see what would be processed
-python pipeline.py --incremental --dry-run
+python -m lets_talk.core.pipeline.cli --incremental --dry-run
 
 # Custom batch size for large datasets
-python pipeline.py --incremental --batch-size 100
+python -m lets_talk.core.pipeline.cli --incremental --batch-size 100
 
 # Health check diagnostics
-python pipeline.py --health-check-only
+python -m lets_talk.core.pipeline.cli --health-check-only
 
 # Performance monitoring enabled
-python pipeline.py --incremental --enable-performance-monitoring
+python -m lets_talk.core.pipeline.cli --incremental --enable-performance-monitoring
 ```
 
 ## Conclusion
