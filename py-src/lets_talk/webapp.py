@@ -171,7 +171,7 @@ async def create_interval_job(
 ):
     """Create a new interval-based scheduled job."""
     try:
-        pipeline_config = job_request.config.dict() if job_request.config else {}
+        pipeline_config = job_request.config.model_dump() if job_request.config else {}
         
         job_id = scheduler.add_interval_job(
             job_id=job_request.job_id,
@@ -192,7 +192,7 @@ async def create_onetime_job(
 ):
     """Create a new one-time scheduled job."""
     try:
-        pipeline_config = job_request.config.dict() if job_request.config else {}
+        pipeline_config = job_request.config.model_dump() if job_request.config else {}
         
         job_id = scheduler.add_one_time_job(
             job_id=job_request.job_id,
