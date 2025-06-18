@@ -1,7 +1,7 @@
 {
     "dockerfile_lines": [],
     "graphs": {
-      "the_data_guy_chat": "./py-src/lets_talk/agent_v2.py:agent"
+      "the_data_guy_chat": "./backend/lets_talk/main.py:reat_agent"
     },
     "python_version": "3.13",
     "env": "./.env",
@@ -9,6 +9,6 @@
       "."
     ],
     "http":{
-      "app": "./py-src/lets_talk//webapp.py:app"
+      "app": "./backend/lets_talk/main.py:app"
     }
   }

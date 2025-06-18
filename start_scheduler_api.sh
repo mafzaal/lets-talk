@@ -69,7 +69,7 @@ echo -e "${YELLOW}Press Ctrl+C to stop the server${NC}"
 echo ""
 
 # Export PYTHONPATH to include py-src
-export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$(pwd)/py-src"
+export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$(pwd)/backend"
 
 # Start uvicorn with the FastAPI app
 exec uv run uvicorn lets_talk.api.main:app \
