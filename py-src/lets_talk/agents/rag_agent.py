@@ -22,7 +22,7 @@ from lets_talk.agents.base import BaseAgent, AgentConfig
 from lets_talk.core.rag.retriever import retriever
 from lets_talk.core.models.state import InputState
 from lets_talk.utils.formatters import format_docs, get_message_text
-from lets_talk.shared.config import Configuration
+from lets_talk.shared.config import LLM_TEMPERATURE, Configuration
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +132,7 @@ class RAGAgent(BaseAgent):
         
         model = init_chat_model(
             configuration.response_model, 
-            temperature=configuration.response_temperature
+            temperature=LLM_TEMPERATURE
         )
         
         # Format documents for context
@@ -155,7 +155,19 @@ class RAGAgent(BaseAgent):
         messages = state.get("messages", [])
         for message in reversed(messages):
             if isinstance(message, HumanMessage):
-                return message.content
+                content = message.content
+                if isinstance(content, str):
+                    return content
+                elif isinstance(content, list):
+                    # Extract text from list content
+                    text_parts = []
+                    for item in content:
+                        if isinstance(item, str):
+                            text_parts.append(item)
+                        elif isinstance(item, dict) and "text" in item:
+                            text_parts.append(str(item["text"]))
+                    return " ".join(text_parts)
+                return str(content)
         return ""
     
     async def ainvoke(

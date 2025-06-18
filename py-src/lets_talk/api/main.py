@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
         logger.info("Pipeline scheduler started successfully")
     except Exception as e:
         logger.error(f"Failed to start scheduler: {e}")
-        set_scheduler_instance(None)
+        # Don't set scheduler instance if initialization failed
     
     yield
     
@@ -49,7 +49,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Let's Talk API",
         description="AI-driven chat system for websites with pipeline management",
-        version="1.0.0",
+        version="0.1.1", #TODO: Use a proper versioning system
         lifespan=lifespan
     )
     
