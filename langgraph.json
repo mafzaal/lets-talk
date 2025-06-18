@@ -10,5 +10,6 @@
     ],
     "http":{
       "app": "./backend/lets_talk/main.py:app"
-    }
+    },
+    "image_distro": "wolfi"
   }
