@@ -61,12 +61,14 @@ class AgentFactory:
 # Convenience functions
 def create_rag_agent(config: Optional[AgentConfig] = None, **kwargs) -> RAGAgent:
     """Create a RAG agent."""
-    return AgentFactory.create_agent(AgentType.RAG, config=config, **kwargs)
+    agent = AgentFactory.create_agent(AgentType.RAG, config=config, **kwargs)
+    return agent  # type: ignore
 
 
 def create_react_agent(config: Optional[AgentConfig] = None, **kwargs) -> ReactAgent:
     """Create a ReAct agent."""
-    return AgentFactory.create_agent(AgentType.REACT, config=config, **kwargs)
+    agent = AgentFactory.create_agent(AgentType.REACT, config=config, **kwargs)
+    return agent  # type: ignore
 
 
 def get_default_agent() -> BaseAgent:

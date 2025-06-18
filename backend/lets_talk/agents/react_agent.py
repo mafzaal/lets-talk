@@ -37,6 +37,10 @@ def retrieve_documents(query: str) -> str:
     """
     logger.info(f"Retrieving documents for query: {query}")
     try:
+        if retriever is None:
+            logger.error("Retriever is not initialized")
+            return "Document retriever is not available. Please check the system configuration."
+        
         docs = retriever.invoke(query)
         logger.info(f"Retrieved {len(docs) if docs else 0} documents for query: {query}")
         return format_docs(docs)

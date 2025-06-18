@@ -52,10 +52,10 @@ requires = ["setuptools>=73.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-package-dir = {"" = "py-src"}
+package-dir = {"" = "backend"}
 
 [tool.setuptools.packages.find]
-where = ["py-src"]
+where = ["backend"]
 
 [dependency-groups]
 dev = [

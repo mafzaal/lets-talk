@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Test script for the updated simple_pipeline_job module.
+Test script for the simple_pipeline_job module.
 
 This script demonstrates how to use the job configuration with default values
-from config.py and how to override specific values.
+from config.py and how to override specific values using the available
+simple_pipeline_job function from the core pipeline module.
 """
 
 import sys
@@ -11,13 +12,38 @@ import os
 from pathlib import Path
 
 # Add py-src to Python path
-sys.path.insert(0, str(Path(__file__).parent / "py-src"))
+sys.path.insert(0, str(Path(__file__).parent / ".." / "backend"))
 
-from lets_talk.simple_pipeline_job import (
-    get_default_job_config, 
-    create_job_config,
-    simple_pipeline_job
+from lets_talk.core.pipeline.jobs import simple_pipeline_job, validate_pipeline_config
+from lets_talk.shared.config import (
+    DATA_DIR, OUTPUT_DIR, EMBEDDING_MODEL, USE_CHUNKING, CHUNK_SIZE, 
+    INCREMENTAL_MODE, QDRANT_COLLECTION, VECTOR_STORAGE_PATH, FORCE_RECREATE
 )
+
+def get_default_job_config():
+    """Get default job configuration values from config.py."""
+    return {
+        'job_id': f"test_job_{os.getpid()}",
+        'data_dir': DATA_DIR,
+        'output_dir': OUTPUT_DIR,
+        'embedding_model': EMBEDDING_MODEL,
+        'use_chunking': USE_CHUNKING,
+        'chunk_size': CHUNK_SIZE,
+        'incremental_mode': INCREMENTAL_MODE,
+        'collection_name': QDRANT_COLLECTION,
+        'storage_path': VECTOR_STORAGE_PATH,
+        'force_recreate': FORCE_RECREATE,
+        'ci_mode': True,
+        'dry_run': False,
+        'health_check': False
+    }
+
+def create_job_config(overrides=None):
+    """Create job configuration by merging defaults with overrides."""
+    config = get_default_job_config()
+    if overrides:
+        config.update(overrides)
+    return validate_pipeline_config(config)
 
 def test_default_config():
     """Test getting default job configuration."""
@@ -79,9 +105,17 @@ def test_dry_run_job():
     print(f"  ci_mode: {job_config['ci_mode']}")
     print(f"  health_check: {job_config['health_check']}")
     
-    print("\nNote: To actually run the job, uncomment the following line:")
-    print("# simple_pipeline_job(job_config)")
-    print("(Commented out to avoid actual pipeline execution during testing)")
+    print("\nExecuting dry run pipeline job...")
+    try:
+        result = simple_pipeline_job(job_config)
+        print(f"Dry run completed successfully!")
+        print(f"  Status: {result.get('status', 'unknown')}")
+        print(f"  Duration: {result.get('duration_seconds', 0):.2f} seconds")
+        print(f"  Job ID: {result.get('job_id', 'unknown')}")
+        if 'message' in result:
+            print(f"  Message: {result['message']}")
+    except Exception as e:
+        print(f"Dry run failed with error: {e}")
     print()
 
 if __name__ == "__main__":
