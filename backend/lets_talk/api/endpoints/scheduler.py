@@ -21,9 +21,62 @@ from lets_talk.shared.config import OUTPUT_DIR
 router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 
 
-@router.get("/status", response_model=SchedulerStats)
+@router.get(
+    "/status", 
+    response_model=SchedulerStats,
+    summary="Get Scheduler Status",
+    description="""
+    Retrieve comprehensive statistics and status information about the pipeline scheduler.
+    
+    This endpoint provides:
+    - Job execution statistics (successful, failed, missed)
+    - Last execution and error information
+    - Current number of active scheduled jobs
+    - Scheduler running state
+    
+    **Use Cases:**
+    - Monitor scheduler health in dashboards
+    - Debug scheduling issues
+    - Performance monitoring and alerting
+    
+    **Response includes:**
+    - `jobs_executed`: Total number of successfully executed jobs
+    - `jobs_failed`: Total number of failed job executions
+    - `jobs_missed`: Total number of missed job executions
+    - `last_execution`: Timestamp of the most recent job execution
+    - `last_error`: Details of the most recent error (if any)
+    - `active_jobs`: Current number of scheduled jobs
+    - `scheduler_running`: Whether the scheduler is currently active
+    """,
+    responses={
+        200: {
+            "description": "Scheduler status retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "jobs_executed": 150,
+                        "jobs_failed": 2,
+                        "jobs_missed": 0,
+                        "last_execution": "2025-06-18T10:25:00Z",
+                        "last_error": None,
+                        "active_jobs": 5,
+                        "scheduler_running": True
+                    }
+                }
+            }
+        },
+        503: {
+            "description": "Scheduler is not available or not properly initialized"
+        }
+    }
+)
 async def get_scheduler_status(scheduler: PipelineScheduler = Depends(get_scheduler)):
-    """Get current scheduler status and statistics."""
+    """
+    Get current scheduler status and statistics.
+    
+    Returns comprehensive information about the scheduler's current state,
+    including execution statistics and active job counts.
+    """
     stats = scheduler.get_job_stats()
     jobs = scheduler.list_jobs()
     
@@ -42,9 +95,67 @@ async def get_scheduler_status(scheduler: PipelineScheduler = Depends(get_schedu
     )
 
 
-@router.get("/jobs", response_model=List[JobResponse])
+@router.get(
+    "/jobs", 
+    response_model=List[JobResponse],
+    summary="List All Scheduled Jobs",
+    description="""
+    Retrieve a comprehensive list of all currently scheduled jobs in the system.
+    
+    This endpoint returns detailed information about each scheduled job including:
+    - Job ID and name
+    - Job type (cron, interval, one-time)
+    - Schedule configuration
+    - Next execution time
+    - Job status and metadata
+    
+    **Use Cases:**
+    - View all active schedules
+    - Monitor job configurations
+    - Debug scheduling conflicts
+    - Audit scheduled tasks
+    
+    **Job Types:**
+    - **Cron Jobs**: Execute on cron-like schedules (e.g., daily, weekly)
+    - **Interval Jobs**: Execute at regular intervals (e.g., every 30 minutes)
+    - **One-time Jobs**: Execute once at a specific time
+    """,
+    responses={
+        200: {
+            "description": "List of scheduled jobs retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "id": "blog_update_daily",
+                            "name": "Daily Blog Update",
+                            "type": "cron",
+                            "next_run": "2025-06-19T09:00:00Z",
+                            "status": "scheduled"
+                        },
+                        {
+                            "id": "health_check_interval",
+                            "name": "Health Check",
+                            "type": "interval",
+                            "next_run": "2025-06-18T10:35:00Z",
+                            "status": "scheduled"
+                        }
+                    ]
+                }
+            }
+        },
+        503: {
+            "description": "Scheduler is not available"
+        }
+    }
+)
 async def list_jobs(scheduler: PipelineScheduler = Depends(get_scheduler)):
-    """List all scheduled jobs."""
+    """
+    List all scheduled jobs.
+    
+    Returns a comprehensive list of all jobs currently scheduled in the system,
+    including their configuration and status information.
+    """
     jobs = scheduler.list_jobs()
     return [JobResponse(**job) for job in jobs]
 

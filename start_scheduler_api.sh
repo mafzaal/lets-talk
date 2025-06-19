@@ -29,7 +29,7 @@ if ! command -v uv &> /dev/null; then
 fi
 
 # Check if the API main module exists
-if [ ! -f "py-src/lets_talk/api/main.py" ]; then
+if [ ! -f "backend/lets_talk/api/main.py" ]; then
     echo -e "${RED}❌ api/main.py not found. Make sure you're in the project root directory.${NC}"
     exit 1
 fi
