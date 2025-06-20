@@ -6,6 +6,7 @@ while maintaining backward compatibility with the original processors.py API.
 """
 
 import logging
+import os
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -26,6 +27,7 @@ from lets_talk.shared.config import (
     METADATA_CSV_FILE,
     QDRANT_COLLECTION,
     QDRANT_URL,
+    STATS_OUTPUT_DIR,
     VECTOR_STORAGE_PATH,
     ChunkingStrategy
 )
@@ -54,7 +56,8 @@ class PipelineProcessor:
         collection_name: str = QDRANT_COLLECTION,
         qdrant_url: str = QDRANT_URL,
         embedding_model: str = EMBEDDING_MODEL,
-        metadata_csv_path: str = METADATA_CSV_FILE
+        metadata_csv: str = METADATA_CSV_FILE,
+        stats_output_dir: str = STATS_OUTPUT_DIR
     ):
         """
         Initialize the pipeline processor.
@@ -72,11 +75,13 @@ class PipelineProcessor:
         self.collection_name = collection_name
         self.qdrant_url = qdrant_url
         self.embedding_model = embedding_model
-        self.metadata_csv_path = metadata_csv_path
+        self.metadata_csv = metadata_csv
+        self.stats_output_dir = stats_output_dir
+        self.metadata_csv_path = os.path.join(stats_output_dir,metadata_csv)
         
         # Initialize services
         self.document_loader = DocumentLoader(data_dir=data_dir)
-        self.metadata_manager = MetadataManager(metadata_csv_path=metadata_csv_path)
+        self.metadata_manager = MetadataManager(metadata_csv_path=self.metadata_csv_path)
         self.vector_store_manager = VectorStoreManager(
             storage_path, collection_name, qdrant_url, embedding_model
         )
@@ -85,8 +90,9 @@ class PipelineProcessor:
         self.optimization_service = OptimizationService()
         self.backup_manager = BackupManager()
         self.health_checker = HealthChecker(
-            storage_path, collection_name, qdrant_url, embedding_model, metadata_csv_path
+            storage_path, collection_name, qdrant_url, embedding_model, metadata_csv_path=self.metadata_csv_path
         )
+    
     
     def process_documents_full(
         self,
@@ -398,7 +404,7 @@ def update_vector_store_incrementally_with_rollback(
         collection_name=collection_name,
         qdrant_url=qdrant_url,
         embedding_model=embedding_model,
-        metadata_csv_path=metadata_csv_path
+        metadata_csv=metadata_csv_path
     )
     
     try:
