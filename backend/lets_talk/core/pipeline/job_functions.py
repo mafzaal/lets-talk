@@ -45,6 +45,7 @@ def pipeline_job_function(job_config: Dict[str, Any]):
         SHOULD_SAVE_STATS = getattr(config_module, 'SHOULD_SAVE_STATS')
         CHUNK_SIZE = getattr(config_module, 'CHUNK_SIZE')
         CHUNK_OVERLAP = getattr(config_module, 'CHUNK_OVERLAP')
+        CHUNKING_STRATEGY = getattr(config_module, 'CHUNKING_STRATEGY')
         QDRANT_COLLECTION = getattr(config_module, 'QDRANT_COLLECTION')
         EMBEDDING_MODEL = getattr(config_module, 'EMBEDDING_MODEL')
         DEFAULT_METADATA_CSV_FILENAME = getattr(config_module, 'DEFAULT_METADATA_CSV_FILENAME')
@@ -63,6 +64,7 @@ def pipeline_job_function(job_config: Dict[str, Any]):
         should_save_stats = job_config.get('should_save_stats', SHOULD_SAVE_STATS)
         chunk_size = job_config.get('chunk_size', CHUNK_SIZE)
         chunk_overlap = job_config.get('chunk_overlap', CHUNK_OVERLAP)
+        chunking_strategy = job_config.get('chunking_strategy', CHUNKING_STRATEGY)
         collection_name = job_config.get('collection_name', QDRANT_COLLECTION)
         embedding_model = job_config.get('embedding_model', EMBEDDING_MODEL)
         data_dir_pattern = job_config.get('data_dir_pattern', "*.md")
@@ -87,6 +89,7 @@ def pipeline_job_function(job_config: Dict[str, Any]):
             should_save_stats=should_save_stats,
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
+            chunking_strategy=chunking_strategy,
             collection_name=collection_name,
             embedding_model=embedding_model,
             data_dir_pattern=data_dir_pattern,

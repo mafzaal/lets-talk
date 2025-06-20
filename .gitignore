@@ -164,6 +164,7 @@ cython_debug/
 # Project specific
 
 output/
+build/
 start-docker.sh
 data/
-!py-src/**/data
+!backend/**/data

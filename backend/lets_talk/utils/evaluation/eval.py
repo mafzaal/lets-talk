@@ -5,7 +5,7 @@ from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from langchain_openai import ChatOpenAI
 from ragas.metrics import LLMContextRecall, Faithfulness, FactualCorrectness, ResponseRelevancy, ContextEntityRecall, NoiseSensitivity
-from lets_talk.config import EMBEDDING_MODEL,SDG_LLM_MODLEL,EVAL_LLM_MODEL
+from lets_talk.shared.config import EMBEDDING_MODEL,SDG_LLM_MODLEL,EVAL_LLM_MODEL
 
 #TODO: need to make more generic
 

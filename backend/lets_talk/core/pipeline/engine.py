@@ -3,6 +3,8 @@ import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
 
+from lets_talk.shared.config import ChunkingStrategy
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,6 +18,7 @@ def run_pipeline(
     use_chunking: bool = True,
     chunk_size: int = 1000,
     chunk_overlap: int = 200,
+    chunking_strategy: ChunkingStrategy = ChunkingStrategy.SEMANTIC,
     should_save_stats: bool = True,
     data_dir_pattern: str = "*.md",
     blog_base_url: Optional[str] = None,
@@ -43,6 +46,7 @@ def run_pipeline(
         use_chunking: Whether to chunk documents
         chunk_size: Size of document chunks
         chunk_overlap: Overlap between chunks
+        chunking_strategy: Strategy for chunking (ChunkingStrategy.SEMANTIC or ChunkingStrategy.TEXT_SPLITTER)
         should_save_stats: Whether to save statistics
         data_dir_pattern: Pattern for matching files
         blog_base_url: Base URL for blog posts
@@ -67,7 +71,7 @@ def run_pipeline(
         # Import the actual pipeline module here to avoid circular imports
         # and provide a fallback if not available
         try:
-            from lets_talk import pipeline
+            from lets_talk.utils.blog import pipeline
             
             # Call the main function from the original pipeline module
             result = pipeline.main(

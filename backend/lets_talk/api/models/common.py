@@ -2,6 +2,13 @@
 from typing import Dict, Any, Optional
 from pydantic import BaseModel
 from datetime import datetime
+from enum import Enum
+
+
+class ChunkingStrategy(str, Enum):
+    """Enumeration for document chunking strategies."""
+    SEMANTIC = "semantic"
+    TEXT_SPLITTER = "text_splitter"
 
 
 class JobConfig(BaseModel):
@@ -14,6 +21,7 @@ class JobConfig(BaseModel):
     should_save_stats: bool = True
     chunk_size: int = 1000
     chunk_overlap: int = 200
+    chunking_strategy: ChunkingStrategy = ChunkingStrategy.SEMANTIC
     collection_name: Optional[str] = None
     embedding_model: Optional[str] = None
     data_dir_pattern: str = "*.md"

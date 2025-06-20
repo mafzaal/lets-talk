@@ -19,7 +19,7 @@ from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
 from langchain.embeddings import init_embeddings
 
-from lets_talk.config import (
+from lets_talk.shared.config import (
     BASE_URL,
     DATA_DIR,
     INDEX_ONLY_PUBLISHED_POSTS,
@@ -31,6 +31,8 @@ from lets_talk.config import (
     BLOG_BASE_URL,
     CHUNK_SIZE,
     CHUNK_OVERLAP,
+    CHUNKING_STRATEGY,
+    ChunkingStrategy,
     METADATA_CSV_FILE,
     CHECKSUM_ALGORITHM,
     BATCH_SIZE,
@@ -41,6 +43,10 @@ from lets_talk.config import (
     BATCH_PAUSE_SECONDS,
     MAX_CONCURRENT_OPERATIONS
 )
+
+# Set up logger
+import logging
+logger = logging.getLogger(__name__)
 
 # Checksum and metadata management functions
 
@@ -433,7 +439,8 @@ def display_document_stats(stats: Dict[str, Any]):
 
 def split_documents(documents: List[Document], 
                    chunk_size: int = CHUNK_SIZE, 
-                   chunk_overlap: int = CHUNK_OVERLAP) -> List[Document]:
+                   chunk_overlap: int = CHUNK_OVERLAP,
+                   chunking_strategy: ChunkingStrategy = CHUNKING_STRATEGY) -> List[Document]:
     """
     Split documents into chunks for better embedding and retrieval.
     
@@ -441,37 +448,66 @@ def split_documents(documents: List[Document],
         documents: List of Document objects to split
         chunk_size: Size of each chunk in characters
         chunk_overlap: Overlap between chunks in characters
+        chunking_strategy: Strategy to use for chunking (semantic or text_splitter)
         
     Returns:
         List of split Document objects
     """
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-        length_function=len,
-    )
+    logger.info(f"Splitting {len(documents)} documents using {chunking_strategy} strategy")
     
-    # Track original documents and their chunk counts
-    source_to_chunk_count = {}
+    split_docs = []  # Initialize to avoid unbound variable
     
-    split_docs = text_splitter.split_documents(documents)
+    if chunking_strategy == ChunkingStrategy.SEMANTIC:
+        try:
+            from langchain_experimental.text_splitter import SemanticChunker
+            from langchain.embeddings import init_embeddings
+            
+            # Initialize embeddings for semantic chunking
+            embeddings = init_embeddings(EMBEDDING_MODEL)
+            # if EMBEDDING_MODEL.startswith("ollama:"):
+            #     embeddings = init_embeddings(EMBEDDING_MODEL, base_url=OLLAMA_BASE_URL)
+            
+            semantic_chunker = SemanticChunker(
+                embeddings,  # type: ignore
+                breakpoint_threshold_type="percentile"
+            )
+            split_docs = semantic_chunker.split_documents(documents)
+            
+        except ImportError:
+            logger.warning("langchain_experimental not available, falling back to text splitter")
+            chunking_strategy = ChunkingStrategy.TEXT_SPLITTER
+        except Exception as e:
+            logger.error(f"Error with semantic chunking: {e}, falling back to text splitter")
+            chunking_strategy = ChunkingStrategy.TEXT_SPLITTER
     
-    # Count chunks per source document
-    for doc in split_docs:
-        source = doc.metadata.get("source", "")
-        source_to_chunk_count[source] = source_to_chunk_count.get(source, 0) + 1
+    if chunking_strategy == ChunkingStrategy.TEXT_SPLITTER:
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            length_function=len,
+        )
+        
+        # Track original documents and their chunk counts
+        source_to_chunk_count = {}
+        
+        split_docs = text_splitter.split_documents(documents)
+        
+        # Count chunks per source document
+        for doc in split_docs:
+            source = doc.metadata.get("source", "")
+            source_to_chunk_count[source] = source_to_chunk_count.get(source, 0) + 1
+        
+        # Update chunk_count in the original documents' metadata
+        for doc in documents:
+            source = doc.metadata.get("source", "")
+            doc.metadata["chunk_count"] = source_to_chunk_count.get(source, 1)
+        
+        # Also update chunk_count in split documents
+        for doc in split_docs:
+            source = doc.metadata.get("source", "")
+            doc.metadata["chunk_count"] = source_to_chunk_count.get(source, 1)
     
-    # Update chunk_count in the original documents' metadata
-    for doc in documents:
-        source = doc.metadata.get("source", "")
-        doc.metadata["chunk_count"] = source_to_chunk_count.get(source, 1)
-    
-    # Also update chunk_count in split documents
-    for doc in split_docs:
-        source = doc.metadata.get("source", "")
-        doc.metadata["chunk_count"] = source_to_chunk_count.get(source, 1)
-    
-    print(f"Split {len(documents)} documents into {len(split_docs)} chunks")
+    logger.info(f"Split {len(documents)} documents into {len(split_docs)} chunks using {chunking_strategy}")
     return split_docs
 
 
@@ -565,60 +601,6 @@ def load_vector_store(storage_path: str = VECTOR_STORAGE_PATH,
     except Exception as e:
         print(f"Error loading vector store: {e}")
         return None
-
-
-def process_blog_posts(data_dir: str = DATA_DIR,
-                      create_embeddings: bool = True,
-                      force_recreate_embeddings: bool = False,
-                      storage_path: str = VECTOR_STORAGE_PATH,
-                      split_docs: bool = True,
-                      display_stats:bool = False) -> Dict[str, Any]:
-    """
-    Complete pipeline to process blog posts and optionally create vector embeddings.
-    
-    Args:
-        data_dir: Directory containing the blog posts
-        create_embeddings: Whether to create vector embeddings
-        force_recreate_embeddings: Whether to force recreation of embeddings
-        storage_path: Path to the vector store (not used with in-memory approach)
-        
-    Returns:
-        Dictionary with data and vector store (if created)
-    """
-    # Load documents
-    documents = load_blog_posts(data_dir)
-    
-    # Update metadata
-    documents = update_document_metadata(documents)
-
-    if split_docs:
-        # Split documents into smaller chunks
-        documents = split_documents(documents)
-    
-
-    # Get and display stats
-    stats = get_document_stats(documents)
-
-    if display_stats:
-        display_document_stats(stats)
-    
-    result = {
-        "documents": documents,
-        "stats": stats,
-        "vector_store": None
-    }
-    
-    # Create vector store if requested
-    if create_embeddings:
-        # Using in-memory vector store to avoid pickling issues
-        vector_store = create_vector_store(
-            documents, 
-            force_recreate=force_recreate_embeddings,
-            storage_path=storage_path
-        )
-        result["vector_store"] = vector_store
-    
-    return result
 
 
 def add_documents_to_vector_store(vector_store: QdrantVectorStore, 

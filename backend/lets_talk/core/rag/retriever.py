@@ -11,7 +11,7 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 
-from lets_talk.utils.blog.processors import load_blog_posts, update_document_metadata
+from lets_talk.core.pipeline.processors import load_blog_posts, update_document_metadata
 from lets_talk.shared.config import (
     BM25_RETRIEVAL, LLM_MODEL, LLM_TEMPERATURE, MAX_SEARCH_RESULTS, 
     MULTI_QUERY_RETRIEVAL, OLLAMA_BASE_URL, PARENT_DOCUMENT_RETRIEVAL,
@@ -78,7 +78,7 @@ def load_vector_store(
     
     try:
         vector_store = QdrantVectorStore.from_existing_collection(        
-            embedding=embeddings,
+            embedding=embeddings,# type: ignore
             collection_name=collection_name,
             url=qdrant_url,
             prefer_grpc=True,
@@ -92,7 +92,7 @@ def load_vector_store(
 
 def build_retriever(
     vector_store: Optional[QdrantVectorStore] = None,
-    all_docs: List[Document] = None,
+    all_docs: List[Document] = None, # type: ignore
     max_search_results: int = MAX_SEARCH_RESULTS,
     model_name: str = LLM_MODEL,    
     temperature: float = LLM_TEMPERATURE,
@@ -144,7 +144,7 @@ def build_retriever(
         retrievers=retriever_list, weights=equal_weighting
     )
     logger.info("EnsembleRetriever created successfully")
-    return ensemble_retriever
+    return ensemble_retriever # type: ignore
 
 
 # Initialize global components

@@ -4,12 +4,20 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field, fields
+from enum import Enum
 from typing import Annotated, Any, Literal, Optional, Type, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+
+class ChunkingStrategy(str, Enum):
+    """Enumeration for document chunking strategies."""
+    SEMANTIC = "semantic"
+    TEXT_SPLITTER = "text_splitter"
+
 
 # Configuration with defaults
 # DATA INPUT
@@ -37,7 +45,7 @@ QDRANT_COLLECTION = os.environ.get("QDRANT_COLLECTION", "lets_talk_documents")
 # Document chunking configuration
 # Chunking and retrieval strategies
 USE_CHUNKING = os.environ.get("USE_CHUNKING", "True").lower() == "true"
-CHUNKING_STRATEGY = os.environ.get("CHUNKING_STRATEGY", "semantic") # Options: "semantic", "text_splitter"
+CHUNKING_STRATEGY = ChunkingStrategy(os.environ.get("CHUNKING_STRATEGY", ChunkingStrategy.SEMANTIC.value))
 # Chunking parameters for text_splitter strategy
 CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "200"))
@@ -98,7 +106,7 @@ DEFAULT_INDEXED_TIMESTAMP = float(os.environ.get("DEFAULT_INDEXED_TIMESTAMP", "0
 # Logging configuration
 LOG_FORMAT = os.environ.get("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
-LOGGER_NAME = os.environ.get("LOGGER_NAME", "blog-pipeline")
+LOGGER_NAME = os.environ.get("LOGGER_NAME", "lets_talk")
 
 # Default metadata CSV filename (used when building path)
 DEFAULT_METADATA_CSV_FILENAME = os.environ.get("DEFAULT_METADATA_CSV_FILENAME", "blog_metadata.csv")

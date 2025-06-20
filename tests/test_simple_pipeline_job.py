@@ -17,7 +17,8 @@ sys.path.insert(0, str(Path(__file__).parent / ".." / "backend"))
 from lets_talk.core.pipeline.jobs import simple_pipeline_job, validate_pipeline_config
 from lets_talk.shared.config import (
     DATA_DIR, OUTPUT_DIR, EMBEDDING_MODEL, USE_CHUNKING, CHUNK_SIZE, 
-    INCREMENTAL_MODE, QDRANT_COLLECTION, VECTOR_STORAGE_PATH, FORCE_RECREATE
+    INCREMENTAL_MODE, QDRANT_COLLECTION, VECTOR_STORAGE_PATH, FORCE_RECREATE,
+    CHUNKING_STRATEGY, ChunkingStrategy
 )
 
 def get_default_job_config():
@@ -29,6 +30,7 @@ def get_default_job_config():
         'embedding_model': EMBEDDING_MODEL,
         'use_chunking': USE_CHUNKING,
         'chunk_size': CHUNK_SIZE,
+        'chunking_strategy': CHUNKING_STRATEGY,
         'incremental_mode': INCREMENTAL_MODE,
         'collection_name': QDRANT_COLLECTION,
         'storage_path': VECTOR_STORAGE_PATH,
@@ -58,6 +60,7 @@ def test_default_config():
     print(f"  embedding_model: {config['embedding_model']}")
     print(f"  use_chunking: {config['use_chunking']}")
     print(f"  chunk_size: {config['chunk_size']}")
+    print(f"  chunking_strategy: {config['chunking_strategy']} ({type(config['chunking_strategy']).__name__})")
     print(f"  incremental_mode: {config['incremental_mode']}")
     print()
 
@@ -72,6 +75,7 @@ def test_custom_config():
         'dry_run': True,
         'data_dir': './test_data',
         'chunk_size': 500,
+        'chunking_strategy': ChunkingStrategy.TEXT_SPLITTER,
         'health_check': True
     }
     
@@ -85,6 +89,7 @@ def test_custom_config():
     print(f"  output_dir: {config['output_dir']} (default)")
     print(f"  embedding_model: {config['embedding_model']} (default)")
     print(f"  use_chunking: {config['use_chunking']} (default)")
+    print(f"  chunking_strategy: {config['chunking_strategy']} (override applied: {custom_values['chunking_strategy']})")
     print()
 
 def test_dry_run_job():
