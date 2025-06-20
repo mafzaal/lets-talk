@@ -10,6 +10,8 @@ import sys
 import os
 import tempfile
 from pathlib import Path
+
+from lets_talk.core.pipeline.processors import PipelineProcessor, get_processor
 # Configure logging
 def setup_logging():
     """Set up logging configuration for the demo."""
@@ -48,83 +50,93 @@ def demo_pipeline_basic():
 
         
         # Create temporary directories for demo
-        with tempfile.TemporaryDirectory() as temp_dir:
-            data_dir = str(Path(temp_dir) / "data")
-            output_dir = str(Path(temp_dir) / "output")
-            storage_path = str(Path(temp_dir) / "vector_store")
-            
-            os.makedirs(data_dir, exist_ok=True)
-            
-            # Create a sample markdown file
-            sample_content = """---
-title: "Sample Blog Post"
-date: "2025-06-19"
-published: true
-categories: ["demo", "test"]
-description: "A sample blog post for pipeline demo"
----
+        #         with tempfile.TemporaryDirectory() as temp_dir:
+        #             data_dir = str(Path(temp_dir) / "data")
+        #             output_dir = str(Path(temp_dir) / "output")
+        #             storage_path = str(Path(temp_dir) / "vector_store")
+                    
+        #             os.makedirs(data_dir, exist_ok=True)
+                    
+        #             # Create a sample markdown file
+        #             sample_content = """---
+        # title: "Sample Blog Post"
+        # date: "2025-06-19"
+        # published: true
+        # categories: ["demo", "test"]
+        # description: "A sample blog post for pipeline demo"
+        # ---
 
-# Sample Blog Post
+        # # Sample Blog Post
 
-This is a sample blog post content for demonstrating the pipeline functionality.
+        # This is a sample blog post content for demonstrating the pipeline functionality.
 
-## Features
+        # ## Features
 
-- Document loading
-- Metadata extraction
-- Checksum calculation
-- Incremental processing
-- Vector indexing
+        # - Document loading
+        # - Metadata extraction
+        # - Checksum calculation
+        # - Incremental processing
+        # - Vector indexing
 
-The pipeline is designed to handle real-world blog content efficiently.
-"""
+        # The pipeline is designed to handle real-world blog content efficiently.
+        # """
+                    
+        #             sample_file = Path(data_dir) / "sample-post" / "index.md"
+        #             sample_file.parent.mkdir(parents=True)
+        #             sample_file.write_text(sample_content)
+                    
+        #             print(f"📁 Created sample data in: {data_dir}")
+        #             print(f"📄 Sample file: {sample_file}")
+                    
+        #             # Run the pipeline
+        #             print("\n🚀 Running pipeline...")
+
+        # data_dir = "data/" 
+        # output_dir = "output/demo"  
+        # storage_path = ""  
+        
+        # result = run_pipeline(
+        #         data_dir=data_dir,
+        #         output_dir=output_dir,
+        #         storage_path=storage_path,
+        #         collection_name="demo_collection",
+        #         embedding_model="ollama:snowflake-arctic-embed2:latest",
+        #         force_recreate=False,
+        #         use_chunking=True,
+        #         chunk_size=500,
+        #         chunk_overlap=50,
+        #         chunking_strategy=ChunkingStrategy.TEXT_SPLITTER,
+        #         should_save_stats=True,
+        #         incremental_mode="auto",
+        #         ci_mode=False
+        #     )
+
+        pipeline_processor : PipelineProcessor  = get_processor()
+
+        result = pipeline_processor.process_documents_incremental()
+
+        return result
             
-            sample_file = Path(data_dir) / "sample-post" / "index.md"
-            sample_file.parent.mkdir(parents=True)
-            sample_file.write_text(sample_content)
+        # print(f"\n📊 Pipeline Result:")
+        # print(f"  ✅ Success: {result['success']}")
+        # print(f"  📝 Message: {result['message']}")
+        # print(f"  🗂️  Documents processed: {result.get('documents_processed', 0)}")
+        # print(f"  🧩 Chunks created: {result.get('chunks_created', 0)}")
             
-            print(f"📁 Created sample data in: {data_dir}")
-            print(f"📄 Sample file: {sample_file}")
-            
-            # Run the pipeline
-            print("\n🚀 Running pipeline...")
-            
-            result = run_pipeline(
-                data_dir=data_dir,
-                output_dir=output_dir,
-                storage_path=storage_path,
-                collection_name="demo_collection",
-                embedding_model="ollama:snowflake-arctic-embed2:latest",
-                force_recreate=True,
-                use_chunking=True,
-                chunk_size=500,
-                chunk_overlap=50,
-                chunking_strategy=ChunkingStrategy.TEXT_SPLITTER,
-                should_save_stats=True,
-                incremental_mode="auto",
-                ci_mode=True
-            )
-            
-            print(f"\n📊 Pipeline Result:")
-            print(f"  ✅ Success: {result['success']}")
-            print(f"  📝 Message: {result['message']}")
-            print(f"  🗂️  Documents processed: {result.get('documents_processed', 0)}")
-            print(f"  🧩 Chunks created: {result.get('chunks_created', 0)}")
-            
-            if result.get('changes_detected'):
-                changes = result['changes_detected']
-                print(f"  📈 Changes detected:")
-                print(f"    - New: {changes.get('new', 0)}")
-                print(f"    - Modified: {changes.get('modified', 0)}")
-                print(f"    - Unchanged: {changes.get('unchanged', 0)}")
-                print(f"    - Deleted: {changes.get('deleted', 0)}")
-            
-            if result.get('errors'):
-                print(f"  ⚠️  Errors: {len(result['errors'])}")
-                for error in result['errors']:
-                    print(f"    - {error}")
-            
-            return result['success']
+        # if result.get('changes_detected'):
+        #     changes = result['changes_detected']
+        #     print(f"  📈 Changes detected:")
+        #     print(f"    - New: {changes.get('new', 0)}")
+        #     print(f"    - Modified: {changes.get('modified', 0)}")
+        #     print(f"    - Unchanged: {changes.get('unchanged', 0)}")
+        #     print(f"    - Deleted: {changes.get('deleted', 0)}")
+        
+        # if result.get('errors'):
+        #     print(f"  ⚠️  Errors: {len(result['errors'])}")
+        #     for error in result['errors']:
+        #         print(f"    - {error}")
+        
+        # return result['success']
             
     except Exception as e:
         print(f"❌ Demo failed: {e}")
@@ -171,12 +183,7 @@ def main():
     print("\n" + "=" * 50)
     if success:
         print("✅ Demo completed successfully!")
-        print("🚀 The pipeline implementation is ready for production use.")
     else:
         print("❌ Demo encountered issues.")
-        print("🔧 Please check the implementation and dependencies.")
-    
-  
-
 if __name__ == "__main__":
     main()

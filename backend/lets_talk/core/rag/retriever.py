@@ -4,7 +4,6 @@ from typing import List, Optional
 from langchain.schema.document import Document
 from langchain_qdrant import QdrantVectorStore
 from langchain_community.document_loaders import WebBaseLoader
-from langchain.embeddings import init_embeddings
 from langchain.chat_models import init_chat_model
 from langchain_core.vectorstores.base import VectorStoreRetriever
 from langchain.retrievers.multi_query import MultiQueryRetriever
@@ -20,6 +19,7 @@ from lets_talk.shared.config import (
     QDRANT_URL, EMBEDDING_MODEL, QDRANT_COLLECTION, DATA_DIR, WEB_URLS, 
     BASE_URL, BLOG_BASE_URL, DATA_DIR_PATTERN
 )
+from lets_talk.utils.wrapper import init_embeddings_wrapper
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def load_vector_store(
         logger.warning("Missing collection_name, qdrant_url, or embedding_model_name. Returning None.")
         return None
     
-    embeddings = init_embeddings(embedding_model_name)
+    embeddings = init_embeddings_wrapper(embedding_model_name)
 
     
     try:

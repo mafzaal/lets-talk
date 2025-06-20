@@ -35,7 +35,7 @@ def simple_pipeline_job(config: Optional[Dict[str, Any]] = None) -> Dict[str, An
     # Extract job configuration with defaults
     job_id = config.get("job_id", f"pipeline_job_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
     force_recreate = config.get("force_recreate", FORCE_RECREATE)
-    ci_mode = config.get("ci_mode", True)
+    ci_mode = config.get("ci_mode", False)
     dry_run = config.get("dry_run", False)
     
     # Data and storage configuration

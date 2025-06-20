@@ -19,6 +19,7 @@ from lets_talk.shared.config import (
     EMBEDDING_MODEL,
     ADAPTIVE_CHUNKING
 )
+from lets_talk.utils.wrapper import init_embeddings_wrapper
 from ..utils.common_utils import handle_exceptions, log_execution_time
 
 logger = logging.getLogger(__name__)
@@ -114,10 +115,10 @@ class ChunkingService:
         """
         try:
             from langchain_experimental.text_splitter import SemanticChunker
-            from langchain.embeddings import init_embeddings
+            
             
             # Initialize embeddings for semantic chunking
-            embeddings = init_embeddings(self.embedding_model)
+            embeddings = init_embeddings_wrapper(self.embedding_model)
             
             semantic_chunker = SemanticChunker(
                 embeddings, # type: ignore

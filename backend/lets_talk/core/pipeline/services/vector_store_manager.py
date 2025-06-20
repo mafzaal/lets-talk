@@ -9,9 +9,10 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
-from langchain.embeddings import init_embeddings
+
 from langchain.schema.document import Document
 from langchain_qdrant import QdrantVectorStore
+from lets_talk.utils.wrapper import init_embeddings_wrapper
 from qdrant_client import QdrantClient
 
 from lets_talk.shared.config import (
@@ -57,10 +58,7 @@ class VectorStoreManager:
     def embeddings(self):
         """Lazy initialization of embeddings."""
         if self._embeddings is None:
-            self._embeddings = init_embeddings(
-                self.embedding_model,
-                base_url='http://host.docker.internal:11434'
-            )
+            self._embeddings = init_embeddings_wrapper(self.embedding_model)
         return self._embeddings
     
     @handle_exceptions(default_return=None)

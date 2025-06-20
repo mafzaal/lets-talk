@@ -13,7 +13,7 @@ from lets_talk.core.pipeline.services.metadata_manager import detect_document_ch
 from lets_talk.core.pipeline.services.performance_monitor import apply_performance_optimizations
 from lets_talk.core.pipeline.services.vector_store_manager import create_vector_store
 from lets_talk.core.pipeline.services.document_loader import get_document_stats, load_blog_posts
-from lets_talk.shared.config import ChunkingStrategy
+from lets_talk.shared.config import QDRANT_URL, ChunkingStrategy
 # from lets_talk.core.pipeline import processors
 
 
@@ -24,6 +24,7 @@ def run_pipeline(
     data_dir: str,
     output_dir: str,
     storage_path: str,
+    
     collection_name: str,
     embedding_model: str,
     force_recreate: bool = False,
@@ -36,7 +37,8 @@ def run_pipeline(
     blog_base_url: Optional[str] = None,
     base_url: Optional[str] = None,
     incremental_mode: str = "auto",
-    ci_mode: bool = True,
+    qdrant_url: str = QDRANT_URL,
+    ci_mode: bool = False,
     
 ) -> Dict[str, Any]:
     """
@@ -106,7 +108,7 @@ def run_pipeline(
         metadata_csv_path = os.path.join(output_dir, "metadata.csv")
         
         # Step 1: Load documents
-        logger.info("\n" + "="*50)
+        logger.info("="*50)
         logger.info("STEP 1: LOADING DOCUMENTS")
         logger.info("="*50)
         
@@ -127,7 +129,7 @@ def run_pipeline(
         result['documents_loaded'] = len(documents)
         
         # Step 2: Update document metadata
-        logger.info("\n" + "="*50)
+        logger.info("="*50)
         logger.info("STEP 2: UPDATING DOCUMENT METADATA")
         logger.info("="*50)
         
@@ -143,7 +145,7 @@ def run_pipeline(
         result['documents_processed'] = len(documents)
         
         # Step 3: Calculate checksums and detect changes
-        logger.info("\n" + "="*50)
+        logger.info("="*50)
         logger.info("STEP 3: DETECTING DOCUMENT CHANGES")
         logger.info("="*50)
         
@@ -190,7 +192,7 @@ def run_pipeline(
         # Step 4: Chunk documents that need indexing
         chunked_docs = []
         if use_chunking and docs_to_process:
-            logger.info("\n" + "="*50)
+            logger.info("="*50)
             logger.info("STEP 4: CHUNKING DOCUMENTS")
             logger.info("="*50)
             
@@ -225,7 +227,7 @@ def run_pipeline(
             logger.info("Chunking disabled - using whole documents")
         
         # Step 5: Index documents
-        logger.info("\n" + "="*50)
+        logger.info("="*50)
         logger.info("STEP 5: INDEXING DOCUMENTS")
         logger.info("="*50)
         
@@ -239,7 +241,7 @@ def run_pipeline(
                 storage_path=storage_path,
                 collection_name=collection_name,
                 embedding_model=embedding_model,
-                qdrant_url="",  # Use local storage by default
+                qdrant_url=qdrant_url,
                 new_docs=changes['new'] if use_chunking else changes['new'],
                 modified_docs=chunked_docs if changes['modified'] else [],
                 deleted_sources=changes['deleted_sources'],

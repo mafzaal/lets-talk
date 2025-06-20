@@ -61,7 +61,7 @@ SHOULD_SAVE_STATS = os.environ.get("SHOULD_SAVE_STATS", "True").lower() == "true
 CREATE_VECTOR_DB = os.environ.get("CREATE_VECTOR_DB", "True").lower() == "true"
 
 # Incremental indexing configuration
-METADATA_CSV_FILE = os.environ.get("METADATA_CSV_FILE", "blog_metadata.csv")
+
 INCREMENTAL_MODE = os.environ.get("INCREMENTAL_MODE", "auto")  # Options: "auto", "incremental", "full"
 CHECKSUM_ALGORITHM = os.environ.get("CHECKSUM_ALGORITHM", "sha256")  # Options: "sha256", "md5"
 AUTO_DETECT_CHANGES = os.environ.get("AUTO_DETECT_CHANGES", "True").lower() == "true"
@@ -93,6 +93,7 @@ STATS_OUTPUT_DIR = os.environ.get("STATS_OUTPUT_DIR", f"{OUTPUT_DIR}/stats")
 INCREMENTAL_FALLBACK_THRESHOLD = float(os.environ.get("INCREMENTAL_FALLBACK_THRESHOLD", "0.8"))
 
 # Output filenames configuration
+METADATA_CSV_FILE = os.environ.get("METADATA_CSV_FILE", f"blog_metadata.csv")
 BLOG_STATS_FILENAME = os.environ.get("BLOG_STATS_FILENAME", "blog_stats_latest.json")
 BLOG_DOCS_FILENAME = os.environ.get("BLOG_DOCS_FILENAME", "blog_docs.csv")
 HEALTH_REPORT_FILENAME = os.environ.get("HEALTH_REPORT_FILENAME", "health_report.json")
@@ -107,8 +108,7 @@ LOG_FORMAT = os.environ.get("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 LOGGER_NAME = os.environ.get("LOGGER_NAME", "lets_talk")
 
-# Default metadata CSV filename (used when building path)
-DEFAULT_METADATA_CSV_FILENAME = os.environ.get("DEFAULT_METADATA_CSV_FILENAME", "blog_metadata.csv")
+
 
 
 T = TypeVar("T", bound="Configuration")
