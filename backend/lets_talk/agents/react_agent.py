@@ -5,11 +5,12 @@ from typing import Any, Dict, List, Optional, Union
 from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
+from langchain.schema.document import Document
 from langchain.chat_models import init_chat_model
 from langgraph.prebuilt import create_react_agent
-
+from langchain_core.vectorstores.base import VectorStoreRetriever
 from lets_talk.agents.base import BaseAgent, AgentConfig
-from lets_talk.core.rag.retriever import retriever, all_docs
+from lets_talk.core.rag.retriever import create_retriever, load_documents
 from lets_talk.tools.datetime.datetime_utils import get_current_datetime
 from lets_talk.utils.formatters import format_docs
 from lets_talk.tools.external.rss_feed import RSSFeedTool
@@ -20,6 +21,7 @@ from lets_talk.shared.config import (
 
 logger = logging.getLogger(__name__)
 
+retriever: Optional[VectorStoreRetriever] = None
 
 @tool
 def retrieve_documents(query: str) -> str:
@@ -35,11 +37,16 @@ def retrieve_documents(query: str) -> str:
     Returns:
         Formatted text containing the retrieved document content
     """
+    global retriever
     logger.info(f"Retrieving documents for query: {query}")
     try:
         if retriever is None:
-            logger.error("Retriever is not initialized")
-            return "Document retriever is not available. Please check the system configuration."
+            logger.info("Initializing retriever")
+            retriever = create_retriever()
+        
+        if retriever is None:
+            logger.error("Failed to initialize retriever")
+            return "Error: Could not initialize document retriever"
         
         docs = retriever.invoke(query)
         logger.info(f"Retrieved {len(docs) if docs else 0} documents for query: {query}")
@@ -48,6 +55,8 @@ def retrieve_documents(query: str) -> str:
         logger.error(f"Error retrieving documents for query '{query}': {e}")
         return f"An error occurred while retrieving documents: {e}"
 
+
+all_docs: Optional[List[Document]] = None
 
 @tool
 def retrieve_page_by_url(url: str) -> str:
@@ -61,6 +70,12 @@ def retrieve_page_by_url(url: str) -> str:
     Returns:
         The content of the page at the specified URL
     """
+    global all_docs
+
+    if all_docs is None:
+        logger.info("Loading all documents from the knowledge base")
+        all_docs = load_documents()
+
     logger.info(f"Retrieving page for URL: {url}")
     try:
         if url.startswith(BASE_URL) or url.startswith(BLOG_BASE_URL):
@@ -165,7 +180,4 @@ class ReactAgent(BaseAgent):
         return self.agent.invoke(input_data, config)
 
 
-# Create default agent instance
-logger.info("Initializing default ReAct agent instance.")
-default_agent = ReactAgent()
-logger.info("Default ReAct agent instance initialized and ready.")
+

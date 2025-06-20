@@ -11,10 +11,12 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 
-from lets_talk.core.pipeline.processors import load_blog_posts, update_document_metadata
+
+from lets_talk.core.pipeline.processors import update_document_metadata,load_blog_posts
+
 from lets_talk.shared.config import (
     BM25_RETRIEVAL, LLM_MODEL, LLM_TEMPERATURE, MAX_SEARCH_RESULTS, 
-    MULTI_QUERY_RETRIEVAL, OLLAMA_BASE_URL, PARENT_DOCUMENT_RETRIEVAL,
+    MULTI_QUERY_RETRIEVAL, PARENT_DOCUMENT_RETRIEVAL,
     QDRANT_URL, EMBEDDING_MODEL, QDRANT_COLLECTION, DATA_DIR, WEB_URLS, 
     BASE_URL, BLOG_BASE_URL, DATA_DIR_PATTERN
 )
@@ -70,11 +72,7 @@ def load_vector_store(
         return None
     
     embeddings = init_embeddings(embedding_model_name)
-    
-    if embedding_model_name.startswith("ollama:"):
-        base_url = OLLAMA_BASE_URL
-        logger.info("Using Ollama embeddings with base_url: %s", base_url)
-        embeddings = init_embeddings(embedding_model_name, base_url=base_url)
+
     
     try:
         vector_store = QdrantVectorStore.from_existing_collection(        
@@ -112,11 +110,7 @@ def build_retriever(
     if MULTI_QUERY_RETRIEVAL:
         logger.info("MULTI_QUERY_RETRIEVAL enabled. Initializing chat model: %s", model_name)
         model = init_chat_model(model_name, temperature=temperature)
-        if model_name.startswith("ollama:"):
-            base_url = OLLAMA_BASE_URL
-            logger.info("Using Ollama chat model with base_url: %s", base_url)
-            model = init_chat_model(model_name, base_url=base_url)
-        
+
         multi_query_retriever = MultiQueryRetriever.from_llm(
             retriever=retriever, llm=model
         )
@@ -148,13 +142,17 @@ def build_retriever(
 
 
 # Initialize global components
-logger.info("Loading vector store and documents for retriever creation")
-vector_store = load_vector_store()
-all_docs = load_documents()
 
-retriever = build_retriever(
-    vector_store=vector_store,
-    all_docs=all_docs,
-    max_search_results=MAX_SEARCH_RESULTS
-)
-logger.info("Retriever created: %s", type(retriever).__name__ if retriever else "None")
+def create_retriever() -> Optional[VectorStoreRetriever]:
+    """Create and return the retriever."""
+    logger.info("Loading vector store and documents for retriever creation")
+    vector_store = load_vector_store()
+    all_docs = load_documents()
+
+    retriever = build_retriever(
+        vector_store=vector_store,
+        all_docs=all_docs,
+        max_search_results=MAX_SEARCH_RESULTS
+    )
+    return retriever
+

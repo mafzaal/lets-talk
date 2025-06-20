@@ -12,6 +12,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+from lets_talk.shared.config import BASE_URL, BLOG_BASE_URL, DATA_DIR_PATTERN, DEFAULT_METADATA_CSV_FILENAME, LOG_LEVEL, LOG_FORMAT, LOGGER_NAME,CHUNK_OVERLAP, CHUNK_SIZE, CHUNKING_STRATEGY, DATA_DIR, EMBEDDING_MODEL, FORCE_RECREATE, OUTPUT_DIR, QDRANT_COLLECTION, SHOULD_SAVE_STATS, USE_CHUNKING, VECTOR_STORAGE_PATH
+logger = logging.getLogger(f"{LOGGER_NAME}.scheduler_job")
+
 def pipeline_job_function(job_config: Dict[str, Any]):
     """
     Standalone pipeline job function that can be serialized by APScheduler.
@@ -21,45 +24,25 @@ def pipeline_job_function(job_config: Dict[str, Any]):
     """
     # Initialize variables that might be used in error handling
     job_id = job_config.get('job_id', 'unknown')
-    logger = None
     
     try:
-        # Import logging configuration at runtime to avoid import issues
-        from lets_talk.shared.config import LOG_LEVEL, LOG_FORMAT, LOGGER_NAME
-        import logging
         
-        logger = logging.getLogger(f"{LOGGER_NAME}.scheduler_job")
+        
         logger.info(f"Starting pipeline job: {job_id}")
         
-        # Import pipeline function only when needed to avoid circular imports
-        import sys
-        import importlib
-        
         # Import configuration constants
-        config_module = importlib.import_module('lets_talk.shared.config')
-        DATA_DIR = getattr(config_module, 'DATA_DIR')
-        VECTOR_STORAGE_PATH = getattr(config_module, 'VECTOR_STORAGE_PATH')
-        FORCE_RECREATE = getattr(config_module, 'FORCE_RECREATE')
-        OUTPUT_DIR = getattr(config_module, 'OUTPUT_DIR')
-        USE_CHUNKING = getattr(config_module, 'USE_CHUNKING')
-        SHOULD_SAVE_STATS = getattr(config_module, 'SHOULD_SAVE_STATS')
-        CHUNK_SIZE = getattr(config_module, 'CHUNK_SIZE')
-        CHUNK_OVERLAP = getattr(config_module, 'CHUNK_OVERLAP')
-        CHUNKING_STRATEGY = getattr(config_module, 'CHUNKING_STRATEGY')
-        QDRANT_COLLECTION = getattr(config_module, 'QDRANT_COLLECTION')
-        EMBEDDING_MODEL = getattr(config_module, 'EMBEDDING_MODEL')
-        DEFAULT_METADATA_CSV_FILENAME = getattr(config_module, 'DEFAULT_METADATA_CSV_FILENAME')
         
         # Import pipeline function
-        pipeline_module = importlib.import_module('lets_talk.core.pipeline.engine')
-        run_pipeline = getattr(pipeline_module, 'run_pipeline')
+        from lets_talk.core.pipeline.engine import run_pipeline
+        
         
         # Extract pipeline parameters with defaults
         data_dir = job_config.get('data_dir', DATA_DIR)
+        data_dir_pattern = job_config.get('data_dir_pattern', DATA_DIR_PATTERN)
         storage_path = job_config.get('storage_path', VECTOR_STORAGE_PATH)
         force_recreate = job_config.get('force_recreate', FORCE_RECREATE)
         output_dir = job_config.get('output_dir', OUTPUT_DIR)
-        ci_mode = job_config.get('ci_mode', True)
+        ci_mode = job_config.get('ci_mode', False)
         use_chunking = job_config.get('use_chunking', USE_CHUNKING)
         should_save_stats = job_config.get('should_save_stats', SHOULD_SAVE_STATS)
         chunk_size = job_config.get('chunk_size', CHUNK_SIZE)
@@ -67,9 +50,9 @@ def pipeline_job_function(job_config: Dict[str, Any]):
         chunking_strategy = job_config.get('chunking_strategy', CHUNKING_STRATEGY)
         collection_name = job_config.get('collection_name', QDRANT_COLLECTION)
         embedding_model = job_config.get('embedding_model', EMBEDDING_MODEL)
-        data_dir_pattern = job_config.get('data_dir_pattern', "*.md")
-        blog_base_url = job_config.get('blog_base_url')
-        base_url = job_config.get('base_url')
+        
+        blog_base_url = job_config.get('blog_base_url', BLOG_BASE_URL)
+        base_url = job_config.get('base_url',BASE_URL)
         incremental_mode = job_config.get('incremental_mode', "auto")
         metadata_csv_path = job_config.get('metadata_csv_path')
         dry_run = job_config.get('dry_run', False)
@@ -95,15 +78,13 @@ def pipeline_job_function(job_config: Dict[str, Any]):
             data_dir_pattern=data_dir_pattern,
             blog_base_url=blog_base_url,
             base_url=base_url,
-            incremental_mode=incremental_mode,
-            metadata_csv_path=metadata_csv_path,
-            dry_run=dry_run
+            incremental_mode=incremental_mode
         )
         
         if success:
             logger.info(f"Pipeline job {job_id} completed successfully: {message}")
-            if stats:
-                logger.info(f"Processed {stats['total_documents']} documents")
+            if stats and isinstance(stats, dict) and 'total_documents' in stats:
+                logger.info(f"Processed {stats.get('total_documents', 0)} documents")
         else:
             logger.error(f"Pipeline job {job_id} failed: {message}")
             raise Exception(message)

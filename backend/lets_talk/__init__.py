@@ -11,9 +11,9 @@ This package provides:
 
 from lets_talk import agents, api, core, tools, utils, data, shared
 
-__version__ = "1.0.0"
+__version__ = "0.1.1"
 __author__ = "Muhammad Afzaal"
-__email__ = "info@thedataguy.pro"
+__email__ = "support@thedataguy.pro"
 
 __all__ = [
     "agents",

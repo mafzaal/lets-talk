@@ -19,13 +19,16 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.documents import Document
 
 from lets_talk.agents.base import BaseAgent, AgentConfig
-from lets_talk.core.rag.retriever import retriever
+from lets_talk.core.rag.retriever import create_retriever
 from lets_talk.core.models.state import InputState
 from lets_talk.utils.formatters import format_docs, get_message_text
 from lets_talk.shared.config import LLM_TEMPERATURE, Configuration
+from langchain_core.vectorstores.base import VectorStoreRetriever
 
 logger = logging.getLogger(__name__)
 
+
+retriever: Optional[VectorStoreRetriever] = None
 
 class SearchQuery(BaseModel):
     """Search the indexed documents for a query."""
@@ -105,6 +108,11 @@ class RAGAgent(BaseAgent):
         if not query:
             return {"documents": []}
         
+        global retriever
+        if retriever is None:
+            logger.info("Initializing retriever")
+            retriever = create_retriever()
+            
         try:
             if retriever is None:
                 logger.warning("Retriever is None, returning empty documents")

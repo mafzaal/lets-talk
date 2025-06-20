@@ -83,8 +83,7 @@ LLM_TEMPERATURE = float(os.environ.get("LLM_TEMPERATURE", "0.1"))
 SDG_LLM_MODLEL = os.environ.get("SDG_LLM_MODEL", "openai:gpt-4.1")
 EVAL_LLM_MODEL = os.environ.get("EVAL_LLM_MODEL", "openai:gpt-4.1")
 
-# Models for the agent
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+
 
 # Pipeline-specific configurations
 # Output directory for statistics and artifacts
