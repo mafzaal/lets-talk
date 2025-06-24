@@ -235,7 +235,7 @@ class PipelineProcessor:
                                                   web_urls=web_urls)
             
             self.logger.debug("Initializing metadata manager service")
-            self.metadata_manager = MetadataManager(metadata_csv_path=self.metadata_csv_path)
+            self.metadata_manager = MetadataManager(metadata_csv_path=self.metadata_csv_path, checksum_algorithm=checksum_algorithm, max_backup_files= max_backup_files)
             
             self.logger.debug("Initializing vector store manager service")
             self.vector_store_manager = VectorStoreManager(
