@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test runner for document loader tests.
+Test runner for document loader tests using pytest.
 
 This script runs all available document loader tests and provides a summary.
 """
@@ -17,7 +17,7 @@ def run_simple_tests():
     
     try:
         result = subprocess.run([
-            sys.executable, "tests/test_document_loader_simple.py"
+            sys.executable, "-m", "pytest", "tests/test_document_loader_simple_pytest.py", "-v"
         ], capture_output=True, text=True, cwd=os.getcwd())
         
         print(result.stdout)
@@ -37,7 +37,7 @@ def run_comprehensive_tests():
     
     try:
         result = subprocess.run([
-            sys.executable, "tests/test_document_loader_comprehensive.py"
+            sys.executable, "-m", "pytest", "tests/test_document_loader_comprehensive_pytest.py", "-v"
         ], capture_output=True, text=True, cwd=os.getcwd())
         
         print(result.stdout)
@@ -50,15 +50,14 @@ def run_comprehensive_tests():
         return False
 
 
-def run_unittest_discovery():
-    """Run tests using unittest discovery."""
-    print("\n🔍 Running Tests via Unittest Discovery...")
+def run_pytest_tests():
+    """Run the pytest version of document loader tests."""
+    print("\n🔍 Running Pytest Document Loader Tests...")
     print("=" * 60)
     
     try:
         result = subprocess.run([
-            sys.executable, "-m", "unittest", "discover", "tests", 
-            "-p", "*document_loader_comprehensive*", "-v"
+            sys.executable, "-m", "pytest", "tests/test_document_loader_pytest.py", "-v"
         ], capture_output=True, text=True, cwd=os.getcwd())
         
         print(result.stdout)
@@ -67,15 +66,39 @@ def run_unittest_discovery():
         
         return result.returncode == 0
     except Exception as e:
-        print(f"❌ Failed to run unittest discovery: {e}")
+        print(f"❌ Failed to run pytest tests: {e}")
+        return False
+
+
+def run_all_pytest_document_tests():
+    """Run all pytest document loader tests at once."""
+    print("\n🔍 Running All Pytest Document Loader Tests...")
+    print("=" * 60)
+    
+    try:
+        result = subprocess.run([
+            sys.executable, "-m", "pytest", 
+            "tests/test_document_loader_simple_pytest.py",
+            "tests/test_document_loader_pytest.py", 
+            "tests/test_document_loader_comprehensive_pytest.py",
+            "-v"
+        ], capture_output=True, text=True, cwd=os.getcwd())
+        
+        print(result.stdout)
+        if result.stderr:
+            print("STDERR:", result.stderr)
+        
+        return result.returncode == 0
+    except Exception as e:
+        print(f"❌ Failed to run all pytest tests: {e}")
         return False
 
 
 def main():
     """Run all document loader tests."""
-    print("🧪 DOCUMENT LOADER TEST SUITE")
+    print("🧪 DOCUMENT LOADER TEST SUITE (PYTEST)")
     print("=" * 80)
-    print("This test suite validates the DocumentLoader service functionality.")
+    print("This test suite validates the DocumentLoader service functionality using pytest.")
     print()
     
     results = []
@@ -88,9 +111,13 @@ def main():
     comprehensive_success = run_comprehensive_tests()
     results.append(("Comprehensive Tests", comprehensive_success))
     
-    # Run unittest discovery
-    unittest_success = run_unittest_discovery()
-    results.append(("Unittest Discovery", unittest_success))
+    # Run pytest tests
+    pytest_success = run_pytest_tests()
+    results.append(("Pytest Tests", pytest_success))
+    
+    # Run all pytest tests together
+    all_pytest_success = run_all_pytest_document_tests()
+    results.append(("All Pytest Tests", all_pytest_success))
     
     # Summary
     print("\n" + "=" * 80)
