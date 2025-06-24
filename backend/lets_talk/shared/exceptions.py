@@ -44,7 +44,7 @@ class ToolError(LetsNevermindTalkError):
 class ValidationError(LetsNevermindTalkError):
     """Raised when validation fails."""
     
-    def __init__(self, message: str, errors: list = None):
+    def __init__(self, message: str, errors: list | None = None):
         super().__init__(message)
         self.errors = errors or []
 
@@ -67,7 +67,7 @@ class AuthorizationError(LetsNevermindTalkError):
 class ExternalServiceError(LetsNevermindTalkError):
     """Raised when there's an error with external services."""
     
-    def __init__(self, message: str, service_name: str = None, status_code: int = None):
+    def __init__(self, message: str, service_name: str | None = None, status_code: int | None = None):
         super().__init__(message)
         self.service_name = service_name
         self.status_code = status_code
@@ -76,7 +76,7 @@ class ExternalServiceError(LetsNevermindTalkError):
 class RateLimitError(LetsNevermindTalkError):
     """Raised when rate limits are exceeded."""
     
-    def __init__(self, message: str, retry_after: int = None):
+    def __init__(self, message: str, retry_after: int | None = None):
         super().__init__(message)
         self.retry_after = retry_after
 
@@ -84,7 +84,7 @@ class RateLimitError(LetsNevermindTalkError):
 class TimeoutError(LetsNevermindTalkError):
     """Raised when an operation times out."""
     
-    def __init__(self, message: str, timeout_duration: float = None):
+    def __init__(self, message: str, timeout_duration: float | None = None):
         super().__init__(message)
         self.timeout_duration = timeout_duration
 

@@ -32,6 +32,7 @@ dependencies = [
     "tqdm>=4.67.1",
     "uvicorn>=0.24.0",
     "websockets>=15.0.1",
+    "python-frontmatter>=1.1.0",
 ]
 
 [project.optional-dependencies]

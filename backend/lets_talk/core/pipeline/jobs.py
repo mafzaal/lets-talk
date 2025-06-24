@@ -5,11 +5,12 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from pathlib import Path
 
+from lets_talk.core.pipeline.processors import get_processor
 from lets_talk.shared.config import (
-    OUTPUT_DIR, LOGGER_NAME, FORCE_RECREATE, DATA_DIR,
+    CHUNKING_STRATEGY, OUTPUT_DIR, LOGGER_NAME, FORCE_RECREATE, DATA_DIR, QDRANT_URL,
     VECTOR_STORAGE_PATH, USE_CHUNKING, SHOULD_SAVE_STATS,
     CHUNK_SIZE, CHUNK_OVERLAP, QDRANT_COLLECTION, EMBEDDING_MODEL,
-    DATA_DIR_PATTERN, BLOG_BASE_URL, BASE_URL, INCREMENTAL_MODE
+    DATA_DIR_PATTERN, BLOG_BASE_URL, BASE_URL, INCREMENTAL_MODE, WEB_URLS
 )
 
 logger = logging.getLogger(f"{LOGGER_NAME}.pipeline_jobs")
@@ -46,13 +47,16 @@ def simple_pipeline_job(config: Optional[Dict[str, Any]] = None) -> Dict[str, An
     
     # Models and collections
     collection_name = config.get("collection_name", QDRANT_COLLECTION)
+    qdrant_url = config.get("qdrant_url", QDRANT_URL)
     embedding_model = config.get("embedding_model", EMBEDDING_MODEL)
     
     # URLs and base paths
     blog_base_url = config.get("blog_base_url", BLOG_BASE_URL)
     base_url = config.get("base_url", BASE_URL)
+    web_urls = config.get("web_urls", WEB_URLS)
     
     # Chunking configuration
+    chunking_strategy = config.get("chunking_strategy", CHUNKING_STRATEGY)
     use_chunking = config.get("use_chunking", USE_CHUNKING)
     chunk_size = config.get("chunk_size", CHUNK_SIZE)
     chunk_overlap = config.get("chunk_overlap", CHUNK_OVERLAP)
@@ -115,6 +119,11 @@ def simple_pipeline_job(config: Optional[Dict[str, Any]] = None) -> Dict[str, An
                     incremental_mode=incremental_mode,
                     ci_mode=ci_mode
                 )
+
+                pipeline_processor =  get_processor()
+                pipeline_processor.process_documents_incremental()
+
+
                 result.update(pipeline_result)
                 result["status"] = "completed"
             except ImportError:

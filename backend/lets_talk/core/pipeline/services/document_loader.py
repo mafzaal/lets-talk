@@ -18,7 +18,9 @@ from lets_talk.shared.config import (
     BASE_URL,
     BLOG_BASE_URL,
     DATA_DIR,
-    INDEX_ONLY_PUBLISHED_POSTS
+    DATA_DIR_PATTERN,
+    INDEX_ONLY_PUBLISHED_POSTS,
+    WEB_URLS
 )
 from ..utils.common_utils import handle_exceptions, log_execution_time, merge_metadata
 
@@ -33,29 +35,34 @@ class DocumentLoader:
     def __init__(
         self,
         data_dir: str = DATA_DIR,
+        data_dir_pattern: str = DATA_DIR_PATTERN,
         blog_base_url: str = BLOG_BASE_URL,
         base_url: str = BASE_URL,
-        index_only_published: bool = INDEX_ONLY_PUBLISHED_POSTS
+        web_urls: Optional[List[str]] = WEB_URLS,
+        index_only_published_posts: bool = INDEX_ONLY_PUBLISHED_POSTS
     ):
         """
         Initialize the document loader.
         
         Args:
             data_dir: Directory containing blog posts
+            data_dir_pattern: Pattern to match files in the directory
             blog_base_url: Base URL for blog posts
             base_url: Base URL for absolute links
-            index_only_published: Whether to only index published posts
+            web_urls: List of web URLs to include
+            index_only_published_posts: Whether to only index published posts
         """
         self.data_dir = data_dir
         self.blog_base_url = blog_base_url.rstrip('/') + '/'
         self.base_url = base_url
-        self.index_only_published = index_only_published
+        self.index_only_published = index_only_published_posts
+        self.data_dir_pattern = data_dir_pattern
+        self.web_urls = web_urls if web_urls else []
     
     @handle_exceptions(default_return=[])
     @log_execution_time()
     def load_documents(
         self,
-        glob_pattern: str = "*.md",
         recursive: bool = True,
         show_progress: bool = True
     ) -> List[Document]:
@@ -74,7 +81,7 @@ class DocumentLoader:
         
         text_loader = DirectoryLoader(
             self.data_dir,
-            glob=glob_pattern,
+            glob=self.data_dir_pattern,
             show_progress=show_progress,
             recursive=recursive,
             loader_cls=TextLoader
@@ -133,8 +140,8 @@ class DocumentLoader:
         url = doc.metadata["source"].replace(self.data_dir, self.blog_base_url)
         
         # Remove index.md suffix if present
-        if url.endswith("index.md"):
-            url = url[:-len("index.md")]
+        if url.endswith(self.data_dir_pattern):
+            url = url[:-len(self.data_dir_pattern)]
         
         # Remove .md suffix if present
         if url.endswith(".md"):
@@ -188,18 +195,26 @@ class DocumentLoader:
             Dictionary of frontmatter data
         """
         frontmatter_data = {}
-        content_parts = content.split('---', 2)
+
+        import frontmatter
+        # Parse frontmatter using the frontmatter library
+        try:
+            post = frontmatter.loads(content)
+            frontmatter_data = post.metadata
+        except Exception as e:
+            logger.warning(f"Failed to parse frontmatter: {e}")
+            frontmatter_data = {}
+        # content_parts = content.split('---', 2)
+        # if len(content_parts) >= 3:  # Valid frontmatter found
+        #     frontmatter_text = content_parts[1]
+        #     for line in frontmatter_text.strip().split('\n'):
+        #         if ':' in line:
+        #             key, value = line.split(':', 1)
+        #             key = key.strip()
+        #             value = value.strip().strip('"')
+        #             frontmatter_data[key] = value
         
-        if len(content_parts) >= 3:  # Valid frontmatter found
-            frontmatter_text = content_parts[1]
-            for line in frontmatter_text.strip().split('\n'):
-                if ':' in line:
-                    key, value = line.split(':', 1)
-                    key = key.strip()
-                    value = value.strip().strip('"')
-                    frontmatter_data[key] = value
-        
-        return frontmatter_data
+        return frontmatter_data #type: ignore[return-value]
     
     def _process_media_urls(self, metadata: Dict, frontmatter_data: Dict[str, str]) -> None:
         """
@@ -222,8 +237,18 @@ class DocumentLoader:
             metadata_key = media_type.replace("cover", "cover_").lower()
             if media_type in frontmatter_data:
                 metadata[metadata_key] = make_absolute_url(frontmatter_data[media_type])
+
+        if "youTubeVideoId" in frontmatter_data:
+            # Convert YouTube video ID to embed URL
+            video_id = frontmatter_data["youTubeVideoId"].strip()
+            if video_id:
+                metadata["cover_video"] = f"https://www.youtube.com/embed/{video_id}"
+            else:
+                metadata["cover_video"] = ""
+        else:
+            metadata["cover_video"] = ""
     
-    def _add_frontmatter_fields(self, metadata: Dict, frontmatter_data: Dict[str, str]) -> None:
+    def _add_frontmatter_fields(self, metadata: Dict, frontmatter_data: Dict) -> None:
         """
         Add additional frontmatter fields to metadata.
         
@@ -235,19 +260,33 @@ class DocumentLoader:
         string_fields = ["date", "description", "readingTime"]
         for field in string_fields:
             if field in frontmatter_data:
+                value = frontmatter_data[field]
                 if field == "readingTime":
-                    metadata["reading_time"] = frontmatter_data[field]
+                    metadata["reading_time"] = str(value) if value is not None else ""
                 else:
-                    metadata[field] = frontmatter_data[field]
+                    metadata[field] = str(value) if value is not None else ""
         
-        # Categories field (parse as list)
+        # Categories field (handle both list and string formats)
         if "categories" in frontmatter_data:
-            categories = frontmatter_data["categories"].strip('[]').replace('"', '')
-            metadata["categories"] = [c.strip() for c in categories.split(',')]
+            categories_value = frontmatter_data["categories"]
+            if isinstance(categories_value, list):
+                metadata["categories"] = categories_value
+            elif isinstance(categories_value, str):
+                # Parse string format like '["AI", "Testing"]' or 'AI, Testing'
+                categories = categories_value.strip('[]').replace('"', '').replace("'", '')
+                metadata["categories"] = [c.strip() for c in categories.split(',') if c.strip()]
+            else:
+                metadata["categories"] = []
         
-        # Published field (parse as boolean)
+        # Published field (handle both boolean and string formats)
         if "published" in frontmatter_data:
-            metadata["published"] = frontmatter_data["published"].lower() == "true"
+            published_value = frontmatter_data["published"]
+            if isinstance(published_value, bool):
+                metadata["published"] = published_value
+            elif isinstance(published_value, str):
+                metadata["published"] = published_value.lower() == "true"
+            else:
+                metadata["published"] = True  # Default to published
     
     def _filter_published_documents(self, documents: List[Document]) -> List[Document]:
         """
@@ -354,7 +393,11 @@ class DocumentStats:
 # Convenience functions for backward compatibility
 def load_blog_posts(
     data_dir: str = DATA_DIR,
-    glob_pattern: str = "*.md",
+    data_dir_pattern: str = DATA_DIR_PATTERN,
+    blog_base_url: str = BLOG_BASE_URL,
+    base_url: str = BASE_URL,
+    web_urls: Optional[List[str]] = WEB_URLS,
+    index_only_published_posts: bool = INDEX_ONLY_PUBLISHED_POSTS,
     recursive: bool = True,
     show_progress: bool = True
 ) -> List[Document]:
@@ -363,15 +406,21 @@ def load_blog_posts(
     
     Args:
         data_dir: Directory containing the blog posts
-        glob_pattern: Pattern to match files
+        data_dir_pattern: Pattern to match files
+        blog_base_url: Base URL for blog posts
+        base_url: Base URL for absolute links
+        web_urls: List of web URLs to include
+        index_only_published_posts: Whether to only index published posts
         recursive: Whether to search subdirectories
         show_progress: Whether to show a progress bar
         
     Returns:
         List of Document objects containing the blog posts
     """
-    loader = DocumentLoader(data_dir=data_dir)
-    return loader.load_documents(glob_pattern, recursive, show_progress)
+    loader = DocumentLoader(data_dir=data_dir,data_dir_pattern=data_dir_pattern,
+                            blog_base_url=blog_base_url, base_url=base_url,
+                            web_urls=web_urls, index_only_published_posts=index_only_published_posts)
+    return loader.load_documents(recursive, show_progress)
 
 
 def get_document_stats(documents: List[Document]) -> Dict:

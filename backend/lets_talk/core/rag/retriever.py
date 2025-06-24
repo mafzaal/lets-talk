@@ -11,7 +11,7 @@ from langchain.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 
 
-from lets_talk.core.pipeline.processors import update_document_metadata,load_blog_posts
+from lets_talk.core.pipeline.services.document_loader import load_blog_posts
 
 from lets_talk.shared.config import (
     BM25_RETRIEVAL, LLM_MODEL, LLM_TEMPERATURE, MAX_SEARCH_RESULTS, 
@@ -33,26 +33,22 @@ def load_documents(
 ) -> List[Document]:
     """Load documents from the specified directory and URLs."""
     logger.info("Loading blog posts from directory: %s", data_dir)
-    docs = load_blog_posts(data_dir=data_dir, glob_pattern=pattern)
-    logger.info("Loaded %d blog posts", len(docs))
-    
-    docs_with_data = update_document_metadata(
-        docs, 
-        data_dir_prefix=data_dir+'/', 
-        base_url=base_url, 
-        blog_base_url=blog_base_url, 
-        remove_suffix=pattern
+    docs = load_blog_posts(
+        data_dir=data_dir, 
+        data_dir_pattern=pattern,
+        blog_base_url=blog_base_url,
+        base_url=base_url
     )
-    logger.info("Updated document metadata for blog posts")
+    logger.info("Loaded %d blog posts with metadata", len(docs))
     
     if web_urls:
         loader = WebBaseLoader(web_urls)
         logger.info("Loading web documents from URLs: %s", web_urls)
         web_docs = loader.load()
         logger.info("Loaded %d web documents", len(web_docs))
-        all_docs = docs_with_data + web_docs
+        all_docs = docs + web_docs
     else:
-        all_docs = docs_with_data
+        all_docs = docs
     
     logger.info("Total documents loaded: %d", len(all_docs))
     return all_docs
