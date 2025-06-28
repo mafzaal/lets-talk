@@ -201,6 +201,7 @@ def run_pipeline(
                 optimized_docs, perf_metrics = apply_performance_optimizations(
                     docs_to_process, 
                     target_chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
                     enable_monitoring=True
                 )
                 result['performance_metrics'].update(perf_metrics)

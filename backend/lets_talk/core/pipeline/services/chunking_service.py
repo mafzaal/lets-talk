@@ -15,9 +15,14 @@ from lets_talk.shared.config import (
     CHUNK_SIZE,
     CHUNK_OVERLAP,
     CHUNKING_STRATEGY,
+    USE_CHUNKING,
     ChunkingStrategy,
     EMBEDDING_MODEL,
-    ADAPTIVE_CHUNKING
+    ADAPTIVE_CHUNKING,
+    SemanticChunkerBreakpointType,
+    SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
+    SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
+    SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
 )
 from lets_talk.utils.wrapper import init_embeddings_wrapper
 from ..utils.common_utils import handle_exceptions, log_execution_time
@@ -36,7 +41,10 @@ class ChunkingService:
         chunk_overlap: int = CHUNK_OVERLAP,
         chunking_strategy: ChunkingStrategy = CHUNKING_STRATEGY,
         embedding_model: str = EMBEDDING_MODEL,
-        adaptive_chunking: bool = ADAPTIVE_CHUNKING
+        adaptive_chunking: bool = ADAPTIVE_CHUNKING,
+        semantic_breakpoint_type: SemanticChunkerBreakpointType = SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
+        semantic_breakpoint_threshold_amount: float = SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
+        semantic_min_chunk_size: int = SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
     ):
         """
         Initialize the chunking service.
@@ -47,12 +55,18 @@ class ChunkingService:
             chunking_strategy: Strategy to use for chunking
             embedding_model: Embedding model for semantic chunking
             adaptive_chunking: Whether to use adaptive chunking
+            semantic_breakpoint_type: Breakpoint threshold type for semantic chunking
+            semantic_breakpoint_threshold_amount: Threshold amount for semantic chunking breakpoints
+            semantic_min_chunk_size: Minimum chunk size for semantic chunking
         """
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
         self.chunking_strategy = chunking_strategy
         self.embedding_model = embedding_model
         self.adaptive_chunking = adaptive_chunking
+        self.semantic_breakpoint_type = semantic_breakpoint_type
+        self.semantic_breakpoint_threshold_amount = semantic_breakpoint_threshold_amount
+        self.semantic_min_chunk_size = semantic_min_chunk_size
     
     @handle_exceptions(default_return=[])
     @log_execution_time()
@@ -83,11 +97,7 @@ class ChunkingService:
         chunk_overlap = chunk_overlap or self.chunk_overlap
         strategy = strategy or self.chunking_strategy
         
-        # Apply adaptive chunking if enabled
-        if self.adaptive_chunking:
-            chunk_size, chunk_overlap = self._optimize_chunking_parameters(
-                documents, chunk_size, chunk_overlap
-            )
+       
         
         logger.info(f"Splitting {len(documents)} documents using {strategy} strategy "
                    f"(chunk_size={chunk_size}, overlap={chunk_overlap})")
@@ -95,6 +105,11 @@ class ChunkingService:
         if strategy == ChunkingStrategy.SEMANTIC:
             split_docs = self._semantic_chunking(documents)
         else:
+             # Apply adaptive chunking if enabled
+            if self.adaptive_chunking:
+                chunk_size, chunk_overlap = self._optimize_chunking_parameters(
+                    documents, chunk_size, chunk_overlap
+                )
             split_docs = self._text_splitter_chunking(documents, chunk_size, chunk_overlap)
         
         # Update chunk count metadata
@@ -116,17 +131,23 @@ class ChunkingService:
         try:
             from langchain_experimental.text_splitter import SemanticChunker
             
-            
             # Initialize embeddings for semantic chunking
             embeddings = init_embeddings_wrapper(self.embedding_model)
             
+            # Create semantic chunker with configured parameters
             semantic_chunker = SemanticChunker(
-                embeddings, # type: ignore
-                breakpoint_threshold_type="percentile"
+                embeddings,  # type: ignore
+                breakpoint_threshold_type=self.semantic_breakpoint_type.value,
+                breakpoint_threshold_amount=self.semantic_breakpoint_threshold_amount,
+                # Note: min_chunk_size parameter may not be available in all versions
+                # Remove this line if it causes issues with your langchain_experimental version
+                # min_chunk_size=self.semantic_min_chunk_size,
             )
+            
             split_docs = semantic_chunker.split_documents(documents)
             
-            logger.info("Successfully applied semantic chunking")
+            logger.info(f"Successfully applied semantic chunking with breakpoint_type={self.semantic_breakpoint_type.value}, "
+                       f"threshold_amount={self.semantic_breakpoint_threshold_amount}")
             return split_docs
             
         except ImportError:
@@ -305,14 +326,94 @@ class ChunkingService:
                    f"avg size: {avg_chunk_size:.0f} chars")
         
         return efficiency_metrics
-
+    
+    @staticmethod
+    def get_available_breakpoint_types() -> List[str]:
+        """
+        Get all available breakpoint threshold types for semantic chunking.
+        
+        Returns:
+            List of available breakpoint threshold type strings
+        """
+        return [bp_type.value for bp_type in SemanticChunkerBreakpointType]
+    
+    def validate_semantic_chunker_config(self) -> bool:
+        """
+        Validate the semantic chunker configuration parameters.
+        
+        Returns:
+            True if configuration is valid, False otherwise
+        """
+        # Validate breakpoint threshold amount based on type
+        if self.semantic_breakpoint_type in [SemanticChunkerBreakpointType.PERCENTILE, SemanticChunkerBreakpointType.GRADIENT]:
+            # Percentile and gradient should be between 0.0 and 100.0
+            if not (0.0 <= self.semantic_breakpoint_threshold_amount <= 100.0):
+                logger.warning(f"Invalid threshold amount {self.semantic_breakpoint_threshold_amount} for {self.semantic_breakpoint_type}. "
+                              "Should be between 0.0 and 100.0")
+                return False
+        elif self.semantic_breakpoint_type == SemanticChunkerBreakpointType.STANDARD_DEVIATION:
+            # Standard deviation should be positive
+            if self.semantic_breakpoint_threshold_amount <= 0.0:
+                logger.warning(f"Invalid threshold amount {self.semantic_breakpoint_threshold_amount} for standard_deviation. "
+                              "Should be positive")
+                return False
+        elif self.semantic_breakpoint_type == SemanticChunkerBreakpointType.INTERQUARTILE:
+            # Interquartile should be positive
+            if self.semantic_breakpoint_threshold_amount <= 0.0:
+                logger.warning(f"Invalid threshold amount {self.semantic_breakpoint_threshold_amount} for interquartile. "
+                              "Should be positive")
+                return False
+        
+        # Validate minimum chunk size
+        if self.semantic_min_chunk_size <= 0:
+            logger.warning(f"Invalid min_chunk_size {self.semantic_min_chunk_size}. Should be positive")
+            return False
+        
+        return True
+    
+    def get_semantic_chunker_config_info(self) -> dict:
+        """
+        Get information about the current semantic chunker configuration.
+        
+        Returns:
+            Dictionary with configuration details and recommendations
+        """
+        config_info = {
+            "breakpoint_type": self.semantic_breakpoint_type.value,
+            "breakpoint_threshold_amount": self.semantic_breakpoint_threshold_amount,
+            "min_chunk_size": self.semantic_min_chunk_size,
+            "is_valid": self.validate_semantic_chunker_config(),
+        }
+        
+        # Add recommendations based on breakpoint type
+        recommendations = {
+            SemanticChunkerBreakpointType.PERCENTILE: 
+                "Good for general use. Default 95.0 works well for most documents. "
+                "Lower values (85-90) create smaller chunks, higher values (95-99) create larger chunks.",
+            SemanticChunkerBreakpointType.STANDARD_DEVIATION:
+                "Good for documents with consistent structure. Default 3.0 is conservative. "
+                "Lower values (1.5-2.5) create more chunks, higher values (3.5-5.0) create fewer chunks.",
+            SemanticChunkerBreakpointType.INTERQUARTILE:
+                "Good for outlier detection. Default 1.5 works well. "
+                "Lower values (1.0-1.2) are more sensitive, higher values (2.0-3.0) are less sensitive.",
+            SemanticChunkerBreakpointType.GRADIENT:
+                "Good for highly correlated or domain-specific content (legal, medical). "
+                "Uses anomaly detection on gradient. Default 95.0 percentile threshold."
+        }
+        
+        config_info["recommendation"] = recommendations.get(self.semantic_breakpoint_type, "Unknown breakpoint type")
+        config_info["available_types"] = self.get_available_breakpoint_types()
+        
+        return config_info
 
 # Convenience functions for backward compatibility
 def split_documents(
     documents: List[Document],
     chunk_size: int = CHUNK_SIZE,
     chunk_overlap: int = CHUNK_OVERLAP,
-    chunking_strategy: ChunkingStrategy = CHUNKING_STRATEGY
+    chunking_strategy: ChunkingStrategy = CHUNKING_STRATEGY,
+    semantic_breakpoint_type: Optional[SemanticChunkerBreakpointType] = None,
+    semantic_breakpoint_threshold_amount: Optional[float] = None,
 ) -> List[Document]:
     """
     Split documents into chunks for better embedding and retrieval.
@@ -322,11 +423,19 @@ def split_documents(
         chunk_size: Size of each chunk in characters
         chunk_overlap: Overlap between chunks in characters
         chunking_strategy: Strategy to use for chunking
+        semantic_breakpoint_type: Breakpoint threshold type for semantic chunking
+        semantic_breakpoint_threshold_amount: Threshold amount for semantic chunking
         
     Returns:
         List of split Document objects
     """
-    service = ChunkingService(chunk_size, chunk_overlap, chunking_strategy)
+    service = ChunkingService(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        chunking_strategy=chunking_strategy,
+        semantic_breakpoint_type=semantic_breakpoint_type or SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
+        semantic_breakpoint_threshold_amount=semantic_breakpoint_threshold_amount or SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
+    )
     return service.split_documents(documents)
 
 

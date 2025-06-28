@@ -19,6 +19,14 @@ class ChunkingStrategy(str, Enum):
     TEXT_SPLITTER = "text_splitter"
 
 
+class SemanticChunkerBreakpointType(str, Enum):
+    """Enumeration for SemanticChunker breakpoint threshold types."""
+    PERCENTILE = "percentile"
+    STANDARD_DEVIATION = "standard_deviation"
+    INTERQUARTILE = "interquartile"
+    GRADIENT = "gradient"
+
+
 # Configuration with defaults
 # DATA INPUT
 DATA_DIR = os.environ.get("DATA_DIR", "data/")
@@ -61,6 +69,17 @@ CHUNKING_STRATEGY = ChunkingStrategy(os.environ.get("CHUNKING_STRATEGY", Chunkin
 CHUNK_SIZE = int(os.environ.get("CHUNK_SIZE", "1000"))
 CHUNK_OVERLAP = int(os.environ.get("CHUNK_OVERLAP", "200"))
 ADAPTIVE_CHUNKING = os.environ.get("ADAPTIVE_CHUNKING", "True").lower() == "true"
+
+# Semantic chunking configuration
+SEMANTIC_CHUNKER_BREAKPOINT_TYPE = SemanticChunkerBreakpointType(
+    os.environ.get("SEMANTIC_CHUNKER_BREAKPOINT_TYPE", SemanticChunkerBreakpointType.PERCENTILE.value)
+)
+SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT = float(
+    os.environ.get("SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT", "95.0")
+)
+SEMANTIC_CHUNKER_MIN_CHUNK_SIZE = int(
+    os.environ.get("SEMANTIC_CHUNKER_MIN_CHUNK_SIZE", "100")
+)
 
 
 # Vector database creation configuration

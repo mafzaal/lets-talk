@@ -37,7 +37,7 @@ class HealthChecker:
         collection_name: str,
         qdrant_url: str,
         embedding_model: str,
-        metadata_csv_path: str = METADATA_CSV_FILE
+        metadata_csv_path: str
     ):
         """
         Initialize the health checker.

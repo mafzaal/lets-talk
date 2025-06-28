@@ -177,9 +177,24 @@ class OptimizationService:
     Provides optimization recommendations and automatic tuning.
     """
     
-    def __init__(self):
-        """Initialize the optimization service."""
+    def __init__(
+        self,
+        adaptive_chunking: bool = ADAPTIVE_CHUNKING,
+        chunk_size: int = CHUNK_SIZE,
+        chunk_overlap: int = CHUNK_OVERLAP
+    ):
+        """
+        Initialize the optimization service.
+        
+        Args:
+            adaptive_chunking: Whether to enable adaptive chunking optimization
+            chunk_size: Default chunk size for document processing
+            chunk_overlap: Default chunk overlap for document processing
+        """
         self.performance_monitor = PerformanceMonitor()
+        self.adaptive_chunking = adaptive_chunking
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
     
     def optimize_batch_size(
         self,
@@ -218,7 +233,8 @@ class OptimizationService:
     def optimize_chunking_parameters(
         self,
         documents: List[Document],
-        target_chunk_size: int = CHUNK_SIZE,
+        target_chunk_size: int | None = None,
+        chunk_overlap: int | None = None,
         max_chunk_size: int = 2000
     ) -> Tuple[int, int]:
         """
@@ -226,14 +242,19 @@ class OptimizationService:
         
         Args:
             documents: List of documents to analyze
-            target_chunk_size: Target chunk size
+            target_chunk_size: Target chunk size (uses instance default if None)
+            chunk_overlap: Chunk overlap (uses instance default if None)
             max_chunk_size: Maximum allowed chunk size
             
         Returns:
             Tuple of (optimized_chunk_size, optimized_overlap)
         """
         if not documents:
-            return target_chunk_size, CHUNK_OVERLAP
+            return (target_chunk_size or self.chunk_size), (chunk_overlap or self.chunk_overlap)
+        
+        # Use instance defaults if not provided
+        target_chunk_size = target_chunk_size or self.chunk_size
+        chunk_overlap = chunk_overlap or self.chunk_overlap
         
         # Analyze document lengths
         lengths = [len(doc.page_content) for doc in documents]
@@ -255,7 +276,7 @@ class OptimizationService:
         else:
             # Documents are medium-sized, use target size
             optimized_chunk_size = target_chunk_size
-            optimized_overlap = max(int(optimized_chunk_size * 0.1), CHUNK_OVERLAP)
+            optimized_overlap = max(int(optimized_chunk_size * 0.1), chunk_overlap)
         
         logger.info(f"Optimized chunking: size={optimized_chunk_size}, overlap={optimized_overlap}")
         return optimized_chunk_size, optimized_overlap
@@ -263,7 +284,9 @@ class OptimizationService:
     def apply_performance_optimizations(
         self,
         documents: List[Document],
-        target_chunk_size: int = CHUNK_SIZE,
+        target_chunk_size: int | None = None,
+        chunk_overlap: int | None = None,
+        adaptive_chunking: bool | None = None,
         enable_monitoring: bool = ENABLE_PERFORMANCE_MONITORING
     ) -> Tuple[List[Document], Dict[str, Any]]:
         """
@@ -271,13 +294,20 @@ class OptimizationService:
         
         Args:
             documents: List of documents to optimize
-            target_chunk_size: Target chunk size for optimization
+            target_chunk_size: Target chunk size for optimization (uses instance default if None)
+            chunk_overlap: Chunk overlap for optimization (uses instance default if None)
+            adaptive_chunking: Whether to enable adaptive chunking (uses instance default if None)
             enable_monitoring: Whether to enable performance monitoring
             
         Returns:
             Tuple of (optimized_documents, performance_metrics)
         """
         start_time = time.time()
+        
+        # Use instance defaults if not provided
+        target_chunk_size = target_chunk_size or self.chunk_size
+        chunk_overlap = chunk_overlap or self.chunk_overlap
+        adaptive_chunking = adaptive_chunking if adaptive_chunking is not None else self.adaptive_chunking
         
         performance_metrics = {
             "input_document_count": len(documents),
@@ -287,17 +317,17 @@ class OptimizationService:
         
         try:
             # Apply adaptive chunking if enabled
-            if ADAPTIVE_CHUNKING and documents:
+            if adaptive_chunking and documents:
                 logger.info("Applying adaptive chunking optimization...")
                 optimized_chunk_size, optimized_overlap = self.optimize_chunking_parameters(
-                    documents, target_chunk_size
+                    documents, target_chunk_size, chunk_overlap
                 )
                 performance_metrics["optimizations_applied"].append("adaptive_chunking")
                 performance_metrics["chunk_size"] = optimized_chunk_size
                 performance_metrics["chunk_overlap"] = optimized_overlap
             else:
                 optimized_chunk_size = target_chunk_size
-                optimized_overlap = CHUNK_OVERLAP
+                optimized_overlap = chunk_overlap
             
             # Monitor system resources if enabled
             if enable_monitoring:
@@ -404,8 +434,20 @@ def monitor_incremental_performance(
 def apply_performance_optimizations(
     documents: List[Document],
     target_chunk_size: int = CHUNK_SIZE,
+    chunk_overlap: int = CHUNK_OVERLAP,
+    adaptive_chunking: bool = ADAPTIVE_CHUNKING,
     enable_monitoring: bool = ENABLE_PERFORMANCE_MONITORING
 ) -> Tuple[List[Document], Dict[str, Any]]:
     """Apply comprehensive performance optimizations to documents."""
-    optimizer = OptimizationService()
-    return optimizer.apply_performance_optimizations(documents, target_chunk_size, enable_monitoring)
+    optimizer = OptimizationService(
+        adaptive_chunking=adaptive_chunking,
+        chunk_size=target_chunk_size,
+        chunk_overlap=chunk_overlap
+    )
+    return optimizer.apply_performance_optimizations(
+        documents, 
+        target_chunk_size, 
+        chunk_overlap, 
+        adaptive_chunking, 
+        enable_monitoring
+    )

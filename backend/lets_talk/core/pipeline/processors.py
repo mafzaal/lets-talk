@@ -43,11 +43,15 @@ from lets_talk.shared.config import (
     OUTPUT_DIR,
     QDRANT_COLLECTION,
     QDRANT_URL,
+    SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
+    SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
+    SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
     STATS_OUTPUT_DIR,
     USE_CHUNKING,
     VECTOR_STORAGE_PATH,
     WEB_URLS,
-    ChunkingStrategy
+    ChunkingStrategy,
+    SemanticChunkerBreakpointType
 )
 
 # Import from refactored services
@@ -82,6 +86,9 @@ class PipelineProcessor:
         adaptive_chunking:bool= ADAPTIVE_CHUNKING,
         chunk_size: int = CHUNK_SIZE,
         chunk_overlap: int = CHUNK_OVERLAP,
+        semantic_breakpoint_type: SemanticChunkerBreakpointType = SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
+        semantic_breakpoint_threshold_amount: float = SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
+        semantic_min_chunk_size: int = SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
         vector_storage_path: str = VECTOR_STORAGE_PATH,
         qdrant_url: str = QDRANT_URL,
         collection_name: str = QDRANT_COLLECTION,
@@ -102,6 +109,7 @@ class PipelineProcessor:
         health_report_filename: str = HEALTH_REPORT_FILENAME,
         ci_summary_filename: str = CI_SUMMARY_FILENAME,
         build_info_filename: str = BUILD_INFO_FILENAME,
+        
 
 
         
@@ -111,11 +119,41 @@ class PipelineProcessor:
         
         Args:
             data_dir: Directory containing blog posts
-            storage_path: Path to vector store
-            collection_name: Qdrant collection name
+            data_dir_pattern: Glob pattern for matching files in data directory
+            web_urls: List of web URLs to process
+            base_url: Base URL for generating absolute URLs
+            blog_base_url: Base URL for blog posts
+            index_only_published_posts: Whether to index only published posts
+            output_dir: Directory for output files
+            stats_output_dir: Directory for statistics and metadata files
+            use_chunking: Whether to enable document chunking
+            chunking_strategy: Strategy for document chunking
+            adaptive_chunking: Whether to use adaptive chunking
+            chunk_size: Size of text chunks
+            chunk_overlap: Overlap between consecutive chunks
+            semantic_breakpoint_type: Type of semantic breakpoint for chunking
+            semantic_breakpoint_threshold_amount: Threshold amount for semantic chunking
+            semantic_min_chunk_size: Minimum size for semantic chunks
+            vector_storage_path: Path to vector store storage
             qdrant_url: Qdrant server URL
-            embedding_model: Embedding model name
-            metadata_csv_path: Path to metadata CSV file
+            collection_name: Qdrant collection name
+            force_recreate: Whether to force recreation of vector store
+            embedding_model: Name of the embedding model to use
+            incremental_mode: Mode for incremental processing
+            checksum_algorithm: Algorithm for calculating checksums
+            auto_detect_changes: Whether to automatically detect document changes
+            enable_batch_processing: Whether to enable batch processing
+            batch_size: Size of processing batches
+            enbable_performance_monitoring: Whether to enable performance monitoring
+            batch_pause_seconds: Pause duration between batches in seconds
+            max_concurrent_operations: Maximum number of concurrent operations
+            max_backup_files: Maximum number of backup files to retain
+            metadata_csv: Name of the metadata CSV file
+            blog_stats_filename: Name of the blog statistics file
+            blog_docs_filename: Name of the blog documents file
+            health_report_filename: Name of the health report file
+            ci_summary_filename: Name of the CI summary file
+            build_info_filename: Name of the build information file
         """
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         
@@ -141,6 +179,9 @@ class PipelineProcessor:
         self.adaptive_chunking = adaptive_chunking
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
+        self.semantic_breakpoint_type = semantic_breakpoint_type
+        self.semantic_breakpoint_threshold_amount = semantic_breakpoint_threshold_amount
+        self.semantic_min_chunk_size = semantic_min_chunk_size
 
         # Vector store parameters
         self.vector_storage_path = vector_storage_path
@@ -204,6 +245,9 @@ class PipelineProcessor:
         self.logger.info(f"  - Adaptive chunking: {self.adaptive_chunking}")
         self.logger.info(f"  - Chunk size: {self.chunk_size}")
         self.logger.info(f"  - Chunk overlap: {self.chunk_overlap}")
+        self.logger.info(f"  - Semantic breakpoint type: {self.semantic_breakpoint_type}")
+        self.logger.info(f"  - Semantic breakpoint threshold amount: {self.semantic_breakpoint_threshold_amount}")
+        self.logger.info(f"  - Semantic minimum chunk size: {self.semantic_min_chunk_size}")
         self.logger.info(f"  - Vector storage path: {self.vector_storage_path}")
         self.logger.info(f"  - Qdrant URL: {self.qdrant_url}")
         self.logger.info(f"  - Collection name: {self.collection_name}")
@@ -243,16 +287,26 @@ class PipelineProcessor:
             )
             
             self.logger.debug("Initializing chunking service")
-            self.chunking_service = ChunkingService()
+            self.chunking_service = ChunkingService(chunk_size=chunk_size,
+                                                    chunk_overlap=chunk_overlap,
+                                                    chunking_strategy=chunking_strategy,
+                                                    adaptive_chunking=adaptive_chunking,
+                                                    semantic_breakpoint_type=semantic_breakpoint_type,
+                                                    semantic_breakpoint_threshold_amount=semantic_breakpoint_threshold_amount,
+                                                    semantic_min_chunk_size=semantic_min_chunk_size
+                                                    )
             
             self.logger.debug("Initializing performance monitor service")
-            self.performance_monitor = PerformanceMonitor()
+            self.performance_monitor = PerformanceMonitor(enable_monitoring=enbable_performance_monitoring)
             
             self.logger.debug("Initializing optimization service")
-            self.optimization_service = OptimizationService()
+            self.optimization_service = OptimizationService(adaptive_chunking= adaptive_chunking,
+                                                             chunk_size=chunk_size,
+                                                             chunk_overlap=chunk_overlap
+                                                             )
             
             self.logger.debug("Initializing backup manager service")
-            self.backup_manager = BackupManager()
+            self.backup_manager = BackupManager(max_backup_files=max_backup_files)
             
             self.logger.debug("Initializing health checker service")
             self.health_checker = HealthChecker(
