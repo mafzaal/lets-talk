@@ -3,71 +3,116 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 
-from lets_talk.core.pipeline.processors import update_document_metadata, update_vector_store_incrementally_with_rollback
-from lets_talk.core.pipeline.services.chunking_service import split_documents
-from lets_talk.core.pipeline.services.health_checker import comprehensive_system_health_check
-from lets_talk.core.pipeline.services.metadata_manager import detect_document_changes, load_existing_metadata, save_document_metadata_csv
-from lets_talk.core.pipeline.services.performance_monitor import apply_performance_optimizations
-from lets_talk.core.pipeline.services.vector_store_manager import create_vector_store
-from lets_talk.core.pipeline.services.document_loader import get_document_stats, load_blog_posts
-from lets_talk.shared.config import QDRANT_URL, ChunkingStrategy
-# from lets_talk.core.pipeline import processors
+from lets_talk.core.pipeline.processors import PipelineProcessor
+from lets_talk.shared.config import (
+    QDRANT_URL, ChunkingStrategy, SemanticChunkerBreakpointType,
+    DATA_DIR, DATA_DIR_PATTERN, WEB_URLS, BASE_URL, BLOG_BASE_URL,
+    INDEX_ONLY_PUBLISHED_POSTS, OUTPUT_DIR, STATS_OUTPUT_DIR,
+    USE_CHUNKING, CHUNKING_STRATEGY, ADAPTIVE_CHUNKING, CHUNK_SIZE,
+    CHUNK_OVERLAP, SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
+    SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT, SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
+    VECTOR_STORAGE_PATH, QDRANT_COLLECTION, FORCE_RECREATE, EMBEDDING_MODEL,
+    INCREMENTAL_MODE, CHECKSUM_ALGORITHM, AUTO_DETECT_CHANGES,
+    ENABLE_BATCH_PROCESSING, BATCH_SIZE, ENABLE_PERFORMANCE_MONITORING,
+    BATCH_PAUSE_SECONDS, MAX_CONCURRENT_OPERATIONS, MAX_BACKUP_FILES,
+    METADATA_CSV_FILE, BLOG_STATS_FILENAME, BLOG_DOCS_FILENAME,
+    HEALTH_REPORT_FILENAME, CI_SUMMARY_FILENAME, BUILD_INFO_FILENAME
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 def run_pipeline(
-    data_dir: str,
-    output_dir: str,
-    storage_path: str,
-    
-    collection_name: str,
-    embedding_model: str,
-    force_recreate: bool = False,
-    use_chunking: bool = True,
-    chunk_size: int = 1000,
-    chunk_overlap: int = 200,
-    chunking_strategy: ChunkingStrategy = ChunkingStrategy.SEMANTIC,
-    should_save_stats: bool = True,
-    data_dir_pattern: str = "*.md",
-    blog_base_url: Optional[str] = None,
-    base_url: Optional[str] = None,
-    incremental_mode: str = "auto",
+    data_dir: str = DATA_DIR,
+    data_dir_pattern: str = DATA_DIR_PATTERN,
+    web_urls: List[str] = WEB_URLS,
+    base_url: str = BASE_URL,
+    blog_base_url: str = BLOG_BASE_URL,
+    index_only_published_posts: bool = INDEX_ONLY_PUBLISHED_POSTS,
+    output_dir: str = OUTPUT_DIR,
+    stats_output_dir: str = STATS_OUTPUT_DIR,
+    use_chunking: bool = USE_CHUNKING,
+    chunking_strategy: ChunkingStrategy = CHUNKING_STRATEGY,
+    adaptive_chunking: bool = ADAPTIVE_CHUNKING,
+    chunk_size: int = CHUNK_SIZE,
+    chunk_overlap: int = CHUNK_OVERLAP,
+    semantic_breakpoint_type: SemanticChunkerBreakpointType = SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
+    semantic_breakpoint_threshold_amount: float = SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
+    semantic_min_chunk_size: int = SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
+    vector_storage_path: str = VECTOR_STORAGE_PATH,
     qdrant_url: str = QDRANT_URL,
-    ci_mode: bool = False,
-    
+    collection_name: str = QDRANT_COLLECTION,
+    embedding_model: str = EMBEDDING_MODEL,
+    force_recreate: bool = FORCE_RECREATE,
+    incremental_mode: str = INCREMENTAL_MODE,
+    checksum_algorithm: str = CHECKSUM_ALGORITHM,
+    auto_detect_changes: bool = AUTO_DETECT_CHANGES,
+    enable_batch_processing: bool = ENABLE_BATCH_PROCESSING,
+    batch_size: int = BATCH_SIZE,
+    enbable_performance_monitoring: bool = ENABLE_PERFORMANCE_MONITORING,
+    batch_pause_seconds: float = BATCH_PAUSE_SECONDS,
+    max_concurrent_operations: int = MAX_CONCURRENT_OPERATIONS,
+    max_backup_files: int = MAX_BACKUP_FILES,
+    metadata_csv: str = METADATA_CSV_FILE,
+    blog_stats_filename: str = BLOG_STATS_FILENAME,
+    blog_docs_filename: str = BLOG_DOCS_FILENAME,
+    health_report_filename: str = HEALTH_REPORT_FILENAME,
+    ci_summary_filename: str = CI_SUMMARY_FILENAME,
+    build_info_filename: str = BUILD_INFO_FILENAME,
+    storage_path: Optional[str] = None,  # Legacy parameter, mapped to vector_storage_path
+    should_save_stats: bool = True,  # Legacy parameter, not used in PipelineProcessor
+    ci_mode: bool = False,  # Legacy parameter, not used in PipelineProcessor
 ) -> Dict[str, Any]:
     """
-    Run the main data processing pipeline.
+    Run the main data processing pipeline using PipelineProcessor.
     
-    This function orchestrates the entire pipeline process including:
-    - Document loading and processing
-    - Vector store creation/updating
-    - Statistics generation
-    - Health checks and validation
+    This function orchestrates the entire pipeline process by delegating to
+    PipelineProcessor which handles all the details internally.
     
     Args:
         data_dir: Directory containing source documents
+        data_dir_pattern: Pattern for matching files in data_dir
+        web_urls: List of web URLs to process
+        base_url: Base URL for media links
+        blog_base_url: Base URL for blog posts
+        index_only_published_posts: Whether to index only published posts
         output_dir: Directory for outputs and reports
-        storage_path: Path for vector store storage
+        stats_output_dir: Directory for statistics and artifacts
+        use_chunking: Whether to chunk documents
+        chunking_strategy: Strategy for chunking (ChunkingStrategy.SEMANTIC or ChunkingStrategy.TEXT_SPLITTER)
+        adaptive_chunking: Whether to use adaptive chunking
+        chunk_size: Size of document chunks
+        chunk_overlap: Overlap between chunks
+        semantic_breakpoint_type: Type of breakpoint for semantic chunking
+        semantic_breakpoint_threshold_amount: Threshold amount for semantic chunking
+        semantic_min_chunk_size: Minimum chunk size for semantic chunking
+        vector_storage_path: Path for vector store storage
+        qdrant_url: URL for Qdrant vector database
         collection_name: Name of the vector collection
         embedding_model: Model to use for embeddings
         force_recreate: Whether to force recreation of vector store
-        use_chunking: Whether to chunk documents
-        chunk_size: Size of document chunks
-        chunk_overlap: Overlap between chunks
-        chunking_strategy: Strategy for chunking (ChunkingStrategy.SEMANTIC or ChunkingStrategy.TEXT_SPLITTER)
-        should_save_stats: Whether to save statistics
-        data_dir_pattern: Pattern for matching files
-        blog_base_url: Base URL for blog posts
-        base_url: Base URL for media links
         incremental_mode: Mode for incremental updates
-        ci_mode: Whether running in CI mode
-        **kwargs: Additional configuration parameters
+        checksum_algorithm: Algorithm for checksums
+        auto_detect_changes: Whether to auto-detect changes
+        enable_batch_processing: Whether to enable batch processing
+        batch_size: Size of processing batches
+        enbable_performance_monitoring: Whether to enable performance monitoring
+        batch_pause_seconds: Pause between batches in seconds
+        max_concurrent_operations: Maximum concurrent operations
+        max_backup_files: Maximum backup files to keep
+        metadata_csv: CSV file for metadata
+        blog_stats_filename: Filename for blog statistics
+        blog_docs_filename: Filename for blog documents
+        health_report_filename: Filename for health reports
+        ci_summary_filename: Filename for CI summaries
+        build_info_filename: Filename for build information
+        storage_path: Legacy parameter, use vector_storage_path instead
+        should_save_stats: Legacy parameter, not used
+        ci_mode: Legacy parameter, not used
         
     Returns:
         Dict containing pipeline execution results
@@ -75,19 +120,16 @@ def run_pipeline(
     start_time = datetime.now()
     job_id = f"pipeline_{start_time.strftime('%Y%m%d_%H%M%S')}"
     
+    # Handle legacy parameters
+    if storage_path is not None:
+        vector_storage_path = storage_path
+        logger.warning("Parameter 'storage_path' is deprecated, use 'vector_storage_path' instead")
+    
     logger.info("="*80)
     logger.info("STARTING PIPELINE EXECUTION")
     logger.info("="*80)
     logger.info(f"Job ID: {job_id}")
-    logger.info(f"Data directory: {data_dir}")
-    logger.info(f"Output directory: {output_dir}")
-    logger.info(f"Storage path: {storage_path}")
-    logger.info(f"Collection: {collection_name}")
-    logger.info(f"Embedding model: {embedding_model}")
-    logger.info(f"Force recreate: {force_recreate}")
-    logger.info(f"Incremental mode: {incremental_mode}")
-    logger.info(f"Use chunking: {use_chunking}")
-    logger.info(f"Chunking strategy: {chunking_strategy}")
+    
     
     # Initialize result tracking
     result = {
@@ -103,261 +145,94 @@ def run_pipeline(
     }
     
     try:
-        # Ensure output directory exists
-        os.makedirs(output_dir, exist_ok=True)
-        metadata_csv_path = os.path.join(output_dir, "metadata.csv")
-        
-        # Step 1: Load documents
+        # Create and configure PipelineProcessor
         logger.info("="*50)
-        logger.info("STEP 1: LOADING DOCUMENTS")
+        logger.info("INITIALIZING PIPELINE PROCESSOR")
         logger.info("="*50)
         
-        documents = load_blog_posts(
+        processor = PipelineProcessor(
             data_dir=data_dir,
-            glob_pattern=data_dir_pattern,
-            recursive=True,
-            show_progress=True
+            data_dir_pattern=data_dir_pattern,
+            web_urls=web_urls,
+            base_url=base_url,
+            blog_base_url=blog_base_url,
+            index_only_published_posts=index_only_published_posts,
+            output_dir=output_dir,
+            stats_output_dir=stats_output_dir,
+            use_chunking=use_chunking,
+            chunking_strategy=chunking_strategy,
+            adaptive_chunking=adaptive_chunking,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            semantic_breakpoint_type=semantic_breakpoint_type,
+            semantic_breakpoint_threshold_amount=semantic_breakpoint_threshold_amount,
+            semantic_min_chunk_size=semantic_min_chunk_size,
+            vector_storage_path=vector_storage_path,
+            qdrant_url=qdrant_url,
+            collection_name=collection_name,
+            embedding_model=embedding_model,
+            force_recreate=force_recreate,
+            incremental_mode=incremental_mode,
+            checksum_algorithm=checksum_algorithm,
+            auto_detect_changes=auto_detect_changes,
+            enable_batch_processing=enable_batch_processing,
+            batch_size=batch_size,
+            enbable_performance_monitoring=enbable_performance_monitoring,
+            batch_pause_seconds=batch_pause_seconds,
+            max_concurrent_operations=max_concurrent_operations,
+            max_backup_files=max_backup_files,
+            metadata_csv=metadata_csv,
+            blog_stats_filename=blog_stats_filename,
+            blog_docs_filename=blog_docs_filename,
+            health_report_filename=health_report_filename,
+            ci_summary_filename=ci_summary_filename,
+            build_info_filename=build_info_filename
         )
         
-        if not documents:
-            result['message'] = "No documents found to process"
-            result['success'] = True
-            logger.warning("No documents found in data directory")
-            return result
+        logger.info("PipelineProcessor initialized successfully")
         
-        logger.info(f"Loaded {len(documents)} documents")
-        result['documents_loaded'] = len(documents)
-        
-        # Step 2: Update document metadata
+        # Determine processing mode and execute
         logger.info("="*50)
-        logger.info("STEP 2: UPDATING DOCUMENT METADATA")
+        logger.info("EXECUTING PIPELINE")
         logger.info("="*50)
-        
-        documents = update_document_metadata(
-            documents=documents,
-            data_dir_prefix=data_dir,
-            blog_base_url=blog_base_url or "",
-            base_url=base_url or "",
-            remove_suffix="index.md"
-        )
-        
-        logger.info(f"Updated metadata for {len(documents)} documents")
-        result['documents_processed'] = len(documents)
-        
-        # Step 3: Calculate checksums and detect changes
-        logger.info("="*50)
-        logger.info("STEP 3: DETECTING DOCUMENT CHANGES")
-        logger.info("="*50)
-        
-        # Load existing metadata for change detection
-        existing_metadata = load_existing_metadata(metadata_csv_path)
-        logger.info(f"Loaded metadata for {len(existing_metadata)} existing documents")
-        
-        # Detect changes
-        changes = detect_document_changes(documents, existing_metadata)
-        result['changes_detected'] = {
-            'new': len(changes['new']),
-            'modified': len(changes['modified']),
-            'unchanged': len(changes['unchanged']),
-            'deleted': len(changes['deleted_sources'])
-        }
-        
-        logger.info(f"Change detection results:")
-        logger.info(f"  - New documents: {len(changes['new'])}")
-        logger.info(f"  - Modified documents: {len(changes['modified'])}")
-        logger.info(f"  - Unchanged documents: {len(changes['unchanged'])}")
-        logger.info(f"  - Deleted documents: {len(changes['deleted_sources'])}")
-        
-        # Determine processing mode
-        docs_to_process = []
-        process_mode = "full"
         
         if incremental_mode == "auto" and not force_recreate:
-            # Only process new and modified documents
-            docs_to_process = changes['new'] + changes['modified']
-            if docs_to_process or changes['deleted_sources']:
-                process_mode = "incremental"
-                logger.info(f"Using incremental mode: {len(docs_to_process)} documents to process")
-            else:
-                logger.info("No changes detected, skipping indexing")
-                result['message'] = "No changes detected - index is up to date"
-                result['success'] = True
-                return result
+            logger.info("Running incremental processing")
+            success = processor.process_documents_incremental()
+            process_mode = "incremental"
         else:
-            # Process all documents
-            docs_to_process = documents
+            logger.info("Running full processing")
+            success = processor.process_documents_full(force_recreate=force_recreate)
             process_mode = "full"
-            logger.info(f"Using full rebuild mode: {len(docs_to_process)} documents to process")
         
-        # Step 4: Chunk documents that need indexing
-        chunked_docs = []
-        if use_chunking and docs_to_process:
-            logger.info("="*50)
-            logger.info("STEP 4: CHUNKING DOCUMENTS")
-            logger.info("="*50)
-            
-            # Apply performance optimizations if available
-            try:
-                optimized_docs, perf_metrics = apply_performance_optimizations(
-                    docs_to_process, 
-                    target_chunk_size=chunk_size,
-                    chunk_overlap=chunk_overlap,
-                    enable_monitoring=True
-                )
-                result['performance_metrics'].update(perf_metrics)
-                
-                chunked_docs = split_documents(
-                    documents=optimized_docs,
-                    chunk_size=chunk_size,
-                    chunk_overlap=chunk_overlap,
-                    chunking_strategy=chunking_strategy
-                )
-            except Exception as e:
-                logger.warning(f"Performance optimization failed, using standard chunking: {e}")
-                chunked_docs = split_documents(
-                    documents=docs_to_process,
-                    chunk_size=chunk_size,
-                    chunk_overlap=chunk_overlap,
-                    chunking_strategy=chunking_strategy
-                )
-            
-            logger.info(f"Created {len(chunked_docs)} chunks from {len(docs_to_process)} documents")
-            result['chunks_created'] = len(chunked_docs)
+        if success:
+            result['success'] = True
+            result['message'] = f"Pipeline completed successfully in {process_mode} mode"
+            logger.info(f"Pipeline execution completed successfully in {process_mode} mode")
         else:
-            chunked_docs = docs_to_process
-            logger.info("Chunking disabled - using whole documents")
+            result['success'] = False
+            result['message'] = f"Pipeline failed during processing in {process_mode} mode"
+            result['errors'].append(f"Pipeline processing failed in {process_mode} mode")
+            logger.error(f"Pipeline execution failed in {process_mode} mode")
         
-        # Step 5: Index documents
+        # Perform health check
         logger.info("="*50)
-        logger.info("STEP 5: INDEXING DOCUMENTS")
-        logger.info("="*50)
-        
-        index_success = False
-        
-        if process_mode == "incremental" and not force_recreate:
-            # Incremental update with comprehensive error handling
-            logger.info("Performing incremental vector store update...")
-            
-            success, error_msg = update_vector_store_incrementally_with_rollback(
-                storage_path=storage_path,
-                collection_name=collection_name,
-                embedding_model=embedding_model,
-                qdrant_url=qdrant_url,
-                new_docs=changes['new'] if use_chunking else changes['new'],
-                modified_docs=chunked_docs if changes['modified'] else [],
-                deleted_sources=changes['deleted_sources'],
-                metadata_csv_path=metadata_csv_path,
-                all_documents=documents
-            )
-            
-            if success:
-                index_success = True
-                logger.info("Incremental indexing completed successfully")
-            else:
-                logger.error(f"Incremental indexing failed: {error_msg}")
-                result['errors'].append(f"Incremental indexing failed: {error_msg}")
-        else:
-            # Full rebuild
-            logger.info("Performing full vector store rebuild...")
-            
-            try:
-                vector_store = create_vector_store(
-                    documents=chunked_docs,
-                    storage_path=storage_path,
-                    collection_name=collection_name,
-                    embedding_model=embedding_model,
-                    force_recreate=force_recreate
-                )
-                
-                if vector_store:
-                    index_success = True
-                    logger.info("Full indexing completed successfully")
-                    
-                    # Update indexed timestamps for all documents
-                    current_time = time.time()
-                    for doc in documents:
-                        doc.metadata["indexed_timestamp"] = current_time
-                        doc.metadata["index_status"] = "indexed"
-                else:
-                    logger.error("Failed to create vector store")
-                    result['errors'].append("Failed to create vector store")
-            except Exception as e:
-                logger.error(f"Vector store creation failed: {e}")
-                result['errors'].append(f"Vector store creation failed: {e}")
-        
-        # Step 6: Save states and metadata
-        logger.info("\n" + "="*50)
-        logger.info("STEP 6: SAVING METADATA AND STATISTICS")
-        logger.info("="*50)
-        
-        # Save document metadata
-        metadata_saved = save_document_metadata_csv(
-            documents=documents,
-            metadata_csv_path=metadata_csv_path
-        )
-        
-        if metadata_saved:
-            logger.info(f"Saved metadata to {metadata_csv_path}")
-        else:
-            logger.warning("Failed to save metadata CSV")
-            result['errors'].append("Failed to save metadata CSV")
-        
-        # Generate and save statistics if requested
-        if should_save_stats:
-            try:
-                stats = get_document_stats(documents)
-                result['stats'] = stats
-                
-                # Save stats to file
-                stats_file = os.path.join(output_dir, f"blog_stats_{start_time.strftime('%Y%m%d_%H%M%S')}.json")
-                import json
-                with open(stats_file, 'w') as f:
-                    json.dump(stats, f, indent=2, default=str)
-                logger.info(f"Saved statistics to {stats_file}")
-                
-                # Display summary stats
-                # processors.display_document_stats(stats)
-                
-            except Exception as e:
-                logger.warning(f"Failed to generate statistics: {e}")
-                result['errors'].append(f"Failed to generate statistics: {e}")
-        
-        # Perform final health check
-        logger.info("\n" + "="*50)
         logger.info("FINAL HEALTH CHECK")
         logger.info("="*50)
         
         try:
-            health_report = comprehensive_system_health_check(
-                storage_path=storage_path,
-                collection_name=collection_name,
-                qdrant_url="",
-                embedding_model=embedding_model,
-                metadata_csv_path=metadata_csv_path
-            )
-            
+            health_report = processor.health_check(comprehensive=True)
             result['health_check'] = health_report
-            logger.info(f"System health: {health_report['overall_status']}")
+            logger.info(f"System health: {health_report.get('overall_status', 'unknown')}")
             
-            if health_report['recommendations']:
-                logger.info("Recommendations:")
+            if health_report.get('recommendations'):
+                logger.info("Health check recommendations:")
                 for rec in health_report['recommendations']:
                     logger.info(f"  - {rec}")
                     
         except Exception as e:
             logger.warning(f"Health check failed: {e}")
             result['errors'].append(f"Health check failed: {e}")
-        
-        # Determine final success status
-        if index_success and not result['errors']:
-            result['success'] = True
-            result['message'] = f"Pipeline completed successfully in {process_mode} mode"
-        elif index_success and result['errors']:
-            result['success'] = True
-            result['message'] = f"Pipeline completed with warnings in {process_mode} mode"
-        else:
-            result['success'] = False
-            result['message'] = f"Pipeline failed during indexing in {process_mode} mode"
         
         # Log final summary
         end_time = datetime.now()
@@ -369,14 +244,13 @@ def run_pipeline(
         logger.info(f"Job ID: {job_id}")
         logger.info(f"Status: {'SUCCESS' if result['success'] else 'FAILED'}")
         logger.info(f"Duration: {duration:.2f} seconds")
-        logger.info(f"Documents processed: {result['documents_processed']}")
-        logger.info(f"Chunks created: {result['chunks_created']}")
         logger.info(f"Mode: {process_mode}")
         if result['errors']:
             logger.info(f"Errors: {len(result['errors'])}")
         logger.info("="*80)
         
         result['duration_seconds'] = duration
+        result['mode'] = process_mode
         return result
         
     except Exception as e:
@@ -384,4 +258,10 @@ def run_pipeline(
         result['success'] = False
         result['message'] = f"Pipeline failed with unexpected error: {e}"
         result['errors'].append(str(e))
+        
+        # Calculate duration even for failures
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
+        result['duration_seconds'] = duration
+        
         return result

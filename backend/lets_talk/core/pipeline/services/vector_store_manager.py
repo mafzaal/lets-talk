@@ -13,7 +13,7 @@ from typing import List, Optional
 from langchain.schema.document import Document
 from langchain_qdrant import QdrantVectorStore
 from lets_talk.utils.wrapper import init_embeddings_wrapper
-from qdrant_client import QdrantClient
+from qdrant_client import QdrantClient, models
 
 from lets_talk.shared.config import (
     EMBEDDING_MODEL,
@@ -116,6 +116,13 @@ class VectorStoreManager:
         """
         try:
             if self.qdrant_url:
+                # Use remote Qdrant - check if collection exists first
+                if not self.collection_exists():
+                    logger.info(f"Collection '{self.collection_name}' does not exist, creating it...")
+                    if not self.create_collection():
+                        logger.error("Failed to create collection")
+                        return None
+                
                 # Use remote Qdrant
                 vector_store = QdrantVectorStore.from_existing_collection(
                     collection_name=self.collection_name,
@@ -130,6 +137,13 @@ class VectorStoreManager:
                 if not Path(self.storage_path).exists():
                     logger.info(f"Vector store not found at {self.storage_path}")
                     return None
+                
+                # Check if collection exists in local Qdrant
+                if not self.collection_exists():
+                    logger.info(f"Collection '{self.collection_name}' does not exist, creating it...")
+                    if not self.create_collection():
+                        logger.error("Failed to create collection")
+                        return None
                 
                 # Initialize Qdrant client
                 client = QdrantClient(path=self.storage_path)
@@ -194,8 +208,6 @@ class VectorStoreManager:
             return True
         
         try:
-            from qdrant_client import models
-            
             # Delete by metadata filter (source field)
             for source in document_sources:
                 # Create a filter to find documents with this source
@@ -403,7 +415,82 @@ class VectorStoreManager:
         except Exception as e:
             logger.error(f"Error during incremental vector store update: {e}")
             return False
-
+    
+    @handle_exceptions(default_return=False)
+    def collection_exists(self) -> bool:
+        """
+        Check if the Qdrant collection exists.
+        
+        Returns:
+            True if collection exists, False otherwise
+        """
+        client = None
+        try:
+            if self.qdrant_url:
+                # Use remote Qdrant
+                client = QdrantClient(url=self.qdrant_url, prefer_grpc=True)
+            else:
+                # Use local Qdrant
+                client = QdrantClient(path=self.storage_path)
+            
+            # Get collection info to check if it exists
+            try:
+                client.get_collection(self.collection_name)
+                logger.info(f"Collection '{self.collection_name}' exists")
+                return True
+            except Exception:
+                logger.info(f"Collection '{self.collection_name}' does not exist")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error checking if collection exists: {e}")
+            return False
+        finally:
+            if client is not None:
+                client.close()
+    
+    @handle_exceptions(default_return=False)
+    def create_collection(self) -> bool:
+        """
+        Create an empty Qdrant collection with proper configuration.
+        
+        Returns:
+            True if collection created successfully, False otherwise
+        """
+        client = None
+        try:
+            if self.qdrant_url:
+                # Use remote Qdrant
+                client = QdrantClient(url=self.qdrant_url, prefer_grpc=True)
+            else:
+                # Use local Qdrant
+                client = QdrantClient(path=self.storage_path)
+            
+            # Get embedding dimension from the model
+            # Create a dummy embedding to get the dimension
+            dummy_text = "test"
+            dummy_embedding = self.embeddings.embed_query(dummy_text)
+            vector_size = len(dummy_embedding)
+            
+            # Create collection with proper vector configuration
+            client.create_collection(
+                collection_name=self.collection_name,
+                vectors_config=models.VectorParams(
+                    size=vector_size,
+                    distance=models.Distance.COSINE
+                )
+            )
+            
+            logger.info(f"Successfully created collection '{self.collection_name}' with vector size {vector_size}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error creating collection: {e}")
+            return False
+        finally:
+            if client is not None:
+                client.close()
+                
 
 # Convenience functions for backward compatibility
 def create_vector_store(
@@ -458,3 +545,27 @@ def validate_vector_store_health(
     """Validate that the vector store is healthy and accessible."""
     manager = VectorStoreManager(storage_path, collection_name, qdrant_url, embedding_model)
     return manager.validate_health()
+
+
+def check_collection_exists(
+    storage_path: str = VECTOR_STORAGE_PATH,
+    collection_name: str = QDRANT_COLLECTION,
+    qdrant_url: str = QDRANT_URL,
+    embedding_model: str = EMBEDDING_MODEL
+) -> bool:
+    """Check if the Qdrant collection exists."""
+    manager = VectorStoreManager(storage_path, collection_name, qdrant_url, embedding_model)
+    return manager.collection_exists()
+
+
+def create_collection_if_not_exists(
+    storage_path: str = VECTOR_STORAGE_PATH,
+    collection_name: str = QDRANT_COLLECTION,
+    qdrant_url: str = QDRANT_URL,
+    embedding_model: str = EMBEDDING_MODEL
+) -> bool:
+    """Create Qdrant collection if it doesn't exist."""
+    manager = VectorStoreManager(storage_path, collection_name, qdrant_url, embedding_model)
+    if not manager.collection_exists():
+        return manager.create_collection()
+    return True
