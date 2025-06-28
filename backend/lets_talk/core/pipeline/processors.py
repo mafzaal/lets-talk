@@ -35,6 +35,7 @@ from lets_talk.shared.config import (
     ENABLE_PERFORMANCE_MONITORING,
     FORCE_RECREATE,
     HEALTH_REPORT_FILENAME,
+    INCREMENTAL_FALLBACK_THRESHOLD,
     INCREMENTAL_MODE,
     INDEX_ONLY_PUBLISHED_POSTS,
     MAX_BACKUP_FILES,
@@ -97,6 +98,7 @@ class PipelineProcessor:
         incremental_mode: str = INCREMENTAL_MODE,
         checksum_algorithm: str = CHECKSUM_ALGORITHM,
         auto_detect_changes:bool=  AUTO_DETECT_CHANGES,
+        incremental_fallback_threshold: float = INCREMENTAL_FALLBACK_THRESHOLD,
         enable_batch_processing: bool = ENABLE_BATCH_PROCESSING,
         batch_size: int = BATCH_SIZE,
         enbable_performance_monitoring: bool = ENABLE_PERFORMANCE_MONITORING,
@@ -142,6 +144,7 @@ class PipelineProcessor:
             incremental_mode: Mode for incremental processing
             checksum_algorithm: Algorithm for calculating checksums
             auto_detect_changes: Whether to automatically detect document changes
+            incremental_fallback_threshold: Threshold for falling back to full indexing when too many changes detected
             enable_batch_processing: Whether to enable batch processing
             batch_size: Size of processing batches
             enbable_performance_monitoring: Whether to enable performance monitoring
@@ -170,6 +173,7 @@ class PipelineProcessor:
         self.incremental_mode = incremental_mode
         self.checksum_algorithm = checksum_algorithm
         self.auto_detect_changes = auto_detect_changes
+        self.incremental_fallback_threshold = incremental_fallback_threshold
 
     
 
@@ -354,10 +358,14 @@ class PipelineProcessor:
             self.logger.debug(f"Added checksum metadata to {len(documents)} documents")
             
             # Step 3: Split documents
-            self.logger.info("Step 3: Splitting documents into chunks")
-            split_docs = self.chunking_service.split_documents(documents)
-            self.logger.info(f"Split {len(documents)} documents into {len(split_docs)} chunks")
-            
+            if not self.use_chunking:
+                self.logger.info("Step 3: Splitting documents into chunks")
+                split_docs = self.chunking_service.split_documents(documents)
+                self.logger.info(f"Split {len(documents)} documents into {len(split_docs)} chunks")
+            else:
+                self.logger.info("Chunking is disabled, using original documents as chunks")
+                split_docs = documents
+                
             # Step 4: Create vector store
             self.logger.info(f"Step 4: Creating vector store (force_recreate={force_recreate})")
             vector_store = self.vector_store_manager.create_vector_store(
@@ -569,6 +577,224 @@ class PipelineProcessor:
             self.logger.exception("Health check exception details:")
             return {"overall_status": "error", "error": str(e)}
 
+    def _vector_store_exists(self) -> bool:
+        """Check if vector store exists and is accessible."""
+        try:
+            # Check if collection exists and vector store can be loaded
+            if not self.vector_store_manager.collection_exists():
+                return False
+            
+            # Try to load the vector store to ensure it's accessible
+            vector_store = self.vector_store_manager.load_vector_store()
+            return vector_store is not None
+        except Exception as e:
+            self.logger.debug(f"Vector store existence check failed: {e}")
+            return False
+    
+    def _metadata_exists(self) -> bool:
+        """Check if metadata file exists and is readable."""
+        try:
+            return os.path.exists(self.metadata_csv_path) and os.path.isfile(self.metadata_csv_path)
+        except Exception as e:
+            self.logger.debug(f"Metadata file existence check failed: {e}")
+            return False
+    
+    def _check_vector_store_compatibility(self) -> Tuple[bool, List[str]]:
+        """
+        Check if current configuration is compatible with existing vector store.
+        
+        Returns:
+            Tuple of (is_compatible, list_of_issues)
+        """
+        issues = []
+        
+        try:
+            # Load existing vector store to check compatibility
+            existing_store = self.vector_store_manager.load_vector_store()
+            if existing_store is None:
+                issues.append("Cannot load existing vector store")
+                return False, issues
+            
+            # Check embedding model compatibility
+            # Note: This would require storing metadata about the vector store configuration
+            # For now, we'll rely on vector store manager's internal checks
+            
+            # Check if collection exists and is accessible
+            try:
+                # Try to get collection info
+                collection_info = existing_store.client.get_collection(self.collection_name)
+                if collection_info is None:
+                    issues.append(f"Collection '{self.collection_name}' does not exist")
+                    return False, issues
+            except Exception as e:
+                issues.append(f"Cannot access collection '{self.collection_name}': {e}")
+                return False, issues
+            
+            # Additional compatibility checks could be added here:
+            # - Check if embedding dimensions match
+            # - Check if chunking strategy metadata matches
+            # - Check if document schema is compatible
+            
+            self.logger.debug("Vector store compatibility check passed")
+            return True, issues
+            
+        except Exception as e:
+            issues.append(f"Vector store compatibility check failed: {e}")
+            self.logger.debug(f"Vector store compatibility check error: {e}")
+            return False, issues
+    
+    def _should_fallback_to_full(self) -> bool:
+        """
+        Determine if we should fallback to full indexing based on change threshold.
+        
+        Returns:
+            True if should fallback to full indexing, False otherwise
+        """
+        try:
+            # Load current documents for change detection
+            current_docs = self.document_loader.load_documents(show_progress=False)
+            if not current_docs:
+                self.logger.debug("No current documents found, recommending full indexing")
+                return True
+            
+            # Add checksums to current documents
+            current_docs = self.metadata_manager.add_checksum_metadata(current_docs)
+            
+            # Detect changes
+            changes = self.metadata_manager.detect_document_changes(current_docs)
+            
+            # Calculate change ratio
+            total_docs = len(current_docs)
+            changed_docs = len(changes["new"]) + len(changes["modified"])
+            
+            if total_docs == 0:
+                return True
+            
+            change_ratio = changed_docs / total_docs
+            
+            self.logger.debug(f"Change detection: {changed_docs}/{total_docs} documents changed ({change_ratio:.2%})")
+            
+            # Use threshold from instance configuration
+            fallback_threshold = self.incremental_fallback_threshold
+            if change_ratio > fallback_threshold:
+                self.logger.info(f"Change ratio {change_ratio:.2%} exceeds threshold {fallback_threshold:.2%}, recommending full indexing")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            self.logger.warning(f"Error during change threshold check: {e}")
+            # If we can't determine changes, be conservative and do full indexing
+            return True
+    
+    def determine_indexing_strategy(self) -> str:
+        """
+        Determine whether to perform full or incremental indexing based on parameters.
+        
+        Returns:
+            "full" or "incremental"
+        """
+        self.logger.info("Determining optimal indexing strategy")
+        
+        # 1. FORCE_RECREATE overrides everything
+        if self.force_recreate:
+            self.logger.info("Strategy decision: FULL (force_recreate=True)")
+            return "full"
+        
+        # 2. Explicit incremental_mode setting
+        if self.incremental_mode == "full":
+            self.logger.info("Strategy decision: FULL (incremental_mode='full')")
+            return "full"
+        elif self.incremental_mode == "incremental":
+            self.logger.info("Strategy decision: INCREMENTAL (incremental_mode='incremental')")
+            return "incremental"
+        
+        # 3. Auto mode - check prerequisites
+        if self.incremental_mode == "auto":
+            self.logger.debug("Auto mode - checking prerequisites for incremental processing")
+            
+            # Check if vector store exists
+            if not self._vector_store_exists():
+                self.logger.info("Strategy decision: FULL (vector store does not exist)")
+                return "full"
+            
+            # Check if metadata exists
+            if not self._metadata_exists():
+                self.logger.info("Strategy decision: FULL (metadata file does not exist)")
+                return "full"
+            
+            # Check if auto_detect_changes is enabled
+            if not self.auto_detect_changes:
+                self.logger.info("Strategy decision: FULL (auto_detect_changes=False)")
+                return "full"
+            
+            # Check vector store compatibility
+            is_compatible, compatibility_issues = self._check_vector_store_compatibility()
+            if not is_compatible:
+                self.logger.info(f"Strategy decision: FULL (vector store compatibility issues: {', '.join(compatibility_issues)})")
+                return "full"
+            
+            # Check change threshold (if we can detect changes)
+            if self._should_fallback_to_full():
+                self.logger.info("Strategy decision: FULL (change threshold exceeded)")
+                return "full"
+            
+            self.logger.info("Strategy decision: INCREMENTAL (all prerequisites met)")
+            return "incremental"
+        
+        # Default case
+        self.logger.warning(f"Unknown incremental_mode '{self.incremental_mode}', defaulting to full processing")
+        return "full"
+    
+    def process_documents(
+        self,
+        show_progress: bool = True
+    ) -> Tuple[bool, str]:
+        """
+        Process documents using intelligent strategy determination.
+        
+        Args:
+            show_progress: Whether to show progress during processing
+            
+        Returns:
+            Tuple of (success, process_mode)
+        """
+        start_time = time.time()
+        self.logger.info("Starting intelligent document processing")
+        
+        try:
+            # Determine the optimal strategy
+            strategy = self.determine_indexing_strategy()
+            
+            # Execute based on determined strategy
+            if strategy == "full":
+                self.logger.info("Executing full document processing")
+                success = self.process_documents_full(
+                    force_recreate=self.force_recreate, 
+                    show_progress=show_progress
+                )
+            else:  # strategy == "incremental"
+                self.logger.info("Executing incremental document processing")
+                success = self.process_documents_incremental(
+                    use_batch_processing=self.enable_batch_processing,
+                    batch_size=self.batch_size
+                )
+            
+            elapsed_time = time.time() - start_time
+            
+            if success:
+                self.logger.info(f"Document processing completed successfully in {strategy} mode ({elapsed_time:.2f}s)")
+            else:
+                self.logger.error(f"Document processing failed in {strategy} mode ({elapsed_time:.2f}s)")
+            
+            return success, strategy
+            
+        except Exception as e:
+            elapsed_time = time.time() - start_time
+            self.logger.error(f"Error in intelligent document processing after {elapsed_time:.2f} seconds: {e}")
+            self.logger.exception("Full stack trace:")
+            return False, "unknown"
+
 
 # Global processor instance for backward compatibility
 _global_processor = None
@@ -584,229 +810,9 @@ def get_processor() -> PipelineProcessor:
     return _global_processor
 
 
-# # Backward compatibility functions - these maintain the original API
-# def load_blog_posts(
-#     data_dir: str = DATA_DIR,
-#     glob_pattern: str = "*.md",
-#     recursive: bool = True,
-#     show_progress: bool = True
-# ) -> List[Document]:
-#     """Load blog posts from the specified directory."""
-#     loader = DocumentLoader(data_dir=data_dir)
-#     return loader.load_documents(glob_pattern, recursive, show_progress)
-
-
-# def update_document_metadata(
-#     documents: List[Document],
-#     data_dir_prefix: str = DATA_DIR,
-#     blog_base_url: str = BLOG_BASE_URL,
-#     base_url: str = BASE_URL,
-#     remove_suffix: str = "index.md",
-#     index_only_published_posts: bool = INDEX_ONLY_PUBLISHED_POSTS
-# ) -> List[Document]:
-#     """Update document metadata - now handled in DocumentLoader."""
-#     # This is now handled automatically in DocumentLoader
-#     # For backward compatibility, we just add checksums
-#     manager = MetadataManager()
-#     return manager.add_checksum_metadata(documents)
-
-
-# def get_document_stats(documents: List[Document]) -> Dict[str, Any]:
-#     """Get statistics about the documents."""
-#     return DocumentStats.calculate_stats(documents)
-
-
-# def display_document_stats(stats: Dict[str, Any]) -> None:
-#     """Display document statistics in a readable format."""
-#     DocumentStats.display_stats(stats)
-
-
-# def split_documents(
-#     documents: List[Document],
-#     chunk_size: int = CHUNK_SIZE,
-#     chunk_overlap: int = CHUNK_OVERLAP,
-#     chunking_strategy: ChunkingStrategy = CHUNKING_STRATEGY
-# ) -> List[Document]:
-#     """Split documents into chunks for better embedding and retrieval."""
-#     service = ChunkingService(chunk_size, chunk_overlap, chunking_strategy)
-#     return service.split_documents(documents)
-
-
-# def create_vector_store(
-#     documents: List[Document],
-#     storage_path: str = VECTOR_STORAGE_PATH,
-#     collection_name: str = QDRANT_COLLECTION,
-#     qdrant_url: str = QDRANT_URL,
-#     embedding_model: str = EMBEDDING_MODEL,
-#     force_recreate: bool = False
-# ) -> Optional[QdrantVectorStore]:
-#     """Create a vector store from the documents using Qdrant."""
-#     manager = VectorStoreManager(storage_path, collection_name, qdrant_url, embedding_model)
-#     return manager.create_vector_store(documents, force_recreate)
-
-
-# def load_vector_store(
-#     storage_path: str = VECTOR_STORAGE_PATH,
-#     collection_name: str = QDRANT_COLLECTION,
-#     qdrant_url: str = QDRANT_URL,
-#     embedding_model: str = EMBEDDING_MODEL
-# ) -> Optional[QdrantVectorStore]:
-#     """Load an existing vector store."""
-#     manager = VectorStoreManager(storage_path, collection_name, qdrant_url, embedding_model)
-#     return manager.load_vector_store()
-
-
-# def add_documents_to_vector_store(
-#     vector_store: QdrantVectorStore,
-#     documents: List[Document]
-# ) -> bool:
-#     """Add new documents to an existing vector store."""
-#     manager = VectorStoreManager()
-#     return manager.add_documents(vector_store, documents)
-
-
-# def remove_documents_from_vector_store(
-#     vector_store: QdrantVectorStore,
-#     document_sources: List[str]
-# ) -> bool:
-#     """Remove documents from the vector store based on their source paths."""
-#     manager = VectorStoreManager()
-#     return manager.remove_documents_by_source(vector_store, document_sources)
-
-
-# def update_vector_store_incrementally(
-#     storage_path: str,
-#     collection_name: str,
-#     embedding_model: str,
-#     qdrant_url: str,
-#     new_docs: List[Document],
-#     modified_docs: List[Document],
-#     deleted_sources: List[str],
-#     use_enhanced_mode: bool = ENABLE_BATCH_PROCESSING,
-#     batch_size: int = BATCH_SIZE
-# ) -> bool:
-#     """Update vector store incrementally by adding new/modified docs and removing deleted ones."""
-#     manager = VectorStoreManager(storage_path, collection_name, qdrant_url, embedding_model)
-#     return manager.update_incrementally(
-#         new_docs, modified_docs, deleted_sources, use_enhanced_mode, batch_size
-#     )
-
-
-# def update_vector_store_incrementally_with_rollback(
-#     storage_path: str,
-#     collection_name: str,
-#     embedding_model: str,
-#     qdrant_url: str,
-#     new_docs: List[Document],
-#     modified_docs: List[Document],
-#     deleted_sources: List[str],
-#     metadata_csv_path: str,
-#     all_documents: List[Document]
-# ) -> Tuple[bool, str]:
-#     """Update vector store incrementally with comprehensive error handling and rollback."""
-#     logger.info(f"Starting incremental update with rollback for collection '{collection_name}'")
-#     logger.debug(f"Processing: {len(new_docs)} new, {len(modified_docs)} modified, {len(deleted_sources)} deleted documents")
-    
-#     processor = PipelineProcessor(
-#         storage_path=storage_path,
-#         collection_name=collection_name,
-#         qdrant_url=qdrant_url,
-#         embedding_model=embedding_model,
-#         metadata_csv=metadata_csv_path
-#     )
-    
-#     try:
-#         success = processor.process_documents_incremental()
-#         message = "Success" if success else "Failed"
-        
-#         if success:
-#             logger.info("Incremental update with rollback completed successfully")
-#         else:
-#             logger.error("Incremental update with rollback failed")
-            
-#         return success, message
-        
-#     except Exception as e:
-#         error_msg = str(e)
-#         logger.error(f"Exception during incremental update with rollback: {error_msg}")
-#         logger.exception("Full exception details:")
-#         return False, error_msg
-
-
-# # Import commonly used functions to maintain compatibility
-# from .services.metadata_manager import (
-#     add_checksum_metadata,
-#     backup_metadata_csv,
-#     calculate_content_checksum,
-#     detect_document_changes,
-#     get_file_modification_time,
-#     load_existing_metadata,
-#     restore_metadata_backup,
-#     save_document_metadata_csv,
-#     should_process_document
-# )
-# from .services.performance_monitor import (
-#     apply_performance_optimizations,
-#     get_processing_stats,
-#     monitor_incremental_performance
-# )
-# from .services.health_checker import comprehensive_system_health_check
-# from .services.vector_store_manager import validate_vector_store_health
-# from .utils.batch_processor import (
-#     batch_process_items,
-#     chunk_list,
-#     estimate_batch_size
-# )
-# from .utils.common_utils import (
-#     format_file_size,
-#     format_duration,
-#     safe_int,
-#     safe_float
-# )
-
 # Export all backward compatibility functions
 __all__ = [
     # Main classes
     "PipelineProcessor",
     "get_processor",
-    
-    # Backward compatibility functions
-    # "load_blog_posts",
-    # "update_document_metadata", 
-    # "get_document_stats",
-    # "display_document_stats",
-    # "split_documents",
-    # "create_vector_store",
-    # "load_vector_store",
-    # "add_documents_to_vector_store",
-    # "remove_documents_from_vector_store",
-    # "update_vector_store_incrementally",
-    # "update_vector_store_incrementally_with_rollback",
-    
-    # # Metadata functions
-    # "add_checksum_metadata",
-    # "backup_metadata_csv",
-    # "calculate_content_checksum",
-    # "detect_document_changes",
-    # "get_file_modification_time",
-    # "load_existing_metadata",
-    # "restore_metadata_backup",
-    # "save_document_metadata_csv",
-    # "should_process_document",
-    
-    # # Performance functions
-    # "apply_performance_optimizations",
-    # "get_processing_stats",
-    # "monitor_incremental_performance",
-    
-    # # Health and utility functions
-    # "comprehensive_system_health_check",
-    # "validate_vector_store_health",
-    # "batch_process_items",
-    # "chunk_list",
-    # "estimate_batch_size",
-    # "format_file_size",
-    # "format_duration",
-    # "safe_int",
-    # "safe_float",
 ]

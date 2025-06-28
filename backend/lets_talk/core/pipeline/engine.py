@@ -16,9 +16,9 @@ from lets_talk.shared.config import (
     SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT, SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
     VECTOR_STORAGE_PATH, QDRANT_COLLECTION, FORCE_RECREATE, EMBEDDING_MODEL,
     INCREMENTAL_MODE, CHECKSUM_ALGORITHM, AUTO_DETECT_CHANGES,
-    ENABLE_BATCH_PROCESSING, BATCH_SIZE, ENABLE_PERFORMANCE_MONITORING,
-    BATCH_PAUSE_SECONDS, MAX_CONCURRENT_OPERATIONS, MAX_BACKUP_FILES,
-    METADATA_CSV_FILE, BLOG_STATS_FILENAME, BLOG_DOCS_FILENAME,
+    INCREMENTAL_FALLBACK_THRESHOLD, ENABLE_BATCH_PROCESSING, BATCH_SIZE,
+    ENABLE_PERFORMANCE_MONITORING, BATCH_PAUSE_SECONDS, MAX_CONCURRENT_OPERATIONS,
+    MAX_BACKUP_FILES, METADATA_CSV_FILE, BLOG_STATS_FILENAME, BLOG_DOCS_FILENAME,
     HEALTH_REPORT_FILENAME, CI_SUMMARY_FILENAME, BUILD_INFO_FILENAME
 )
 
@@ -51,6 +51,7 @@ def run_pipeline(
     incremental_mode: str = INCREMENTAL_MODE,
     checksum_algorithm: str = CHECKSUM_ALGORITHM,
     auto_detect_changes: bool = AUTO_DETECT_CHANGES,
+    incremental_fallback_threshold: float = INCREMENTAL_FALLBACK_THRESHOLD,
     enable_batch_processing: bool = ENABLE_BATCH_PROCESSING,
     batch_size: int = BATCH_SIZE,
     enbable_performance_monitoring: bool = ENABLE_PERFORMANCE_MONITORING,
@@ -98,6 +99,7 @@ def run_pipeline(
         incremental_mode: Mode for incremental updates
         checksum_algorithm: Algorithm for checksums
         auto_detect_changes: Whether to auto-detect changes
+        incremental_fallback_threshold: Threshold for falling back to full indexing when too many changes detected
         enable_batch_processing: Whether to enable batch processing
         batch_size: Size of processing batches
         enbable_performance_monitoring: Whether to enable performance monitoring
@@ -175,6 +177,7 @@ def run_pipeline(
             incremental_mode=incremental_mode,
             checksum_algorithm=checksum_algorithm,
             auto_detect_changes=auto_detect_changes,
+            incremental_fallback_threshold=incremental_fallback_threshold,
             enable_batch_processing=enable_batch_processing,
             batch_size=batch_size,
             enbable_performance_monitoring=enbable_performance_monitoring,
@@ -196,14 +199,7 @@ def run_pipeline(
         logger.info("EXECUTING PIPELINE")
         logger.info("="*50)
         
-        if incremental_mode == "auto" and not force_recreate:
-            logger.info("Running incremental processing")
-            success = processor.process_documents_incremental()
-            process_mode = "incremental"
-        else:
-            logger.info("Running full processing")
-            success = processor.process_documents_full(force_recreate=force_recreate)
-            process_mode = "full"
+        success, process_mode = processor.process_documents(show_progress=True)
         
         if success:
             result['success'] = True

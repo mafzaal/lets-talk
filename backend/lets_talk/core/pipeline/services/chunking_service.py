@@ -99,9 +99,17 @@ class ChunkingService:
         
        
         
-        logger.info(f"Splitting {len(documents)} documents using {strategy} strategy "
-                   f"(chunk_size={chunk_size}, overlap={chunk_overlap})")
-        
+        # Log parameters based on chunking strategy
+        if strategy == ChunkingStrategy.SEMANTIC:
+            logger.info(f"Splitting {len(documents)} documents using {strategy} strategy "
+                   f"(breakpoint_type={self.semantic_breakpoint_type.value}, "
+                   f"threshold={self.semantic_breakpoint_threshold_amount}, "
+                   f"min_chunk_size={self.semantic_min_chunk_size})")
+        else:
+            logger.info(f"Splitting {len(documents)} documents using {strategy} strategy "
+                   f"(chunk_size={chunk_size}, overlap={chunk_overlap}, "
+                   f"adaptive={self.adaptive_chunking})")
+            
         if strategy == ChunkingStrategy.SEMANTIC:
             split_docs = self._semantic_chunking(documents)
         else:
