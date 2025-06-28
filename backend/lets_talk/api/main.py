@@ -22,7 +22,6 @@ async def lifespan(app: FastAPI):
         scheduler_instance = PipelineScheduler(
             scheduler_type="background",
             max_workers=4,
-            executor_type="thread",
             enable_persistence=True
         )
         scheduler_instance.start()

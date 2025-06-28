@@ -5,7 +5,6 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from pathlib import Path
 
-from lets_talk.core.pipeline.processors import get_processor
 from lets_talk.shared.config import (
     CHUNKING_STRATEGY, OUTPUT_DIR, LOGGER_NAME, FORCE_RECREATE, DATA_DIR, QDRANT_URL,
     VECTOR_STORAGE_PATH, USE_CHUNKING, SHOULD_SAVE_STATS,
@@ -95,42 +94,69 @@ def simple_pipeline_job(config: Optional[Dict[str, Any]] = None) -> Dict[str, An
             result["message"] = "Health check completed successfully"
             result["steps_completed"] = ["health_check"]
         else:
-            # Actual pipeline execution would go here
-            # For now, we'll simulate a successful run
+            # Actual pipeline execution
             logger.info("Executing pipeline with actual processing")
             
             # Import pipeline here to avoid circular imports
             try:
                 from lets_talk.core.pipeline.engine import run_pipeline
+                
+                # Execute the pipeline with proper parameters
                 pipeline_result = run_pipeline(
+                    job_id=job_id,
                     data_dir=data_dir,
+                    data_dir_pattern=data_dir_pattern,
+                    web_urls=web_urls,
+                    base_url=base_url,
+                    blog_base_url=blog_base_url,
                     output_dir=output_dir,
-                    storage_path=storage_path,
+                    vector_storage_path=storage_path,
+                    qdrant_url=qdrant_url,
                     collection_name=collection_name,
                     embedding_model=embedding_model,
                     force_recreate=force_recreate,
                     use_chunking=use_chunking,
+                    chunking_strategy=chunking_strategy,
                     chunk_size=chunk_size,
                     chunk_overlap=chunk_overlap,
-                    should_save_stats=should_save_stats,
-                    data_dir_pattern=data_dir_pattern,
-                    blog_base_url=blog_base_url,
-                    base_url=base_url,
-                    incremental_mode=incremental_mode,
-                    ci_mode=ci_mode
+                    incremental_mode=incremental_mode
                 )
-
-                pipeline_processor =  get_processor()
-                pipeline_processor.process_documents_incremental()
-
-
-                result.update(pipeline_result)
-                result["status"] = "completed"
-            except ImportError:
-                logger.warning("Pipeline engine not available, using mock execution")
-                result["status"] = "completed_mock"
-                result["message"] = "Mock pipeline execution completed"
-                result["steps_completed"] = ["mock_processing", "mock_indexing", "mock_validation"]
+                
+                # Update result with pipeline execution results
+                if pipeline_result.get('success', False):
+                    result["status"] = "completed"
+                    result["message"] = pipeline_result.get('message', 'Pipeline completed successfully')
+                    result["steps_completed"] = ["data_loading", "processing", "indexing", "health_check"]
+                    
+                    # Add pipeline-specific metrics
+                    if 'documents_processed' in pipeline_result:
+                        result["documents_processed"] = pipeline_result['documents_processed']
+                    if 'chunks_created' in pipeline_result:
+                        result["chunks_created"] = pipeline_result['chunks_created']
+                    if 'mode' in pipeline_result:
+                        result["processing_mode"] = pipeline_result['mode']
+                    if 'health_check' in pipeline_result:
+                        result["health_check"] = pipeline_result['health_check']
+                    if 'performance_metrics' in pipeline_result:
+                        result["performance_metrics"] = pipeline_result['performance_metrics']
+                else:
+                    result["status"] = "failed"
+                    result["message"] = pipeline_result.get('message', 'Pipeline execution failed')
+                    result["errors"] = pipeline_result.get('errors', ['Unknown pipeline error'])
+                
+                # Include full pipeline result for debugging
+                result["pipeline_result"] = pipeline_result
+                
+            except ImportError as e:
+                logger.error(f"Pipeline engine not available: {e}")
+                result["status"] = "failed"
+                result["message"] = f"Pipeline engine import failed: {e}"
+                result["errors"] = [f"ImportError: {e}"]
+            except Exception as e:
+                logger.error(f"Pipeline execution failed: {e}")
+                result["status"] = "failed"
+                result["message"] = f"Pipeline execution failed: {e}"
+                result["errors"] = [str(e)]
         
         end_time = datetime.now()
         result["end_time"] = end_time.isoformat()
@@ -179,23 +205,3 @@ def simple_pipeline_job(config: Optional[Dict[str, Any]] = None) -> Dict[str, An
         raise  # Re-raise to let scheduler handle the error
 
 
-def validate_pipeline_config(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Validate pipeline configuration and return cleaned config."""
-    validated_config = config.copy()
-    
-    # Ensure required paths exist
-    data_dir = validated_config.get("data_dir", DATA_DIR)
-    output_dir = validated_config.get("output_dir", OUTPUT_DIR)
-    
-    Path(data_dir).mkdir(parents=True, exist_ok=True)
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    
-    # Validate chunk sizes
-    chunk_size = validated_config.get("chunk_size", CHUNK_SIZE)
-    chunk_overlap = validated_config.get("chunk_overlap", CHUNK_OVERLAP)
-    
-    if chunk_overlap >= chunk_size:
-        logger.warning(f"Chunk overlap ({chunk_overlap}) >= chunk size ({chunk_size}), adjusting")
-        validated_config["chunk_overlap"] = chunk_size // 2
-    
-    return validated_config

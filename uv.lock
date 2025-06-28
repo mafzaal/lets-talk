@@ -1550,7 +1550,7 @@ dependencies = [
     { name = "websockets" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "chainlit" },
     { name = "grandalf" },
@@ -1559,17 +1559,13 @@ dev = [
     { name = "ipywidgets" },
     { name = "langchain-huggingface" },
     { name = "langgraph-cli", extra = ["inmem"] },
-    { name = "ragas" },
-    { name = "unstructured", extra = ["md"] },
-]
-
-[package.dev-dependencies]
-dev = [
     { name = "matplotlib" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "pytest-mock" },
+    { name = "ragas" },
+    { name = "unstructured", extra = ["md"] },
 ]
 
 [package.metadata]
@@ -1578,25 +1574,18 @@ requires-dist = [
     { name = "apscheduler", specifier = ">=3.11.0" },
     { name = "arxiv", specifier = ">=2.2.0" },
     { name = "beautifulsoup4", specifier = ">=4.13.4" },
-    { name = "chainlit", marker = "extra == 'dev'", specifier = ">=2.5.5" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "feedparser", specifier = ">=6.0.11" },
-    { name = "grandalf", marker = "extra == 'dev'", specifier = ">=0.8" },
-    { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29.5" },
-    { name = "ipython", marker = "extra == 'dev'", specifier = ">=9.2.0" },
-    { name = "ipywidgets", marker = "extra == 'dev'", specifier = ">=8.1.7" },
     { name = "langchain", specifier = ">=0.3.25" },
     { name = "langchain-community", specifier = ">=0.3.23" },
     { name = "langchain-core", specifier = ">=0.3.59" },
     { name = "langchain-experimental", specifier = ">=0.3.4" },
-    { name = "langchain-huggingface", marker = "extra == 'dev'", specifier = ">=0.2.0" },
     { name = "langchain-ollama", specifier = ">=0.3.2" },
     { name = "langchain-openai", specifier = ">=0.3.16" },
     { name = "langchain-qdrant", specifier = ">=0.2.0" },
     { name = "langchain-text-splitters", specifier = ">=0.3.8" },
     { name = "langchain-together", specifier = ">=0.3.0" },
     { name = "langgraph", specifier = ">=0.4.3" },
-    { name = "langgraph-cli", extras = ["inmem"], marker = "extra == 'dev'", specifier = ">=0.2.10" },
     { name = "libmagic", specifier = ">=1.0" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "psutil", specifier = ">=7.0.0" },
@@ -1604,23 +1593,29 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.1.0" },
     { name = "python-frontmatter", specifier = ">=1.1.0" },
     { name = "qdrant-client", specifier = ">=1.14.2" },
-    { name = "ragas", marker = "extra == 'dev'", specifier = ">=0.2.15" },
     { name = "rank-bm25", specifier = ">=0.2.2" },
     { name = "sqlalchemy", specifier = ">=2.0.41" },
     { name = "tqdm", specifier = ">=4.67.1" },
-    { name = "unstructured", extras = ["md"], marker = "extra == 'dev'", specifier = ">=0.17.2" },
     { name = "uvicorn", specifier = ">=0.24.0" },
     { name = "websockets", specifier = ">=15.0.1" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "chainlit", specifier = ">=2.5.5" },
+    { name = "grandalf", specifier = ">=0.8" },
+    { name = "ipykernel", specifier = ">=6.29.5" },
+    { name = "ipython", specifier = ">=9.2.0" },
+    { name = "ipywidgets", specifier = ">=8.1.7" },
+    { name = "langchain-huggingface", specifier = ">=0.2.0" },
+    { name = "langgraph-cli", extras = ["inmem"], specifier = ">=0.2.10" },
     { name = "matplotlib", specifier = ">=3.10.3" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-asyncio", specifier = ">=1.0.0" },
     { name = "pytest-cov", specifier = ">=6.2.1" },
     { name = "pytest-mock", specifier = ">=3.14.1" },
+    { name = "ragas", specifier = ">=0.2.15" },
+    { name = "unstructured", extras = ["md"], specifier = ">=0.17.2" },
 ]
 
 [[package]]

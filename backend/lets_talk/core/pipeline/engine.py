@@ -64,9 +64,7 @@ def run_pipeline(
     health_report_filename: str = HEALTH_REPORT_FILENAME,
     ci_summary_filename: str = CI_SUMMARY_FILENAME,
     build_info_filename: str = BUILD_INFO_FILENAME,
-    storage_path: Optional[str] = None,  # Legacy parameter, mapped to vector_storage_path
-    should_save_stats: bool = True,  # Legacy parameter, not used in PipelineProcessor
-    ci_mode: bool = False,  # Legacy parameter, not used in PipelineProcessor
+    job_id: Optional[str] = None,  # Job ID for tracking pipeline execution
 ) -> Dict[str, Any]:
     """
     Run the main data processing pipeline using PipelineProcessor.
@@ -115,17 +113,14 @@ def run_pipeline(
         storage_path: Legacy parameter, use vector_storage_path instead
         should_save_stats: Legacy parameter, not used
         ci_mode: Legacy parameter, not used
+        job_id: Optional job ID for tracking pipeline execution. If not provided, will be auto-generated
         
     Returns:
         Dict containing pipeline execution results
     """
     start_time = datetime.now()
-    job_id = f"pipeline_{start_time.strftime('%Y%m%d_%H%M%S')}"
-    
-    # Handle legacy parameters
-    if storage_path is not None:
-        vector_storage_path = storage_path
-        logger.warning("Parameter 'storage_path' is deprecated, use 'vector_storage_path' instead")
+    if job_id is None:
+        job_id = f"pipeline_{start_time.strftime('%Y%m%d_%H%M%S')}"
     
     logger.info("="*80)
     logger.info("STARTING PIPELINE EXECUTION")
