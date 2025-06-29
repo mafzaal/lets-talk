@@ -46,8 +46,7 @@ services:
             timeout: 5s
             retries: 5
     langgraph-api:
-        image: ghcr.io/mafzaal/lets-talk:main #the_data_guy_chat
-        # Remove direct port exposure - access only through nginx
+        image: lets-talk #ghcr.io/mafzaal/lets-talk:main 
         ports:
             - "8124:8000"
         depends_on:
