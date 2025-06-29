@@ -46,7 +46,7 @@ services:
             timeout: 5s
             retries: 5
     langgraph-api:
-        image: lets-talk #ghcr.io/mafzaal/lets-talk:main 
+        image: ghcr.io/mafzaal/lets-talk:main 
         ports:
             - "8124:8000"
         depends_on:
@@ -63,7 +63,7 @@ services:
            - ${OUTPUT_DIR_HOST}:${OUTPUT_DIR}
         environment:
             REDIS_URI: redis://langgraph-redis:6379
-            QDRANT_URL: http://langgraph-qdrant:6334
+            QDRANT_URL: http://langgraph-qdrant:6333
             POSTGRES_URI:  postgres://${POSTGRES_USER}:${POSTGRES_USER}@langgraph-postgres:5432/${POSTGRES_DB}?sslmode=disable
         restart: unless-stopped
     
