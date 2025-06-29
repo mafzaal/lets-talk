@@ -46,10 +46,18 @@ http {
             proxy_hide_header Access-Control-Allow-Headers;
             proxy_hide_header Access-Control-Allow-Credentials;
             
-            # CORS configuration for thedataguy.pro and its subdomains
-            # Check if origin matches thedataguy.pro or its subdomains
+            # CORS configuration for allowed domains
+            # Check if origin matches any of the configured domains
             set $cors_origin "";
-            if ($http_origin ~* "^https?://([a-zA-Z0-9\-]+\.)?thedataguy\.pro$") {
+            
+            # Check each configured CORS domain
+            if ($http_origin ~* "^https?://([a-zA-Z0-9\-]+\.)?${CORS_DOMAIN_1}$") {
+                set $cors_origin $http_origin;
+            }
+            if ($http_origin ~* "^https?://([a-zA-Z0-9\-]+\.)?${CORS_DOMAIN_2}$") {
+                set $cors_origin $http_origin;
+            }
+            if ($http_origin ~* "^https?://([a-zA-Z0-9\-]+\.)?${CORS_DOMAIN_3}$") {
                 set $cors_origin $http_origin;
             }
             
