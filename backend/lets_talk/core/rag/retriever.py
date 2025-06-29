@@ -3,6 +3,8 @@ import logging
 from typing import List, Optional
 from langchain.schema.document import Document
 from langchain_qdrant import QdrantVectorStore
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.chat_models import init_chat_model
 from langchain_core.vectorstores.base import VectorStoreRetriever
@@ -59,7 +61,7 @@ def load_vector_store(
     qdrant_url: str = QDRANT_URL,
     embedding_model_name: str = EMBEDDING_MODEL
 ) -> Optional[QdrantVectorStore]:
-    """Load the vector store from the specified collection."""
+    """Load the vector store from the specified collection, creating it if it doesn't exist."""
     logger.info("Loading vector store: collection=%s, url=%s, embedding_model=%s", 
                 collection_name, qdrant_url, embedding_model_name)
     
@@ -68,20 +70,61 @@ def load_vector_store(
         return None
     
     embeddings = init_embeddings_wrapper(embedding_model_name)
-
     
     try:
+        # First, try to connect to existing collection
         vector_store = QdrantVectorStore.from_existing_collection(        
             embedding=embeddings,# type: ignore
             collection_name=collection_name,
             url=qdrant_url,
             prefer_grpc=True,
         )
-        logger.info("Vector store loaded successfully")
+        logger.info("Vector store loaded successfully from existing collection")
         return vector_store
     except Exception as e:
-        logger.error(f"Failed to load vector store: {e}")
-        return None
+        logger.warning(f"Failed to load existing collection '{collection_name}': {e}")
+        logger.info("Attempting to create new collection...")
+        
+        try:
+            # Create a Qdrant client to check/create collection
+            client = QdrantClient(url=qdrant_url, prefer_grpc=True)
+            
+            # Check if collection exists
+            collections = client.get_collections()
+            collection_exists = any(col.name == collection_name for col in collections.collections)
+            
+            if not collection_exists:
+                logger.info(f"Collection '{collection_name}' does not exist. Creating it...")
+                
+                # Get embedding dimension from the embeddings model
+                sample_embedding = embeddings.embed_query("sample text")
+                vector_size = len(sample_embedding)
+                
+                # Create collection with vector parameters
+                client.create_collection(
+                    collection_name=collection_name,
+                    vectors_config=VectorParams(
+                        size=vector_size,
+                        distance=Distance.COSINE
+                    )
+                )
+                logger.info(f"Collection '{collection_name}' created successfully with vector size {vector_size}")
+            else:
+                logger.info(f"Collection '{collection_name}' already exists")
+            
+            # Now create vector store from the collection (existing or newly created)
+            vector_store = QdrantVectorStore.from_existing_collection(        
+                embedding=embeddings,# type: ignore
+                collection_name=collection_name,
+                url=qdrant_url,
+                prefer_grpc=True,
+            )
+            logger.info("Vector store loaded successfully after collection creation/verification")
+            return vector_store
+            
+        except Exception as create_error:
+            logger.error(f"Failed to create/load collection '{collection_name}': {create_error}")
+            return None
 
 
 def build_retriever(

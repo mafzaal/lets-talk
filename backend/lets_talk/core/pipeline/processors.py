@@ -358,7 +358,7 @@ class PipelineProcessor:
             self.logger.debug(f"Added checksum metadata to {len(documents)} documents")
             
             # Step 3: Split documents
-            if not self.use_chunking:
+            if self.use_chunking:
                 self.logger.info("Step 3: Splitting documents into chunks")
                 split_docs = self.chunking_service.split_documents(documents)
                 self.logger.info(f"Split {len(documents)} documents into {len(split_docs)} chunks")

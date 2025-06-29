@@ -137,7 +137,13 @@ class DocumentLoader:
             doc: Document to update
         """
         # Create URL from source path
-        url = doc.metadata["source"].replace(self.data_dir, self.blog_base_url)
+        
+        # remove trailing slash from blog_base_url
+        blog_base_url = self.blog_base_url
+        if blog_base_url.endswith('/'):
+            blog_base_url = blog_base_url[:-1]
+
+        url = doc.metadata["source"].replace(self.data_dir, blog_base_url)
         
         # Remove index.md suffix if present
         if url.endswith(self.data_dir_pattern):
