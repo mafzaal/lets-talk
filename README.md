@@ -1,6 +1,6 @@
 ---
 title: Lets Talk
-emoji: 🐨
+emoji: 🌴
 colorFrom: green
 colorTo: blue
 sdk: docker

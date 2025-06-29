@@ -1,0 +1,135 @@
+events {
+    worker_connections 1024;
+}
+
+http {
+    upstream langgraph_api {
+        server langgraph-api:8000;
+    }
+
+    # Rate limiting for anonymous users
+    limit_req_zone $binary_remote_addr zone=public_api:10m rate=30r/m;
+    limit_req_zone $binary_remote_addr zone=auth_api:10m rate=100r/m;
+    
+    # Map to check API key validation - populated from environment variables
+    map $http_x_api_key $api_key_valid {
+        default 0;
+        # Only include non-empty API keys
+        "${API_KEY_1}" 1;
+        "${API_KEY_2}" 1;
+        # Remove empty entries during substitution
+    }
+    
+    server {
+        listen 80;
+        server_name localhost;
+
+        # Add security headers
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+        # Public endpoint - /threads accessible to anonymous users
+        location ~ ^/threads {
+            limit_req zone=public_api burst=10 nodelay;
+            
+            proxy_pass http://langgraph_api;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            
+            # Hide any existing CORS headers from upstream to prevent duplicates
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            
+            # CORS configuration for thedataguy.pro and its subdomains
+            # Check if origin matches thedataguy.pro or its subdomains
+            set $cors_origin "";
+            if ($http_origin ~* "^https?://([a-zA-Z0-9\-]+\.)?thedataguy\.pro$") {
+                set $cors_origin $http_origin;
+            }
+            
+            # Add CORS headers if origin is allowed
+            add_header 'Access-Control-Allow-Origin' $cors_origin always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept, Authorization, Cache-Control, Content-Type, DNT, If-Modified-Since, Keep-Alive, Origin, User-Agent, X-Requested-With' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            
+            # Handle preflight requests
+            if ($request_method = 'OPTIONS') {
+                add_header 'Access-Control-Allow-Origin' $cors_origin;
+                add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS';
+                add_header 'Access-Control-Allow-Headers' 'Accept, Authorization, Cache-Control, Content-Type, DNT, If-Modified-Since, Keep-Alive, Origin, User-Agent, X-Requested-With';
+                add_header 'Access-Control-Allow-Credentials' 'true';
+                add_header 'Access-Control-Max-Age' 1728000;
+                add_header 'Content-Type' 'text/plain; charset=utf-8';
+                add_header 'Content-Length' 0;
+                return 204;
+            }
+        }
+
+        # Health check endpoint - public for monitoring
+        location /health {
+            limit_req zone=public_api burst=5 nodelay;
+            
+            # Hide any existing CORS headers from upstream
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            
+            proxy_pass http://langgraph_api;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Documentation endpoints - require authentication
+        location ~ ^/(docs|redoc|openapi\.json) {
+            if ($api_key_valid = 0) {
+                add_header 'Content-Type' 'application/json' always;
+                return 401 '{"error": "Valid API key required for documentation access", "hint": "Add X-API-Key header with valid key"}';
+            }
+            
+            limit_req zone=auth_api burst=20 nodelay;
+            
+            proxy_pass http://langgraph_api;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # All other LangGraph API endpoints - require authentication
+        location / {
+            # Allow threads endpoint to pass through (handled above)
+            if ($uri ~ ^/threads) {
+                break;
+            }
+            
+            # Allow health endpoint to pass through (handled above)  
+            if ($uri = /health) {
+                break;
+            }
+            
+            # Require API key for all other endpoints
+            if ($api_key_valid = 0) {
+                add_header 'Content-Type' 'application/json' always;
+                return 401 '{"error": "Valid API key required", "hint": "Add X-API-Key header with valid key"}';
+            }
+            
+            limit_req zone=auth_api burst=50 nodelay;
+            
+            proxy_pass http://langgraph_api;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}

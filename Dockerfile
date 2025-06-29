@@ -10,7 +10,7 @@ ADD . /deps/lets-talk
 RUN PYTHONDONTWRITEBYTECODE=1 uv pip install --system --no-cache-dir -c /api/constraints.txt -e /deps/*
 # -- End of local dependencies install --
 ENV LANGGRAPH_HTTP='{"app": "/deps/lets-talk/backend/lets_talk/main.py:app"}'
-ENV LANGSERVE_GRAPHS='{"the_data_guy_chat": "/deps/lets-talk/backend/lets_talk/main.py:reat_agent", "rag_agent": "/deps/lets-talk/backend/lets_talk/main.py:rag_agent"}'
+ENV LANGSERVE_GRAPHS='{"reat_agent": "/deps/lets-talk/backend/lets_talk/main.py:reat_agent", "rag_agent": "/deps/lets-talk/backend/lets_talk/main.py:rag_agent"}'
 
 
 

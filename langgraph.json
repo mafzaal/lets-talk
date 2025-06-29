@@ -1,7 +1,7 @@
 {
     "dockerfile_lines": [],
     "graphs": {
-      "the_data_guy_chat": "./backend/lets_talk/main.py:reat_agent",
+      "reat_agent": "./backend/lets_talk/main.py:reat_agent",
       "rag_agent": "./backend/lets_talk/main.py:rag_agent"
     },
     "python_version": "3.13",
