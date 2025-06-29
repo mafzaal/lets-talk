@@ -6,8 +6,10 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiohttp>=3.11.18",
+    "apscheduler>=3.11.0",
     "arxiv>=2.2.0",
     "beautifulsoup4>=4.13.4",
+    "fastapi>=0.115.0",
     "feedparser>=6.0.11",
     "langchain>=0.3.25",
     "langchain-community>=0.3.23",
@@ -21,15 +23,36 @@ dependencies = [
     "langgraph>=0.4.3",
     "libmagic>=1.0",
     "pandas>=2.2.3",
+    "psutil>=7.0.0",
     "python-dotenv>=1.1.0",
+    "pydantic>=2.5.0",
     "qdrant-client>=1.14.2",
     "rank-bm25>=0.2.2",
+    "sqlalchemy>=2.0.41",
     "tqdm>=4.67.1",
+    "uvicorn>=0.24.0",
     "websockets>=15.0.1",
+    "python-frontmatter>=1.1.0",
 ]
 
-[project.optional-dependencies]
+
+[build-system]
+requires = ["setuptools>=73.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "backend"}
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+
+[dependency-groups]
 dev = [
+    "matplotlib>=3.10.3",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=6.2.1",
+    "pytest-mock>=3.14.1",
     "ipykernel>=6.29.5",
     "ipython>=9.2.0",
     "ipywidgets>=8.1.7",
@@ -41,17 +64,24 @@ dev = [
     "chainlit>=2.5.5",
 ]
 
-[build-system]
-requires = ["setuptools>=73.0.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-package-dir = {"" = "py-src"}
-
-[tool.setuptools.packages.find]
-where = ["py-src"]
-
-[dependency-groups]
-dev = [
-    "matplotlib>=3.10.3",
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings",
+    "--color=yes"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests"
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
 ]

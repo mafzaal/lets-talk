@@ -1,0 +1,35 @@
+{
+  "exported_at": "2025-06-17T00:11:13.486181",
+  "scheduler_stats": {
+    "jobs_executed": 0,
+    "jobs_failed": 0,
+    "jobs_missed": 0,
+    "last_execution": null,
+    "last_error": null
+  },
+  "jobs": [
+    {
+      "job_id": "demo_onetime",
+      "name": "Simple Pipeline Job: demo_onetime",
+      "next_run_time": "2025-06-17T00:11:43.485972-05:00",
+      "trigger": "date[2025-06-17 00:11:43 CDT]",
+      "type": "date",
+      "run_date": "2025-06-17T00:11:43.485972-05:00"
+    },
+    {
+      "job_id": "hourly_check",
+      "name": "Simple Pipeline Job: hourly_check",
+      "next_run_time": "2025-06-17T01:11:13.485819-05:00",
+      "trigger": "interval[1:00:00]",
+      "type": "interval",
+      "hours": 1
+    },
+    {
+      "job_id": "daily_incremental",
+      "name": "Simple Pipeline Job: daily_incremental",
+      "next_run_time": "2025-06-17T02:00:00-05:00",
+      "trigger": "cron[hour='2', minute='0']",
+      "type": "cron"
+    }
+  ]
+}

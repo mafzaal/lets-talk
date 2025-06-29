@@ -66,3 +66,4 @@ lets_talk.egg-info/
 frontend/
 output/
 start-docker.sh
+data/

@@ -1,7 +1,8 @@
 {
     "dockerfile_lines": [],
     "graphs": {
-      "the_data_guy_chat": "./py-src/lets_talk/agent_v2.py:agent"
+      "reat_agent": "./backend/lets_talk/main.py:reat_agent",
+      "rag_agent": "./backend/lets_talk/main.py:rag_agent"
     },
     "python_version": "3.13",
     "env": "./.env",
@@ -9,7 +10,7 @@
       "."
     ],
     "http":{
-      "disable_meta": true,
-      "disable_store": true
-    }
+      "app": "./backend/lets_talk/main.py:app"
+    },
+    "image_distro": "wolfi"
   }

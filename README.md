@@ -1,6 +1,6 @@
 ---
 title: Lets Talk
-emoji: 🐨
+emoji: 🌴
 colorFrom: green
 colorTo: blue
 sdk: docker
@@ -52,6 +52,76 @@ Let's Talk is available in multiple implementations:
 
 Ask questions about RAG evaluation, research agents, data strategy, or any other topics from my blog to see Let's Talk in action!
 
+## Pipeline Scheduling and Management 🕐
+
+Let's Talk now includes a comprehensive pipeline scheduling system built with FastAPI:
+
+- **Automated Content Updates:** Schedule regular pipeline runs to keep your content up-to-date
+- **Flexible Scheduling:** Support for cron expressions, intervals, and one-time runs
+- **REST API Management:** Full API for creating, monitoring, and managing scheduled jobs
+- **Real-time Monitoring:** Health checks, execution statistics, and error tracking
+- **Preset Configurations:** Common scheduling patterns (daily, weekly, hourly)
+
+### Quick Start with Pipeline Scheduling
+
+```bash
+# Start the FastAPI scheduler server
+./start_scheduler_api.sh
+
+# Or manually with uvicorn
+cd py-src && uv run uvicorn lets_talk.api.main:app --host 0.0.0.0 --port 8000
+
+# Alternative: Use the main entry point
+cd py-src && uv run python lets_talk/main.py
+```
+
+Visit `http://localhost:8000/docs` for the interactive API documentation.
+
+For complete documentation, see [Pipeline Scheduling API Guide](docs/PIPELINE_SCHEDULING_API.md).
+
+## Architecture Overview 🏗️
+
+Let's Talk features a modular, layered architecture for maintainability and scalability:
+
+### Core Components
+
+- **`agents/`** - AI agent implementations (RAG, ReAct) with factory pattern
+- **`api/`** - FastAPI application with modular endpoints and Pydantic models
+- **`core/`** - Business logic (pipeline, scheduler, RAG retrieval, domain models)
+- **`tools/`** - External integrations and utilities (RSS, datetime, contact forms)
+- **`utils/`** - Helper functions (blog processing, document formatting)
+- **`shared/`** - Configuration, constants, exceptions, and prompt templates
+
+### Getting Started
+
+```bash
+# Install dependencies
+uv install
+
+# Run the API server
+cd py-src && uv run python lets_talk/main.py
+
+# Run pipeline manually
+cd py-src && uv run python -m lets_talk.core.pipeline.engine
+
+# Use scheduler CLI
+cd py-src && uv run python -m lets_talk.core.scheduler.cli --help
+```
+
+### Import Examples
+
+```python
+# Create agents
+from lets_talk.agents import create_rag_agent, create_react_agent
+
+# Access API
+from lets_talk.api.main import app
+
+# Use core components
+from lets_talk.core.pipeline.engine import run_pipeline
+from lets_talk.core.scheduler.manager import PipelineScheduler
+from lets_talk.shared.config import Configuration
+```
 
 ## Future Enhancements
 
