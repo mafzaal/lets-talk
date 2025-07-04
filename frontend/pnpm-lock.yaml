@@ -17,7 +17,7 @@ importers:
     devDependencies:
       '@langchain/langgraph':
         specifier: ^0.3.1
-        version: 0.3.1(@langchain/core@0.3.57)(zod-to-json-schema@3.24.6(zod@3.25.67))
+        version: 0.3.1(@langchain/core@0.3.57)(zod-to-json-schema@3.24.6(zod@3.25.74))
       '@sveltejs/adapter-static':
         specifier: ^3.0.8
         version: 3.0.8(@sveltejs/kit@2.22.2(@sveltejs/vite-plugin-svelte@5.1.0(svelte@5.34.9)(vite@6.3.5(jiti@2.4.2)(lightningcss@1.30.1)))(svelte@5.34.9)(vite@6.3.5(jiti@2.4.2)(lightningcss@1.30.1)))
@@ -37,13 +37,11 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(vite@6.3.5(jiti@2.4.2)(lightningcss@1.30.1))
       prettier:
-        specifier: ^3.6.0
-        version: 3.6.0
+        specifier: ^3.6.2
+        version: 3.6.2
       prettier-plugin-svelte:
         specifier: ^3.3.3
-
-        version: 3.4.0(prettier@3.6.0)(svelte@5.34.9)
-
+        version: 3.4.0(prettier@3.6.2)(svelte@5.34.9)
       remote:
         specifier: link:@langchain/langgraph/remote
         version: link:@langchain/langgraph/remote
@@ -675,8 +673,8 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
-  langsmith@0.3.35:
-    resolution: {integrity: sha512-Ho39bkA3zthYdNDgSRF8Yo68K42UI7OdXV8U8nVEOnW9lrLycUCevMtD/cAfuPUd3Oo9+40B6pSQVShNMZ6JWA==}
+  langsmith@0.3.38:
+    resolution: {integrity: sha512-2f3h427UCEi9jpGvdZp6eZNDhOzcSFSdwyZAax4Wo80NWozkXunepKkiXdQNloUZzE++fh3lxrjOqvimAJ0SSg==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -850,8 +848,8 @@ packages:
       prettier: ^3.0.0
       svelte: ^3.2.0 || ^4.0.0-next.0 || ^5.0.0-next.0
 
-  prettier@3.6.0:
-    resolution: {integrity: sha512-ujSB9uXHJKzM/2GBuE0hBOUgC77CN3Bnpqa+g80bkv3T3A93wL/xlzDATHhnhkzifz/UE2SNOvmbTz5hSkDlHw==}
+  prettier@3.6.2:
+    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -1013,8 +1011,8 @@ packages:
   zod@3.25.58:
     resolution: {integrity: sha512-DVLmMQzSZwNYzQoMaM3MQWnxr2eq+AtM9Hx3w1/Yl0pH8sLTSjN4jGP7w6f7uand6Hw44tsnSu1hz1AOA6qI2Q==}
 
-  zod@3.25.67:
-    resolution: {integrity: sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==}
+  zod@3.25.74:
+    resolution: {integrity: sha512-J8poo92VuhKjNknViHRAIuuN6li/EwFbAC8OedzI8uxpEPGiXHGQu9wemIAioIpqgfB4SySaJhdk0mH5Y4ICBg==}
 
 snapshots:
 
@@ -1130,13 +1128,13 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.20
-      langsmith: 0.3.35
+      langsmith: 0.3.38
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
       uuid: 10.0.0
-      zod: 3.25.67
-      zod-to-json-schema: 3.24.6(zod@3.25.67)
+      zod: 3.25.74
+      zod-to-json-schema: 3.24.6(zod@3.25.74)
     transitivePeerDependencies:
       - '@opentelemetry/api'
       - '@opentelemetry/exporter-trace-otlp-proto'
@@ -1157,7 +1155,7 @@ snapshots:
     optionalDependencies:
       '@langchain/core': 0.3.57
 
-  '@langchain/langgraph@0.3.1(@langchain/core@0.3.57)(zod-to-json-schema@3.24.6(zod@3.25.67))':
+  '@langchain/langgraph@0.3.1(@langchain/core@0.3.57)(zod-to-json-schema@3.24.6(zod@3.25.74))':
     dependencies:
       '@langchain/core': 0.3.57
       '@langchain/langgraph-checkpoint': 0.0.18(@langchain/core@0.3.57)
@@ -1165,7 +1163,7 @@ snapshots:
       uuid: 10.0.0
       zod: 3.25.58
     optionalDependencies:
-      zod-to-json-schema: 3.24.6(zod@3.25.67)
+      zod-to-json-schema: 3.24.6(zod@3.25.74)
     transitivePeerDependencies:
       - react
 
@@ -1499,7 +1497,7 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  langsmith@0.3.35:
+  langsmith@0.3.38:
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -1619,14 +1617,12 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-
-  prettier-plugin-svelte@3.4.0(prettier@3.6.0)(svelte@5.34.9):
+  prettier-plugin-svelte@3.4.0(prettier@3.6.2)(svelte@5.34.9):
     dependencies:
-      prettier: 3.6.0
+      prettier: 3.6.2
       svelte: 5.34.9
 
-
-  prettier@3.6.0: {}
+  prettier@3.6.2: {}
 
   readdirp@4.1.2: {}
 
@@ -1762,10 +1758,10 @@ snapshots:
 
   zimmerframe@1.1.2: {}
 
-  zod-to-json-schema@3.24.6(zod@3.25.67):
+  zod-to-json-schema@3.24.6(zod@3.25.74):
     dependencies:
-      zod: 3.25.67
+      zod: 3.25.74
 
   zod@3.25.58: {}
 
-  zod@3.25.67: {}
+  zod@3.25.74: {}
