@@ -12,8 +12,8 @@ importers:
         specifier: ^0.0.84
         version: 0.0.84(@langchain/core@0.3.57)
       marked:
-        specifier: ^15.0.12
-        version: 15.0.12
+        specifier: ^16.0.0
+        version: 16.0.0
     devDependencies:
       '@langchain/langgraph':
         specifier: ^0.3.1
@@ -41,7 +41,9 @@ importers:
         version: 3.6.0
       prettier-plugin-svelte:
         specifier: ^3.3.3
+
         version: 3.4.0(prettier@3.6.0)(svelte@5.34.9)
+
       remote:
         specifier: link:@langchain/langgraph/remote
         version: link:@langchain/langgraph/remote
@@ -769,9 +771,9 @@ packages:
   magic-string@0.30.17:
     resolution: {integrity: sha512-sNPKHvyjVf7gyjwS4xGTaW/mCnF8wnjtifKBEhxfZ7E/S8tQ0rssrwGNn6q8JH/ohItJfSQp9mBtQYuTlH5QnA==}
 
-  marked@15.0.12:
-    resolution: {integrity: sha512-8dD6FusOQSrpv9Z1rdNMdlSgQOIP880DHqnohobOmYLElGEqAL/JvxvuxZO16r4HtjTlfPRDC1hbvxC9dPN2nA==}
-    engines: {node: '>= 18'}
+  marked@16.0.0:
+    resolution: {integrity: sha512-MUKMXDjsD/eptB7GPzxo4xcnLS6oo7/RHimUMHEDRhUooPwmN9BEpMl7AEOJv3bmso169wHI2wUF9VQgL7zfmA==}
+    engines: {node: '>= 20'}
     hasBin: true
 
   mini-svg-data-uri@1.4.4:
@@ -1564,7 +1566,7 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.3
 
-  marked@15.0.12: {}
+  marked@16.0.0: {}
 
   mini-svg-data-uri@1.4.4: {}
 
@@ -1617,10 +1619,12 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+
   prettier-plugin-svelte@3.4.0(prettier@3.6.0)(svelte@5.34.9):
     dependencies:
       prettier: 3.6.0
       svelte: 5.34.9
+
 
   prettier@3.6.0: {}
 
