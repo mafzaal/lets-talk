@@ -20,7 +20,7 @@
 		"@sveltejs/vite-plugin-svelte": "^5.1.0",
 		"@tailwindcss/forms": "^0.5.9",
 		"@tailwindcss/typography": "^0.5.15",
-		"@tailwindcss/vite": "^4.1.10",
+		"@tailwindcss/vite": "^4.1.11",
 		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"remote": "link:@langchain/langgraph/remote",
