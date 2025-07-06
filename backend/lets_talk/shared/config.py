@@ -8,23 +8,19 @@ from enum import Enum
 from typing import Annotated, Any, Literal, Optional, Type, TypeVar
 from langchain_core.runnables import RunnableConfig, ensure_config
 from dotenv import load_dotenv
+from lets_talk.api.models.common import ChunkingStrategy, SemanticChunkerBreakpointType
 
 # Load environment variables from .env file
 load_dotenv()
 
 
-class ChunkingStrategy(str, Enum):
-    """Enumeration for document chunking strategies."""
-    SEMANTIC = "semantic"
-    TEXT_SPLITTER = "text_splitter"
+# class ChunkingStrategy(str, Enum):
+#     """Enumeration for document chunking strategies."""
+#     SEMANTIC = "semantic"
+#     TEXT_SPLITTER = "text_splitter"
 
 
-class SemanticChunkerBreakpointType(str, Enum):
-    """Enumeration for SemanticChunker breakpoint threshold types."""
-    PERCENTILE = "percentile"
-    STANDARD_DEVIATION = "standard_deviation"
-    INTERQUARTILE = "interquartile"
-    GRADIENT = "gradient"
+
 
 
 # Configuration with defaults
