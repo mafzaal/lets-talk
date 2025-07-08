@@ -36,7 +36,7 @@
 		]
 	},
 	"dependencies": {
-		"@langchain/langgraph-sdk": "^0.0.89",
+		"@langchain/langgraph-sdk": "^0.0.90",
 		"marked": "^16.0.0"
 	}
 }
