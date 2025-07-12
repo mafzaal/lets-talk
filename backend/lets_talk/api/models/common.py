@@ -17,42 +17,51 @@ class SemanticChunkerBreakpointType(str, Enum):
     INTERQUARTILE = "interquartile"
     GRADIENT = "gradient"
 
+class SemanticChunkerBreakpointType(str, Enum):
+    """Enumeration for SemanticChunker breakpoint threshold types."""
+    PERCENTILE = "percentile"
+    STANDARD_DEVIATION = "standard_deviation"
+    INTERQUARTILE = "interquartile"
+    GRADIENT = "gradient"
+
+
 class JobConfig(BaseModel):
     """Configuration for pipeline jobs."""
-    data_dir: Optional[str] = None
-    data_dir_pattern: Optional[str] = "*.md"
-    web_urls: Optional[List[str]] = None
-    base_url: Optional[str] = None
-    blog_base_url: Optional[str] = None
-    index_only_published_posts: Optional[bool] = True
-    use_chunking: Optional[bool] = True
-    chunking_strategy: Optional[ChunkingStrategy] = ChunkingStrategy.TEXT_SPLITTER
-    adaptive_chunking: Optional[bool] = True
-    chunk_size: Optional[int] = 1000
-    chunk_overlap: Optional[int] = 200
-    semantic_breakpoint_type: Optional[SemanticChunkerBreakpointType] = SemanticChunkerBreakpointType.PERCENTILE
-    semantic_breakpoint_threshold_amount: Optional[float] = 95.0
-    semantic_min_chunk_size: Optional[int] = 100
-    collection_name: Optional[str] = None
-    embedding_model: Optional[str] = None
-    force_recreate: Optional[bool] = False
-    incremental_mode: Optional[str] = "auto"
-    checksum_algorithm: Optional[str] = "sha256"
-    auto_detect_changes: Optional[bool] = True
-    incremental_fallback_threshold: Optional[float] = None
-    enable_batch_processing: Optional[bool] = None
-    batch_size: Optional[int] = None
-    enbable_performance_monitoring: Optional[bool] = None
-    batch_pause_seconds: Optional[float] = None
-    max_concurrent_operations: Optional[int] = None
-    max_backup_files: Optional[int] = None
-    metadata_csv: Optional[str] = None
-    blog_stats_filename: Optional[str] = None
-    blog_docs_filename: Optional[str] = None
-    health_report_filename: Optional[str] = None
-    ci_summary_filename: Optional[str] = None
-    build_info_filename: Optional[str] = None
+    data_dir: str
+    data_dir_pattern: str
+    web_urls: List[str]
+    base_url: str
+    blog_base_url: str
+    index_only_published_posts: bool
+    use_chunking: bool
+    chunking_strategy: ChunkingStrategy
+    adaptive_chunking: bool
+    chunk_size: int
+    chunk_overlap: int
+    semantic_breakpoint_type: SemanticChunkerBreakpointType
+    semantic_breakpoint_threshold_amount: float
+    semantic_min_chunk_size: int
+    collection_name: str
+    embedding_model: str
+    force_recreate: bool
+    incremental_mode: str
+    checksum_algorithm: str
+    auto_detect_changes: bool
+    incremental_fallback_threshold: float
+    enable_batch_processing: bool
+    batch_size: int
+    enbable_performance_monitoring: bool  # Note: Typo 'enbable' preserved as specified
+    batch_pause_seconds: float
+    max_concurrent_operations: int
+    max_backup_files: int
+    metadata_csv: str
+    blog_stats_filename: str
+    blog_docs_filename: str
+    health_report_filename: str
+    ci_summary_filename: str
+    build_info_filename: str
     job_id: Optional[str] = None
+
 
 
 class JobResponse(BaseModel):
