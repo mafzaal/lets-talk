@@ -1,38 +1,111 @@
-# sv
+# Let's Talk Frontend
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Modern web frontend for the Let's Talk AI chat system built with **Svelte 5**, **SvelteKit**, and **TailwindCSS 4**.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+### 🎯 Dashboard
+- **Execution History**: View recent pipeline executions with status indicators
+- **System Analytics**: Monitor job success rates, execution times, and system health
+- **Error Highlighting**: Visual indicators for failed jobs and system issues
+- **Real-time Status**: Live system status indicators
 
+### 🔧 Jobs Management
+- **Job Listing**: View all configured pipeline jobs with detailed information
+- **CRUD Operations**: Create, edit, and delete pipeline jobs
+- **Execution Control**: Run pipelines on-demand with real-time status updates
+- **History Tracking**: Detailed execution history for each job
+- **Job Scheduling**: Support for cron, interval, and one-time job scheduling
+
+### 📊 Analytics
+- **Performance Metrics**: Track execution success rates and performance trends
+- **Resource Usage**: Monitor CPU, memory, and disk usage
+- **Visual Charts**: Interactive charts showing execution patterns over time
+- **Trend Analysis**: Identify performance patterns and optimization opportunities
+
+### 📋 Activity Feed
+- **Real-time Activity**: Live feed of system activities and user interactions
+- **Event Tracking**: Monitor job creations, executions, failures, and user logins
+- **Historical Data**: Access to historical activity data with filtering options
+- **User Attribution**: Track which users performed specific actions
+
+### 💬 Chat Interface
+- **AI Chat Widget**: Interactive chat interface for user queries
+- **LangGraph Integration**: Powered by LangGraph for intelligent responses
+- **Streaming Responses**: Real-time streaming of AI responses
+- **Context Awareness**: Maintains conversation context across interactions
+
+## Tech Stack
+
+- **Frontend Framework**: Svelte 5 with SvelteKit
+- **Styling**: TailwindCSS 4 with custom dark theme
+- **Icons**: Lucide Svelte for consistent iconography
+- **UI Components**: Custom component library with accessibility features
+- **API Integration**: RESTful API client for backend communication
+- **State Management**: Svelte's reactive state management
+
+## Development
+
+### Prerequisites
+- Node.js 18+
+- pnpm package manager
+
+### Setup
 ```bash
-# create a new project in the current directory
-npx sv create
+# Install dependencies
+pnpm install
 
-# create a new project in my-app
-npx sv create my-app
+# Start development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Preview production build
+pnpm preview
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
+### Code Quality
 ```bash
-npm run dev
+# Type checking
+pnpm check
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+# Format code
+pnpm format
+
+# Lint code
+pnpm lint
 ```
 
-## Building
+## API Integration
 
-To create a production version of your app:
+The frontend communicates with the FastAPI backend through a type-safe API client:
 
-```bash
-npm run build
+- **Health Monitoring**: `/health` endpoint for system status
+- **Job Management**: `/scheduler/*` endpoints for CRUD operations
+- **Pipeline Control**: `/pipeline/*` endpoints for execution control
+- **Real-time Updates**: Polling-based updates for live data
+
+## Architecture
+
+### Layout Structure
+```
+src/
+├── lib/
+│   ├── components/
+│   │   ├── ui/          # Reusable UI components
+│   │   └── Layout.svelte # Main navigation layout
+│   ├── api.ts           # API client and type definitions
+│   └── utils.ts         # Utility functions
+├── routes/
+│   ├── dashboard/       # Dashboard page
+│   ├── jobs/           # Jobs management page
+│   ├── analytics/      # Analytics and performance page
+│   ├── activity/       # Activity feed page
+│   └── +layout.svelte  # Root layout
+└── app.css             # Global styles and theme
 ```
 
-You can preview the production build with `npm run preview`.
+## License
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+This project is licensed under the MIT License.
