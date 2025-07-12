@@ -10,6 +10,15 @@ This file provides guidelines for GitHub Copilot to interact with this repositor
 - For virtual environments, use `uv venv` to create them
 - When generating requirements files, use `uv pip freeze` instead of `pip freeze`
 
+## Frontend (Svelte, SvelteKit, shadcn-svelte) and JS/TS Package Management
+
+- Always use `pnpm` for JavaScript/TypeScript package management
+- Use `pnpm install <package>` to add dependencies
+- Use `pnpm` scripts (e.g., `pnpm dev`, `pnpm build`, `pnpm preview`) to run, build, and preview the frontend
+- The frontend uses **Svelte 5** and **SvelteKit**; follow their conventions for routing, file structure, and component usage
+- For UI components, use **shadcn-svelte**; prefer shadcn-svelte components for new UI work
+- When adding new UI components, use the shadcn-svelte CLI (`pnpm shadcn-svelte add <component>`) where possible
+- Follow SvelteKit best practices for endpoints, server-side logic, and routing
 
 ## Testing Guidelines
 - Use `uv run pytest` to run tests instead of `pytest` directly
