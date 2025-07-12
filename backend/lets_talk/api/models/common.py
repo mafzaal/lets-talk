@@ -1,5 +1,5 @@
 """Common API models shared across endpoints."""
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 from enum import Enum
@@ -11,24 +11,49 @@ class ChunkingStrategy(str, Enum):
     TEXT_SPLITTER = "text_splitter"
 
 
+class SemanticChunkerBreakpointType(str, Enum):
+    """Enumeration for SemanticChunker breakpoint threshold types."""
+    PERCENTILE = "percentile"
+    STANDARD_DEVIATION = "standard_deviation"
+    INTERQUARTILE = "interquartile"
+    GRADIENT = "gradient"
+
+
 class JobConfig(BaseModel):
     """Configuration for pipeline jobs."""
-    data_dir: Optional[str] = None
-    storage_path: Optional[str] = None
-    force_recreate: bool = False
-    ci_mode: bool = True
-    use_chunking: bool = True
-    should_save_stats: bool = True
-    chunk_size: int = 1000
-    chunk_overlap: int = 200
-    chunking_strategy: ChunkingStrategy = ChunkingStrategy.SEMANTIC
-    collection_name: Optional[str] = None
-    embedding_model: Optional[str] = None
-    data_dir_pattern: str = "*.md"
-    blog_base_url: Optional[str] = None
-    base_url: Optional[str] = None
-    incremental_mode: str = "auto"
-    dry_run: bool = False
+    data_dir: str
+    data_dir_pattern: str
+    web_urls: List[str]
+    base_url: str
+    blog_base_url: str
+    index_only_published_posts: bool
+    use_chunking: bool
+    chunking_strategy: ChunkingStrategy
+    adaptive_chunking: bool
+    chunk_size: int
+    chunk_overlap: int
+    semantic_breakpoint_type: SemanticChunkerBreakpointType
+    semantic_breakpoint_threshold_amount: float
+    semantic_min_chunk_size: int
+    collection_name: str
+    embedding_model: str
+    force_recreate: bool
+    incremental_mode: str
+    checksum_algorithm: str
+    auto_detect_changes: bool
+    incremental_fallback_threshold: float
+    enable_batch_processing: bool
+    batch_size: int
+    enbable_performance_monitoring: bool  # Note: Typo 'enbable' preserved as specified
+    batch_pause_seconds: float
+    max_concurrent_operations: int
+    max_backup_files: int
+    metadata_csv: str
+    blog_stats_filename: str
+    blog_docs_filename: str
+    health_report_filename: str
+    ci_summary_filename: str
+    build_info_filename: str
 
 
 class JobResponse(BaseModel):
