@@ -16,17 +16,17 @@
 	"devDependencies": {
 		"@langchain/langgraph": "^0.3.1",
 		"@sveltejs/adapter-static": "^3.0.8",
-		"@sveltejs/kit": "^2.22.0",
+		"@sveltejs/kit": "^2.22.2",
 		"@sveltejs/vite-plugin-svelte": "^5.1.0",
 		"@tailwindcss/forms": "^0.5.9",
 		"@tailwindcss/typography": "^0.5.15",
-		"@tailwindcss/vite": "^4.1.10",
-		"prettier": "^3.6.0",
+		"@tailwindcss/vite": "^4.1.11",
+		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"remote": "link:@langchain/langgraph/remote",
-		"svelte": "^5.34.7",
+		"svelte": "^5.35.4",
 		"svelte-check": "^4.2.2",
-		"tailwindcss": "^4.1.10",
+		"tailwindcss": "^4.1.11",
 		"typescript": "^5.0.0",
 		"vite": "^6.2.6"
 	},
@@ -36,7 +36,7 @@
 		]
 	},
 	"dependencies": {
-		"@langchain/langgraph-sdk": "^0.0.84",
-		"marked": "^15.0.12"
+		"@langchain/langgraph-sdk": "^0.0.90",
+		"marked": "^16.0.0"
 	}
 }

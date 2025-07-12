@@ -75,7 +75,7 @@ class PipelineScheduler:
         job_defaults = {
             'coalesce': False,
             'max_instances': 3,
-            'misfire_grace_time': 300  # 5 minutes
+            'misfire_grace_time': 3600  # 1 hour
         }
         
         # Create scheduler
@@ -162,6 +162,15 @@ class PipelineScheduler:
         else:
             trigger = CronTrigger(hour=hour, minute=minute, day_of_week=day_of_week)
         
+
+        if pipeline_config is None:
+            pipeline_config = {}
+
+
+        if "job_id" not in pipeline_config or pipeline_config["job_id"] is None:
+            pipeline_config["job_id"] = job_id
+
+
         self.scheduler.add_job(
             func=simple_pipeline_job,
             trigger=trigger,
@@ -188,6 +197,14 @@ class PipelineScheduler:
         from lets_talk.core.pipeline.jobs import simple_pipeline_job
         
         trigger = IntervalTrigger(days=days, hours=hours, minutes=minutes)
+
+        if pipeline_config is None:
+            pipeline_config = {}
+
+
+        if "job_id" not in pipeline_config or pipeline_config["job_id"] is None:
+            pipeline_config["job_id"] = job_id
+
         
         self.scheduler.add_job(
             func=simple_pipeline_job,
@@ -265,7 +282,9 @@ class PipelineScheduler:
                 "id": job.id,
                 "name": job.name,
                 "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
-                "trigger": str(job.trigger)
+                "trigger": str(job.trigger),
+                "config": job.args[0],
+                
             })
         
         return jobs
