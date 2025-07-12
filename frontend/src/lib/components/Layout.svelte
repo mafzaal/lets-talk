@@ -25,9 +25,10 @@
 
 	const navigation = [
 		{ name: 'Dashboard', href: '/dashboard', icon: Home },
-		{ name: 'Jobs', href: '/jobs', icon: Settings },
+		{ name: 'Jobs', href: '/jobs', icon: Calendar },
 		{ name: 'Analytics', href: '/analytics', icon: ChartColumn },
 		{ name: 'Activity', href: '/activity', icon: Activity },
+		{ name: 'Settings', href: '/settings', icon: Settings },
 		{ name: 'Chat', href: '/', icon: MessageCircle }
 	];
 
@@ -93,6 +94,8 @@
 						Analytics
 					{:else if page.url.pathname === '/activity'}
 						Activity
+					{:else if page.url.pathname === '/settings'}
+						Settings
 					{:else}
 						Chat
 					{/if}

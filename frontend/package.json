@@ -26,6 +26,7 @@
 		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"remote": "link:@langchain/langgraph/remote",
+		"shadcn-svelte": "^1.0.6",
 		"svelte": "^5.35.4",
 		"svelte-check": "^4.2.2",
 		"tailwind-merge": "^3.3.1",
@@ -41,6 +42,7 @@
 	},
 	"dependencies": {
 		"@langchain/langgraph-sdk": "^0.0.90",
-		"marked": "^16.0.0"
+		"marked": "^16.0.0",
+		"svelte-sonner": "^1.0.5"
 	}
 }
