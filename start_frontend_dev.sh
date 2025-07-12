@@ -63,154 +63,52 @@ fi
 
 echo -e "${GREEN}✅ All dependencies are available${NC}"
 
-# Start the mock backend server
-echo -e "${BLUE}🔧 Starting mock backend server...${NC}"
-cat > /tmp/lets_talk_mock_backend.py << 'EOF'
-#!/usr/bin/env python3
-"""
-Mock backend for testing the frontend.
-This provides the necessary API endpoints with mock data.
-"""
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
-import uvicorn
-from typing import Dict, Any, List
-from pydantic import BaseModel
 
-app = FastAPI(title="Mock Let's Talk API", version="0.1.0")
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Mock data
-mock_stats = {
-    "jobs_executed": 42,
-    "jobs_failed": 3,
-    "jobs_missed": 1,
-    "last_execution": datetime.now().isoformat(),
-    "last_error": None,
-    "active_jobs": 5,
-    "scheduler_running": True
-}
-
-mock_jobs = [
-    {
-        "id": "daily_update",
-        "name": "Daily Content Update",
-        "next_run_time": "2024-07-13T02:00:00",
-        "trigger": "cron",
-        "config": {"incremental_mode": "auto"}
-    },
-    {
-        "id": "weekly_backup",
-        "name": "Weekly Full Backup",
-        "next_run_time": "2024-07-14T01:00:00",
-        "trigger": "cron",
-        "config": {"force_recreate": True}
-    }
-]
-
-mock_reports = [
-    {
-        "job_id": "daily_update",
-        "execution_time": "2024-07-12T14:30:00",
-        "status": "success",
-        "duration": 45.2,
-        "total_documents": 127,
-        "errors": [],
-        "warnings": []
-    },
-    {
-        "job_id": "weekly_backup",
-        "execution_time": "2024-07-12T10:15:00",
-        "status": "success",
-        "duration": 182.7,
-        "total_documents": 1543,
-        "errors": [],
-        "warnings": ["Some documents were skipped"]
-    },
-    {
-        "job_id": "hourly_check",
-        "execution_time": "2024-07-12T09:00:00",
-        "status": "failed",
-        "duration": 12.1,
-        "total_documents": 0,
-        "errors": ["Connection timeout"],
-        "warnings": []
-    }
-]
-
-# Health endpoint
-@app.get("/health")
-async def get_health():
-    return {
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "scheduler_status": "running",
-        "version": "0.1.0"
-    }
-
-# Scheduler endpoints
-@app.get("/scheduler/status")
-async def get_scheduler_status():
-    return mock_stats
-
-@app.get("/scheduler/jobs")
-async def get_jobs():
-    return mock_jobs
-
-@app.post("/scheduler/jobs/cron")
-async def create_cron_job(data: Dict[str, Any]):
-    return {"message": f"Cron job {data.get('job_id', 'unknown')} created successfully"}
-
-@app.post("/scheduler/jobs/interval")
-async def create_interval_job(data: Dict[str, Any]):
-    return {"message": f"Interval job {data.get('job_id', 'unknown')} created successfully"}
-
-@app.delete("/scheduler/jobs/{job_id}")
-async def delete_job(job_id: str):
-    return {"message": f"Job {job_id} deleted successfully"}
-
-# Pipeline endpoints
-@app.post("/pipeline/run")
-async def run_pipeline(config: Dict[str, Any] = None):
-    return {
-        "message": "Pipeline execution started",
-        "job_id": f"pipeline_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    }
-
-@app.get("/pipeline/reports")
-async def get_pipeline_reports():
-    return {"reports": mock_reports}
-
-if __name__ == "__main__":
-    print("Starting mock backend server...")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-EOF
-
-# Start backend in background
-echo -e "${BLUE}🔧 Starting backend server on port 8000...${NC}"
-uv run python /tmp/lets_talk_mock_backend.py > /tmp/backend.log 2>&1 &
-BACKEND_PID=$!
-
-# Wait for backend to start
-sleep 3
-
-# Check if backend started successfully
-if curl -s http://localhost:8000/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ Backend server is running on http://localhost:8000${NC}"
-else
-    echo -e "${RED}❌ Backend server failed to start. Check /tmp/backend.log for details.${NC}"
-    exit 1
+# Choose backend: langgraph (default) or backend API
+BACKEND_CHOICE="langgraph"
+if [[ "$1" == "backend" ]]; then
+    BACKEND_CHOICE="backend"
 fi
+
+if [ "$BACKEND_CHOICE" = "backend" ]; then
+    echo -e "${BLUE}🔧 Starting FastAPI Backend API on port 2024...${NC}"
+    PORT=2024 ./start_backend_dev.sh > /tmp/backend_api.log 2>&1 &
+    BACKEND_PID=$!
+    # Wait for backend to start
+    echo -e "${BLUE}⏳ Waiting for Backend API to become healthy...${NC}"
+    for i in {1..10}; do
+        if curl -s http://localhost:2024/health > /dev/null 2>&1; then
+            echo -e "${GREEN}✅ Backend API is running on http://localhost:2024${NC}"
+            break
+        fi
+        sleep 1
+    done
+    if ! curl -s http://localhost:2024/health > /dev/null 2>&1; then
+        echo -e "${RED}❌ Backend API failed to start. Check /tmp/backend_api.log for details.${NC}"
+        kill $BACKEND_PID 2>/dev/null || true
+        exit 1
+    fi
+else
+    echo -e "${BLUE}🔧 Starting LangGraph dev server on port 2024...${NC}"
+    ./start_langgraph_dev.sh > /tmp/langgraph_dev.log 2>&1 &
+    BACKEND_PID=$!
+    # Wait for LangGraph to start
+    echo -e "${BLUE}⏳ Waiting for LangGraph dev server to become healthy...${NC}"
+    for i in {1..10}; do
+        if nc -z localhost 2024; then
+            echo -e "${GREEN}✅ LangGraph dev server is running on port 2024${NC}"
+            break
+        fi
+        sleep 1
+    done
+    if ! nc -z localhost 2024; then
+        echo -e "${RED}❌ LangGraph dev server failed to start. Check /tmp/langgraph_dev.log for details.${NC}"
+        kill $BACKEND_PID 2>/dev/null || true
+        exit 1
+    fi
+fi
+
 
 # Install frontend dependencies
 echo -e "${BLUE}📦 Installing frontend dependencies...${NC}"
@@ -230,6 +128,8 @@ if curl -s http://localhost:5173 > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Frontend server is running on http://localhost:5173${NC}"
 else
     echo -e "${RED}❌ Frontend server failed to start. Check /tmp/frontend.log for details.${NC}"
+    kill $BACKEND_PID 2>/dev/null || true
+    kill $FRONTEND_PID 2>/dev/null || true
     exit 1
 fi
 
@@ -237,8 +137,13 @@ echo -e "${GREEN}🎉 Setup complete!${NC}"
 echo ""
 echo -e "${BLUE}📱 Access the application:${NC}"
 echo "   • Frontend: http://localhost:5173"
-echo "   • Backend API: http://localhost:8000"
-echo "   • API Documentation: http://localhost:8000/docs"
+if [ "$BACKEND_CHOICE" = "backend" ]; then
+    echo "   • Backend API: http://localhost:2024"
+    echo "   • API Documentation: http://localhost:2024/docs"
+else
+    echo "   • LangGraph dev server: http://localhost:2024"
+    echo "   • API Documentation: http://localhost:2024/docs"
+fi
 echo ""
 echo -e "${BLUE}🎛️  Available pages:${NC}"
 echo "   • Landing page: http://localhost:5173/"
@@ -251,4 +156,3 @@ echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
 
 # Wait for user to stop the servers
 wait
-EOF

@@ -54,3 +54,12 @@ jobs:
         run: |
           cd frontend
           pnpm install
+
+      - name: Build backend
+        run: |
+          uv run python -m compileall backend
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          pnpm build

@@ -1,17 +1,18 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { cn } from '$lib/utils';
-	import { 
-		Home, 
-		Settings, 
-		Activity, 
+	import SystemStatus from '$lib/components/SystemStatus.svelte';
+	import {
+		Home,
+		Settings,
+		Activity,
 		Calendar,
 		MessageCircle,
 		Users,
-		BarChart3,
 		Play,
 		Pause,
-		Plus
+		Plus,
+		ChartColumn
 	} from 'lucide-svelte';
 	import Button from '$lib/components/ui/button.svelte';
 	import type { Snippet } from 'svelte';
@@ -25,13 +26,13 @@
 	const navigation = [
 		{ name: 'Dashboard', href: '/dashboard', icon: Home },
 		{ name: 'Jobs', href: '/jobs', icon: Settings },
-		{ name: 'Analytics', href: '/analytics', icon: BarChart3 },
+		{ name: 'Analytics', href: '/analytics', icon: ChartColumn },
 		{ name: 'Activity', href: '/activity', icon: Activity },
-		{ name: 'Chat', href: '/', icon: MessageCircle },
+		{ name: 'Chat', href: '/', icon: MessageCircle }
 	];
 
 	function isCurrentPage(href: string) {
-		return $page.url.pathname === href;
+		return page.url.pathname === href;
 	}
 </script>
 
@@ -79,16 +80,18 @@
 	<!-- Main content -->
 	<div class="flex-1 flex flex-col overflow-hidden">
 		<!-- Header -->
-		<header class="flex items-center justify-between h-16 px-6 border-b border-slate-800 bg-slate-900">
+		<header
+			class="flex items-center justify-between h-16 px-6 border-b border-slate-800 bg-slate-900"
+		>
 			<div class="flex items-center space-x-4">
 				<h1 class="text-xl font-semibold text-white">
-					{#if $page.url.pathname === '/dashboard'}
+					{#if page.url.pathname === '/dashboard'}
 						Dashboard
-					{:else if $page.url.pathname === '/jobs'}
+					{:else if page.url.pathname === '/jobs'}
 						Jobs
-					{:else if $page.url.pathname === '/analytics'}
+					{:else if page.url.pathname === '/analytics'}
 						Analytics
-					{:else if $page.url.pathname === '/activity'}
+					{:else if page.url.pathname === '/activity'}
 						Activity
 					{:else}
 						Chat
@@ -96,10 +99,7 @@
 				</h1>
 			</div>
 			<div class="flex items-center space-x-4">
-				<div class="flex items-center space-x-2 text-sm text-slate-400">
-					<div class="w-2 h-2 bg-green-500 rounded-full"></div>
-					<span>System Online</span>
-				</div>
+				<SystemStatus />
 			</div>
 		</header>
 
