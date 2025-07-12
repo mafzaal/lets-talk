@@ -230,7 +230,7 @@
 				<Card class="p-6">
 					<h2 class="text-lg font-semibold text-white mb-4">{section}</h2>
 					<div class="grid gap-6">
-						{#each settingsBySection.get(section) || [] as setting}
+						{#each settingsBySection().get(section) || [] as setting}
 							<div class="space-y-2">
 								<div class="flex items-center justify-between">
 									<Label for={setting.key} class="text-sm font-medium text-white">
