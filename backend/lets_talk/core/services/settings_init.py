@@ -5,7 +5,16 @@ import logging
 from typing import Dict, List, Tuple, Any
 from lets_talk.core.models.settings import init_settings_db
 from lets_talk.core.services.settings import SettingsService
-from lets_talk.shared.config import LOGGER_NAME
+from lets_talk.shared.config import (
+    ALLOW_ORIGINS_URLS, DATA_DIR_PATTERN, LOGGER_NAME, DATA_DIR, WEB_URLS, BASE_URL, BLOG_BASE_URL, INDEX_ONLY_PUBLISHED_POSTS, RSS_URL,
+    OUTPUT_DIR, STATS_OUTPUT_DIR, VECTOR_STORAGE_PATH, FORCE_RECREATE, QDRANT_URL, QDRANT_COLLECTION,
+    USE_CHUNKING, CHUNKING_STRATEGY, CHUNK_SIZE, CHUNK_OVERLAP, ADAPTIVE_CHUNKING,
+    SEMANTIC_CHUNKER_BREAKPOINT_TYPE, SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT, SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
+    BATCH_SIZE, ENABLE_BATCH_PROCESSING, ENABLE_PERFORMANCE_MONITORING, MAX_CONCURRENT_OPERATIONS,
+    EMBEDDING_MODEL, LLM_MODEL, LLM_TEMPERATURE,
+    BM25_RETRIEVAL, MULTI_QUERY_RETRIEVAL, PARENT_DOCUMENT_RETRIEVAL, MAX_SEARCH_RESULTS,
+    LOG_LEVEL, METADATA_CSV_FILE, DEFAULT_INDEXED_TIMESTAMP
+)
 
 logger = logging.getLogger(f"{LOGGER_NAME}.settings_init")
 
@@ -26,8 +35,8 @@ class SettingsInitializer:
             # CORS Settings
             {
                 "key": "ALLOW_ORIGINS_URLS",
-                "value": "http://localhost:5173,http://127.0.0.1:5173",
-                "default_value": "http://localhost:5173,http://127.0.0.1:5173",
+                "value": ALLOW_ORIGINS_URLS,
+                "default_value": ALLOW_ORIGINS_URLS,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "CORS",
@@ -38,8 +47,8 @@ class SettingsInitializer:
             # Data Input Settings
             {
                 "key": "DATA_DIR",
-                "value": "data/",
-                "default_value": "data/",
+                "value": DATA_DIR,
+                "default_value": DATA_DIR,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Data Input",
@@ -48,8 +57,8 @@ class SettingsInitializer:
             },
             {
                 "key": "DATA_DIR_PATTERN",
-                "value": "*.md",
-                "default_value": "*.md",
+                "value": DATA_DIR_PATTERN,
+                "default_value": DATA_DIR_PATTERN,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Data Input",
@@ -58,8 +67,8 @@ class SettingsInitializer:
             },
             {
                 "key": "WEB_URLS",
-                "value": "",
-                "default_value": "",
+                "value": WEB_URLS,
+                "default_value": WEB_URLS,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Data Input",
@@ -68,8 +77,8 @@ class SettingsInitializer:
             },
             {
                 "key": "BASE_URL",
-                "value": "",
-                "default_value": "",
+                "value": BASE_URL,
+                "default_value": BASE_URL,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Data Input",
@@ -78,8 +87,8 @@ class SettingsInitializer:
             },
             {
                 "key": "BLOG_BASE_URL",
-                "value": "",
-                "default_value": "",
+                "value": BLOG_BASE_URL,
+                "default_value": BLOG_BASE_URL,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Data Input",
@@ -88,8 +97,8 @@ class SettingsInitializer:
             },
             {
                 "key": "INDEX_ONLY_PUBLISHED_POSTS",
-                "value": "true",
-                "default_value": "true",
+                "value": INDEX_ONLY_PUBLISHED_POSTS,
+                "default_value": "True",
                 "data_type": "boolean",
                 "is_secret": False,
                 "section": "Data Input",
@@ -98,20 +107,20 @@ class SettingsInitializer:
             },
             {
                 "key": "RSS_URL",
-                "value": "",
-                "default_value": "",
+                "value": RSS_URL,
+                "default_value": RSS_URL,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Data Input",
                 "description": "RSS feed URL for content ingestion",
                 "is_read_only": False
             },
-            
+
             # Output Settings
             {
                 "key": "OUTPUT_DIR",
-                "value": "output/",
-                "default_value": "output/",
+                "value": OUTPUT_DIR,
+                "default_value": OUTPUT_DIR,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Output",
@@ -120,20 +129,20 @@ class SettingsInitializer:
             },
             {
                 "key": "STATS_OUTPUT_DIR",
-                "value": "output/stats",
-                "default_value": "output/stats",
+                "value": STATS_OUTPUT_DIR,
+                "default_value": STATS_OUTPUT_DIR,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Output",
                 "description": "Directory for statistics output",
                 "is_read_only": False
             },
-            
+
             # Vector Storage Settings
             {
                 "key": "VECTOR_STORAGE_PATH",
-                "value": "",
-                "default_value": "",
+                "value": VECTOR_STORAGE_PATH,
+                "default_value": VECTOR_STORAGE_PATH,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Vector Storage",
@@ -142,8 +151,8 @@ class SettingsInitializer:
             },
             {
                 "key": "FORCE_RECREATE",
-                "value": "false",
-                "default_value": "false",
+                "value": FORCE_RECREATE,
+                "default_value": "False",
                 "data_type": "boolean",
                 "is_secret": False,
                 "section": "Vector Storage",
@@ -152,8 +161,8 @@ class SettingsInitializer:
             },
             {
                 "key": "QDRANT_URL",
-                "value": "",
-                "default_value": "",
+                "value": QDRANT_URL,
+                "default_value": QDRANT_URL,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Vector Storage",
@@ -162,20 +171,20 @@ class SettingsInitializer:
             },
             {
                 "key": "QDRANT_COLLECTION",
-                "value": "lets_talk_documents",
-                "default_value": "lets_talk_documents",
+                "value": QDRANT_COLLECTION,
+                "default_value": QDRANT_COLLECTION,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Vector Storage",
                 "description": "Qdrant collection name",
                 "is_read_only": False
             },
-            
+
             # Chunking Settings
             {
                 "key": "USE_CHUNKING",
-                "value": "true",
-                "default_value": "true",
+                "value": USE_CHUNKING,
+                "default_value": "True",
                 "data_type": "boolean",
                 "is_secret": False,
                 "section": "Chunking",
@@ -184,8 +193,8 @@ class SettingsInitializer:
             },
             {
                 "key": "CHUNKING_STRATEGY",
-                "value": "semantic",
-                "default_value": "semantic",
+                "value": CHUNKING_STRATEGY,
+                "default_value": CHUNKING_STRATEGY,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Chunking",
@@ -194,8 +203,8 @@ class SettingsInitializer:
             },
             {
                 "key": "CHUNK_SIZE",
-                "value": "1000",
-                "default_value": "1000",
+                "value": CHUNK_SIZE,
+                "default_value": CHUNK_SIZE,
                 "data_type": "integer",
                 "is_secret": False,
                 "section": "Chunking",
@@ -204,8 +213,8 @@ class SettingsInitializer:
             },
             {
                 "key": "CHUNK_OVERLAP",
-                "value": "200",
-                "default_value": "200",
+                "value": CHUNK_OVERLAP,
+                "default_value": CHUNK_OVERLAP,
                 "data_type": "integer",
                 "is_secret": False,
                 "section": "Chunking",
@@ -214,20 +223,20 @@ class SettingsInitializer:
             },
             {
                 "key": "ADAPTIVE_CHUNKING",
-                "value": "true",
-                "default_value": "true",
+                "value": ADAPTIVE_CHUNKING,
+                "default_value": "True",
                 "data_type": "boolean",
                 "is_secret": False,
                 "section": "Chunking",
                 "description": "Use adaptive chunking strategies",
                 "is_read_only": False
             },
-            
+
             # Semantic Chunking Settings
             {
                 "key": "SEMANTIC_CHUNKER_BREAKPOINT_TYPE",
-                "value": "percentile",
-                "default_value": "percentile",
+                "value": SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
+                "default_value": SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Semantic Chunking",
@@ -236,8 +245,8 @@ class SettingsInitializer:
             },
             {
                 "key": "SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT",
-                "value": "95.0",
-                "default_value": "95.0",
+                "value": SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
+                "default_value": SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
                 "data_type": "float",
                 "is_secret": False,
                 "section": "Semantic Chunking",
@@ -246,20 +255,20 @@ class SettingsInitializer:
             },
             {
                 "key": "SEMANTIC_CHUNKER_MIN_CHUNK_SIZE",
-                "value": "100",
-                "default_value": "100",
+                "value": SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
+                "default_value": SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
                 "data_type": "integer",
                 "is_secret": False,
                 "section": "Semantic Chunking",
                 "description": "Minimum chunk size for semantic chunking",
                 "is_read_only": False
             },
-            
+
             # Performance Settings
             {
                 "key": "BATCH_SIZE",
-                "value": "50",
-                "default_value": "50",
+                "value": BATCH_SIZE,
+                "default_value": BATCH_SIZE,
                 "data_type": "integer",
                 "is_secret": False,
                 "section": "Performance",
@@ -268,8 +277,8 @@ class SettingsInitializer:
             },
             {
                 "key": "ENABLE_BATCH_PROCESSING",
-                "value": "true",
-                "default_value": "true",
+                "value": ENABLE_BATCH_PROCESSING,
+                "default_value": "True",
                 "data_type": "boolean",
                 "is_secret": False,
                 "section": "Performance",
@@ -278,8 +287,8 @@ class SettingsInitializer:
             },
             {
                 "key": "ENABLE_PERFORMANCE_MONITORING",
-                "value": "true",
-                "default_value": "true",
+                "value": ENABLE_PERFORMANCE_MONITORING,
+                "default_value": "True",
                 "data_type": "boolean",
                 "is_secret": False,
                 "section": "Performance",
@@ -288,20 +297,20 @@ class SettingsInitializer:
             },
             {
                 "key": "MAX_CONCURRENT_OPERATIONS",
-                "value": "5",
-                "default_value": "5",
+                "value": MAX_CONCURRENT_OPERATIONS,
+                "default_value": MAX_CONCURRENT_OPERATIONS,
                 "data_type": "integer",
                 "is_secret": False,
                 "section": "Performance",
                 "description": "Maximum concurrent operations",
                 "is_read_only": False
             },
-            
+
             # AI/ML Settings
             {
                 "key": "EMBEDDING_MODEL",
-                "value": "ollama:snowflake-arctic-embed2:latest",
-                "default_value": "ollama:snowflake-arctic-embed2:latest",
+                "value": EMBEDDING_MODEL,
+                "default_value": EMBEDDING_MODEL,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "AI/ML",
@@ -310,8 +319,8 @@ class SettingsInitializer:
             },
             {
                 "key": "LLM_MODEL",
-                "value": "openai:gpt-4o-mini",
-                "default_value": "openai:gpt-4o-mini",
+                "value": LLM_MODEL,
+                "default_value": LLM_MODEL,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "AI/ML",
@@ -320,20 +329,20 @@ class SettingsInitializer:
             },
             {
                 "key": "LLM_TEMPERATURE",
-                "value": "0.1",
-                "default_value": "0.1",
+                "value": LLM_TEMPERATURE,
+                "default_value": LLM_TEMPERATURE,
                 "data_type": "float",
                 "is_secret": False,
                 "section": "AI/ML",
                 "description": "Temperature for LLM generation",
                 "is_read_only": False
             },
-            
+
             # Retrieval Settings
             {
                 "key": "BM25_RETRIEVAL",
-                "value": "true",
-                "default_value": "true",
+                "value": BM25_RETRIEVAL,
+                "default_value": "True",
                 "data_type": "boolean",
                 "is_secret": False,
                 "section": "Retrieval",
@@ -342,8 +351,8 @@ class SettingsInitializer:
             },
             {
                 "key": "MULTI_QUERY_RETRIEVAL",
-                "value": "true",
-                "default_value": "true",
+                "value": MULTI_QUERY_RETRIEVAL,
+                "default_value": "True",
                 "data_type": "boolean",
                 "is_secret": False,
                 "section": "Retrieval",
@@ -352,8 +361,8 @@ class SettingsInitializer:
             },
             {
                 "key": "PARENT_DOCUMENT_RETRIEVAL",
-                "value": "true",
-                "default_value": "true",
+                "value": PARENT_DOCUMENT_RETRIEVAL,
+                "default_value": "True",
                 "data_type": "boolean",
                 "is_secret": False,
                 "section": "Retrieval",
@@ -362,20 +371,20 @@ class SettingsInitializer:
             },
             {
                 "key": "MAX_SEARCH_RESULTS",
-                "value": "4",
-                "default_value": "4",
+                "value": MAX_SEARCH_RESULTS,
+                "default_value": MAX_SEARCH_RESULTS,
                 "data_type": "integer",
                 "is_secret": False,
                 "section": "Retrieval",
                 "description": "Maximum search results to return",
                 "is_read_only": False
             },
-            
+
             # Logging Settings
             {
                 "key": "LOG_LEVEL",
-                "value": "INFO",
-                "default_value": "INFO",
+                "value": LOG_LEVEL,
+                "default_value": LOG_LEVEL,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Logging",
@@ -384,20 +393,20 @@ class SettingsInitializer:
             },
             {
                 "key": "LOGGER_NAME",
-                "value": "lets_talk",
-                "default_value": "lets_talk",
+                "value": LOGGER_NAME,
+                "default_value": LOGGER_NAME,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "Logging",
                 "description": "Logger name prefix",
                 "is_read_only": False
             },
-            
+
             # Read-Only System Settings
             {
                 "key": "METADATA_CSV_FILE",
-                "value": "blog_metadata.csv",
-                "default_value": "blog_metadata.csv",
+                "value": METADATA_CSV_FILE,
+                "default_value": METADATA_CSV_FILE,
                 "data_type": "string",
                 "is_secret": False,
                 "section": "System",
@@ -406,8 +415,8 @@ class SettingsInitializer:
             },
             {
                 "key": "DEFAULT_INDEXED_TIMESTAMP",
-                "value": "0.0",
-                "default_value": "0.0",
+                "value": DEFAULT_INDEXED_TIMESTAMP,
+                "default_value": DEFAULT_INDEXED_TIMESTAMP,
                 "data_type": "float",
                 "is_secret": False,
                 "section": "System",
