@@ -10,6 +10,12 @@
 	import Badge from '$lib/components/ui/badge.svelte';
 	import Alert from '$lib/components/ui/alert.svelte';
 	import AlertDescription from '$lib/components/ui/alert-description.svelte';
+	import AlertDialog from '$lib/components/ui/alert-dialog.svelte';
+	import AlertDialogContent from '$lib/components/ui/alert-dialog-content.svelte';
+	import AlertDialogHeader from '$lib/components/ui/alert-dialog-header.svelte';
+	import AlertDialogTitle from '$lib/components/ui/alert-dialog-title.svelte';
+	import AlertDialogDescription from '$lib/components/ui/alert-dialog-description.svelte';
+	import AlertDialogFooter from '$lib/components/ui/alert-dialog-footer.svelte';
 	import { toast } from 'svelte-sonner';
 	import { Eye, EyeOff, Save, RotateCcw, Settings, Lock, Unlock } from 'lucide-svelte';
 
@@ -21,6 +27,7 @@
 	let pendingChanges = $state(new Map<string, string>());
 	let secretVisibility = $state(new Map<string, boolean>());
 	let error = $state('');
+	let showRestoreDialog = $state(false);
 
 	// Group settings by section
 	let settingsBySection = $derived(() => {
@@ -134,13 +141,11 @@
 	}
 
 	async function restoreDefaults() {
-		if (
-			!confirm(
-				'Are you sure you want to restore all settings to their default values? This action cannot be undone.'
-			)
-		) {
-			return;
-		}
+		showRestoreDialog = true;
+	}
+
+	async function confirmRestoreDefaults() {
+		showRestoreDialog = false;
 
 		try {
 			restoring = true;
@@ -159,6 +164,10 @@
 		} finally {
 			restoring = false;
 		}
+	}
+
+	function cancelRestoreDefaults() {
+		showRestoreDialog = false;
 	}
 
 	function discardChanges() {
@@ -321,3 +330,38 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Restore Defaults Confirmation Dialog -->
+<AlertDialog open={showRestoreDialog} onOpenChange={(open) => (showRestoreDialog = open)}>
+	<AlertDialogContent>
+		{#snippet children()}
+			<AlertDialogHeader>
+				{#snippet children()}
+					<AlertDialogTitle>
+						{#snippet children()}
+							Restore Default Settings
+						{/snippet}
+					</AlertDialogTitle>
+					<AlertDialogDescription>
+						{#snippet children()}
+							Are you sure you want to restore all settings to their default values? This action cannot be undone and will override any customizations you've made.
+						{/snippet}
+					</AlertDialogDescription>
+				{/snippet}
+			</AlertDialogHeader>
+			<AlertDialogFooter>
+				{#snippet children()}
+					<Button variant="outline" onclick={cancelRestoreDefaults}>Cancel</Button>
+					<Button variant="destructive" onclick={confirmRestoreDefaults} disabled={restoring}>
+						{#if restoring}
+							<RotateCcw class="w-4 h-4 mr-2 animate-spin" />
+						{:else}
+							<RotateCcw class="w-4 h-4 mr-2" />
+						{/if}
+						Restore Defaults
+					</Button>
+				{/snippet}
+			</AlertDialogFooter>
+		{/snippet}
+	</AlertDialogContent>
+</AlertDialog>
