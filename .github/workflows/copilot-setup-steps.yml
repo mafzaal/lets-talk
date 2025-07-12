@@ -24,6 +24,8 @@ jobs:
 
     # You can define any steps you want, and they will run before the agent starts.
     # If you do not check out your code, Copilot will do this for you.
+    env:
+      COPILOT_AGENT_FIREWALL_ENABLED: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -38,3 +40,17 @@ jobs:
       - name: Install all-extras dependencies
         run: uv sync
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          #cache: "npm"
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+
+      - name: Install JavaScript dependencies
+        run: |
+          cd frontend
+          pnpm install
