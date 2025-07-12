@@ -186,7 +186,7 @@
 					{#each activityFeed as activity}
 						<div class="flex items-start space-x-4">
 							<div class="h-10 w-10 rounded-lg flex items-center justify-center {getActivityTypeColor(activity.type)}">
-								<svelte:component this={activity.icon} class="w-5 h-5" />
+								<activity.icon class="w-5 h-5" />
 							</div>
 							<div class="flex-1">
 								<div class="flex items-center justify-between">
