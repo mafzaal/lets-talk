@@ -10,6 +10,12 @@ class ChunkingStrategy(str, Enum):
     SEMANTIC = "semantic"
     TEXT_SPLITTER = "text_splitter"
 
+class SemanticChunkerBreakpointType(str, Enum):
+    """Enumeration for SemanticChunker breakpoint threshold types."""
+    PERCENTILE = "percentile"
+    STANDARD_DEVIATION = "standard_deviation"
+    INTERQUARTILE = "interquartile"
+    GRADIENT = "gradient"
 
 class SemanticChunkerBreakpointType(str, Enum):
     """Enumeration for SemanticChunker breakpoint threshold types."""
@@ -54,6 +60,8 @@ class JobConfig(BaseModel):
     health_report_filename: str
     ci_summary_filename: str
     build_info_filename: str
+    job_id: Optional[str] = None
+
 
 
 class JobResponse(BaseModel):
@@ -62,6 +70,7 @@ class JobResponse(BaseModel):
     name: str
     next_run_time: Optional[str]
     trigger: str
+    config: Dict[str, Any] = {}
 
 
 class BaseResponse(BaseModel):

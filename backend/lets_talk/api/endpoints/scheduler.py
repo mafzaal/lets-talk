@@ -108,6 +108,7 @@ async def get_scheduler_status(scheduler: PipelineScheduler = Depends(get_schedu
     - Schedule configuration
     - Next execution time
     - Job status and metadata
+    - args and kwargs used for job execution
     
     **Use Cases:**
     - View all active schedules
@@ -131,14 +132,18 @@ async def get_scheduler_status(scheduler: PipelineScheduler = Depends(get_schedu
                             "name": "Daily Blog Update",
                             "type": "cron",
                             "next_run": "2025-06-19T09:00:00Z",
-                            "status": "scheduled"
+                            "status": "scheduled",
+                            "args": {},
+                            "kwargs": {}
                         },
                         {
                             "id": "health_check_interval",
                             "name": "Health Check",
                             "type": "interval",
                             "next_run": "2025-06-18T10:35:00Z",
-                            "status": "scheduled"
+                            "status": "scheduled",
+                            "args": {},
+                            "kwargs": {}
                         }
                     ]
                 }
