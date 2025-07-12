@@ -34,6 +34,7 @@
 <Tooltip.Provider>
 	<Tooltip.Root>
 		<Tooltip.Trigger>
+			<!-- Status indicator with tooltip -->
 			<div class="flex items-center space-x-2 text-sm group relative">
 				<div
 					class="w-2 h-2 rounded-full"
@@ -52,10 +53,11 @@
 						System Issue
 					{/if}
 				</span>
-				<!-- Tooltip on hover -->
 			</div>
 		</Tooltip.Trigger>
 		<Tooltip.Content>
+			<!-- Tooltip on hover -->
+
 			<div>
 				{#if state.loading}
 					Checking system health...
