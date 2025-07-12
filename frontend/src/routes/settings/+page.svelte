@@ -44,14 +44,23 @@
 		try {
 			loading = true;
 			error = '';
+			console.log('Starting to load settings...');
 			const response = await apiClient.getSettings();
+			console.log('Settings response:', response);
 			settings = response.settings;
 			sections = response.sections;
+			console.log('Settings loaded:', settings.length, 'sections:', sections.length);
 		} catch (err) {
+			console.error('Error loading settings:', err);
 			error = err instanceof Error ? err.message : 'Failed to load settings';
 			toast.error('Failed to load settings');
 		} finally {
 			loading = false;
+			console.log('Loading complete. loading:', loading, 'settings:', settings.length, 'sections:', sections.length);
+			// Force a re-render by updating the DOM
+			requestAnimationFrame(() => {
+				console.log('Animation frame - loading:', loading, 'settings:', settings.length);
+			});
 		}
 	}
 
@@ -215,7 +224,7 @@
 			<div class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
 			<p class="text-slate-400 mt-2">Loading settings...</p>
 		</div>
-	{:else}
+	{:else if settings.length > 0}
 		<div class="space-y-6">
 			{#each sections as section}
 				<Card class="p-6">
@@ -298,6 +307,10 @@
 					</div>
 				</Card>
 			{/each}
+		</div>
+	{:else}
+		<div class="text-center py-8">
+			<p class="text-slate-400">No settings found.</p>
 		</div>
 	{/if}
 </div>
