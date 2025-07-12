@@ -34,5 +34,5 @@ jobs:
 
       - name: Install all-extras dependencies
         run: |
-          uv pip install .[all-extras]
+          uv sync
 
