@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
+from fastapi.middleware.cors import CORSMiddleware
+from lets_talk.shared.config import ALLOW_ORIGINS_URLS
 import logging
 
 from lets_talk.api.dependencies import set_scheduler_instance
@@ -110,6 +112,16 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     
+
+    # Enable CORS for development
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=ALLOW_ORIGINS_URLS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"]
+    )
+
     # Include routers
     app.include_router(scheduler.router)
     app.include_router(pipeline.router)

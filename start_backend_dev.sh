@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# FastAPI Pipeline Scheduler Startup Script
+# FastAPI Pipeline Scheduler Startup Script (renamed to start_backend_dev.sh)
 # This script starts the FastAPI server with pipeline scheduling capabilities
 
 set -e
 
 # Configuration
 HOST="${HOST:-0.0.0.0}"
-PORT="${PORT:-8000}"
+PORT="${PORT:-2024}"
 WORKERS="${WORKERS:-1}"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 
