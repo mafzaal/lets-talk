@@ -25,7 +25,7 @@
 	// Group settings by section
 	let settingsBySection = $derived(() => {
 		const grouped = new Map<string, SettingDisplay[]>();
-		settings.forEach(setting => {
+		settings.forEach((setting) => {
 			const sectionSettings = grouped.get(setting.section) || [];
 			sectionSettings.push(setting);
 			grouped.set(setting.section, sectionSettings);
@@ -56,7 +56,14 @@
 			toast.error('Failed to load settings');
 		} finally {
 			loading = false;
-			console.log('Loading complete. loading:', loading, 'settings:', settings.length, 'sections:', sections.length);
+			console.log(
+				'Loading complete. loading:',
+				loading,
+				'settings:',
+				settings.length,
+				'sections:',
+				sections.length
+			);
 			// Force a re-render by updating the DOM
 			requestAnimationFrame(() => {
 				console.log('Animation frame - loading:', loading, 'settings:', settings.length);
@@ -65,7 +72,7 @@
 	}
 
 	function handleInputChange(key: string, value: string) {
-		const originalSetting = settings.find(s => s.key === key);
+		const originalSetting = settings.find((s) => s.key === key);
 		if (originalSetting && originalSetting.value !== value) {
 			pendingChanges.set(key, value);
 		} else {
@@ -97,7 +104,7 @@
 
 	async function saveSettings() {
 		if (pendingChanges.size === 0) return;
-		
+
 		try {
 			saving = true;
 			const updates: SettingUpdate[] = Array.from(pendingChanges.entries()).map(([key, value]) => ({
@@ -106,7 +113,7 @@
 			}));
 
 			const response = await apiClient.updateSettings({ settings: updates });
-			
+
 			if (response.success) {
 				toast.success(`Updated ${response.updated_settings.length} settings`);
 				pendingChanges.clear();
@@ -115,7 +122,7 @@
 			} else {
 				toast.error(response.message);
 				if (response.failed_settings.length > 0) {
-					const failedMessages = response.failed_settings.map(f => `${f.key}: ${f.error}`);
+					const failedMessages = response.failed_settings.map((f) => `${f.key}: ${f.error}`);
 					toast.error(`Failed: ${failedMessages.join(', ')}`);
 				}
 			}
@@ -127,14 +134,18 @@
 	}
 
 	async function restoreDefaults() {
-		if (!confirm('Are you sure you want to restore all settings to their default values? This action cannot be undone.')) {
+		if (
+			!confirm(
+				'Are you sure you want to restore all settings to their default values? This action cannot be undone.'
+			)
+		) {
 			return;
 		}
 
 		try {
 			restoring = true;
 			const response = await apiClient.restoreDefaultSettings();
-			
+
 			if (response.success) {
 				toast.success(`Restored ${response.restored_count} settings to defaults`);
 				pendingChanges.clear();
@@ -169,21 +180,13 @@
 				<Settings class="w-8 h-8" />
 				System Settings
 			</h1>
-			<p class="text-slate-400 mt-1">
-				Configure system behavior and application settings
-			</p>
+			<p class="text-slate-400 mt-1">Configure system behavior and application settings</p>
 		</div>
 		<div class="flex items-center gap-2">
 			{#if hasChanges}
-				<Button variant="outline" onclick={discardChanges}>
-					Discard Changes
-				</Button>
+				<Button variant="outline" onclick={discardChanges}>Discard Changes</Button>
 			{/if}
-			<Button 
-				variant="outline" 
-				onclick={restoreDefaults}
-				disabled={restoring}
-			>
+			<Button variant="outline" onclick={restoreDefaults} disabled={restoring}>
 				{#if restoring}
 					<RotateCcw class="w-4 h-4 mr-2 animate-spin" />
 				{:else}
@@ -191,10 +194,7 @@
 				{/if}
 				Restore Defaults
 			</Button>
-			<Button 
-				onclick={saveSettings}
-				disabled={!hasChanges || saving}
-			>
+			<Button onclick={saveSettings} disabled={!hasChanges || saving}>
 				{#if saving}
 					<Save class="w-4 h-4 mr-2 animate-spin" />
 				{:else}
@@ -211,17 +211,21 @@
 		</Alert>
 	{/if}
 
-	{#if hasChanges}
-		<Alert>
-			<AlertDescription>
-				You have {pendingChanges.size} unsaved changes. Don't forget to save them.
-			</AlertDescription>
-		</Alert>
-	{/if}
+	<div class="transition-all duration-300 h-12 mb-2">
+		<div
+			class={`flex items-center px-4 py-2 rounded border text-sm font-medium transition-all duration-300
+		   ${hasChanges ? 'bg-yellow-900/80 border-yellow-500 text-yellow-200 opacity-100 visible' : 'bg-transparent border-transparent text-transparent opacity-0 invisible'}`}
+			style="height: 2.5rem;"
+		>
+			You have {pendingChanges.size} unsaved changes. Don't forget to save them.
+		</div>
+	</div>
 
 	{#if loading}
 		<div class="text-center py-8">
-			<div class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+			<div
+				class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"
+			></div>
 			<p class="text-slate-400 mt-2">Loading settings...</p>
 		</div>
 	{:else if settings.length > 0}
@@ -263,22 +267,25 @@
 
 								<div class="flex items-center gap-2">
 									{#if setting.data_type === 'boolean'}
-										<Switch 
+										<Switch
 											id={setting.key}
 											checked={getDisplayValue(setting) === 'true'}
-											onCheckedChange={(checked) => handleInputChange(setting.key, checked.toString())}
+											onCheckedChange={(checked) =>
+												handleInputChange(setting.key, checked.toString())}
 											disabled={setting.is_read_only}
 										/>
 									{:else}
 										<div class="flex-1 relative">
 											<Input
 												id={setting.key}
-												type={setting.is_secret && !secretVisibility.get(setting.key) ? 'password' : 'text'}
+												type={setting.is_secret && !secretVisibility.get(setting.key)
+													? 'password'
+													: 'text'}
 												value={getActualValue(setting)}
 												oninput={(e) => handleInputChange(setting.key, e.target.value)}
 												disabled={setting.is_read_only}
 												placeholder={setting.default_value}
-												class={pendingChanges.has(setting.key) ? 'border-yellow-500' : ''}
+												class={`text-white placeholder:text-slate-400 bg-transparent border-slate-600 focus:ring-2 focus:ring-primary ${pendingChanges.has(setting.key) ? 'border-yellow-500' : ''}`}
 											/>
 											{#if setting.is_secret}
 												<button
