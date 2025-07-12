@@ -32,7 +32,9 @@ jobs:
         run: |
           curl -Ls https://astral.sh/uv/install.sh | sh
 
+      - name: Set up virtual environment
+        run: uv venv
+
       - name: Install all-extras dependencies
-        run: |
-          uv venv && uv sync
+        run: uv sync
 
