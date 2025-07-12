@@ -34,5 +34,5 @@ jobs:
 
       - name: Install all-extras dependencies
         run: |
-          uv sync
+          uv venv && uv sync
 
