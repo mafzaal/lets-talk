@@ -8,7 +8,7 @@ from lets_talk.shared.config import ALLOW_ORIGINS_URLS
 import logging
 
 from lets_talk.api.dependencies import set_scheduler_instance
-from lets_talk.api.endpoints import scheduler, pipeline, health
+from lets_talk.api.endpoints import scheduler, pipeline, health, settings
 from lets_talk.core.scheduler.manager import PipelineScheduler
 from lets_talk.shared.config import LOGGER_NAME
 
@@ -102,9 +102,9 @@ def create_app() -> FastAPI:
                 "description": "Background task scheduler endpoints. Control the execution of scheduled tasks and monitor their status."
             },
             {
-                "name": "examples",
-                "description": "Example endpoints demonstrating API patterns, request/response models, and documentation best practices. These endpoints showcase common REST operations and can be used for testing and learning."
-            }
+                "name": "settings",
+                "description": "System settings management endpoints. View, update, and restore system configurations through a user-friendly API."
+            },
         ],
         docs_url="/docs",
         redoc_url="/redoc",
@@ -126,6 +126,7 @@ def create_app() -> FastAPI:
     app.include_router(scheduler.router)
     app.include_router(pipeline.router)
     app.include_router(health.router)
+    app.include_router(settings.router)
 
     
     def custom_openapi():

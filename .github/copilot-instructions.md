@@ -40,3 +40,11 @@ This file provides guidelines for GitHub Copilot to interact with this repositor
   - Use `test_document_loader_pytest.py` for main tests
   - Use `test_document_loader_comprehensive_pytest.py` for comprehensive tests 
 - Use `_pytest` suffix for new pytest files to avoid conflicts with existing unittest files
+
+# Documentation and Comments
+- Use clear, concise comments in code to explain complex logic or important decisions
+- Use docstrings for functions and classes to describe their purpose, parameters, and return values
+- Maintain consistent formatting and style across all documentation files
+- Use Markdown for documentation files, ensuring proper headings, lists, and code blocks
+- Store documentation in the `docs/` directory, with subdirectories for specific topics (e.g., `docs/frontend/`, `docs/backend/`, etc.)
+

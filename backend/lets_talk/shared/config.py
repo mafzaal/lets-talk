@@ -25,7 +25,7 @@ load_dotenv()
 
 # Configuration with defaults
 # CORS configuration
-ALLOW_ORIGINS_URLS = [url.strip() for url in os.environ.get("ALLOW_ORIGINS_URLS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if url.strip()]
+ALLOW_ORIGINS_URLS = [url.strip() for url in os.environ.get("ALLOW_ORIGINS_URLS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000").split(",") if url.strip()]
 # DATA INPUT
 DATA_DIR = os.environ.get("DATA_DIR", "data/")
 DATA_DIR_PATTERN = os.environ.get("DATA_DIR_PATTERN", "*.md")

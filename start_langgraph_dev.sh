@@ -42,9 +42,22 @@ if [ ! -f "langgraph.json" ]; then
     print_info "Make sure you're running this script from the project root directory"
 fi
 
+# Function to handle cleanup
+cleanup() {
+    print_info "Shutting down LangGraph development server..."
+    # Kill any remaining LangGraph processes
+    pkill -f "uv run langgraph dev" 2>/dev/null || true
+    pkill -f "langgraph dev" 2>/dev/null || true
+    print_success "LangGraph development server stopped"
+    exit 0
+}
+
+# Set up signal handlers
+trap cleanup INT TERM EXIT
+
 print_info "Starting LangGraph development server..."
 print_info "Command: uv run langgraph dev --allow-blocking"
 print_info "Press Ctrl+C to stop the server"
 
 # Start the LangGraph development server
-uv run langgraph dev --allow-blocking
+exec uv run langgraph dev --allow-blocking

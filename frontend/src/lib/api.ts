@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:2024';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export interface JobConfig {
 	data_dir: string;
@@ -70,6 +70,44 @@ export interface PipelineReport {
 	total_documents: number;
 	errors: string[];
 	warnings: string[];
+}
+
+export interface SettingDisplay {
+	key: string;
+	value: string;
+	default_value: string;
+	data_type: string;
+	is_secret: boolean;
+	section: string;
+	description?: string;
+	is_read_only: boolean;
+}
+
+export interface SettingsResponse {
+	settings: SettingDisplay[];
+	sections: string[];
+}
+
+export interface SettingUpdate {
+	key: string;
+	value: string;
+}
+
+export interface SettingsUpdateRequest {
+	settings: SettingUpdate[];
+}
+
+export interface SettingsUpdateResponse {
+	success: boolean;
+	message: string;
+	updated_settings: string[];
+	failed_settings: Array<{ key: string; error: string }>;
+}
+
+export interface RestoreDefaultsResponse {
+	success: boolean;
+	message: string;
+	restored_count: number;
 }
 
 class ApiClient {
@@ -153,6 +191,24 @@ class ApiClient {
 
 	async getPipelineReports(): Promise<{ reports: PipelineReport[] }> {
 		return this.request<{ reports: PipelineReport[] }>('/pipeline/reports');
+	}
+
+	// Settings endpoints
+	async getSettings(): Promise<SettingsResponse> {
+		return this.request<SettingsResponse>('/settings/');
+	}
+
+	async updateSettings(data: SettingsUpdateRequest): Promise<SettingsUpdateResponse> {
+		return this.request<SettingsUpdateResponse>('/settings/', {
+			method: 'PUT',
+			body: JSON.stringify(data),
+		});
+	}
+
+	async restoreDefaultSettings(): Promise<RestoreDefaultsResponse> {
+		return this.request<RestoreDefaultsResponse>('/settings/restore-defaults', {
+			method: 'POST',
+		});
 	}
 }
 
