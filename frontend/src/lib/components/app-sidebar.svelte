@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import SystemStatus from '$lib/components/SystemStatus.svelte';
+	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { Home, Settings, Activity, Calendar, MessageCircle, ChartColumn } from 'lucide-svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 
@@ -48,10 +49,13 @@
 	</Sidebar.Content>
 	<Sidebar.Footer>
 		<div class="flex items-left gap-2 justify-between flex-col pt-4 pl-4 border-t">
-			<a href="/settings" class="flex items-center text-sm">
-				<Settings class="w-4 h-4 mr-2" />
-				<span>Settings</span>
-			</a>
+			<div class="flex items-center justify-between">
+				<a href="/settings" class="flex items-center text-sm">
+					<Settings class="w-4 h-4 mr-2" />
+					<span>Settings</span>
+				</a>
+				<ThemeToggle />
+			</div>
 			<div class="flex items-center space-x-4">
 				<SystemStatus />
 			</div>

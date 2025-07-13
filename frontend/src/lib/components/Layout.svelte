@@ -12,12 +12,12 @@
 	let { children }: Props = $props();
 </script>
 
-<div class="flex h-screen">
+<div class="flex h-screen bg-background text-foreground">
 	<!-- Sidebar using shadcn-svelte -->
 	<Sidebar.Provider>
 		<AppSidebar />
 		<!-- Main content area -->
-		<main class="flex-1 overflow-auto p-6">
+		<main class="flex-1 overflow-auto p-6 bg-background">
 			{@render children()}
 		</main>
 	</Sidebar.Provider>

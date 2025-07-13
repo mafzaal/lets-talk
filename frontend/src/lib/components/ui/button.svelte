@@ -19,12 +19,12 @@
 	}: Props = $props();
 
 	const variants = {
-		default: 'bg-slate-900 text-slate-50 hover:bg-slate-900/90',
-		secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-100/80',
-		destructive: 'bg-red-500 text-slate-50 hover:bg-red-500/90',
-		outline: 'border border-slate-200 bg-background hover:bg-slate-100 hover:text-slate-900',
-		ghost: 'hover:bg-slate-100 hover:text-slate-900',
-		link: 'text-slate-900 underline-offset-4 hover:underline',
+		default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+		secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+		destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+		outline: 'border border-border bg-background hover:bg-accent hover:text-accent-foreground',
+		ghost: 'hover:bg-accent hover:text-accent-foreground',
+		link: 'text-primary underline-offset-4 hover:underline',
 	};
 
 	const sizes = {

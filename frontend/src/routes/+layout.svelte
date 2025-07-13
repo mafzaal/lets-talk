@@ -3,8 +3,15 @@
 	import Layout from '$lib/components/Layout.svelte';
 	import { page } from '$app/state';
 	import { Toaster } from 'svelte-sonner';
+	import { themeStore } from '$lib/stores/theme';
+	import { onMount } from 'svelte';
 
 	let { children } = $props();
+
+	// Initialize theme on mount
+	onMount(() => {
+		themeStore.init();
+	});
 
 	// Only show layout for dashboard-related pages
 	let showLayout = $derived(
@@ -24,4 +31,4 @@
 	{@render children()}
 {/if}
 
-<Toaster theme="dark" position="top-right" />
+<Toaster theme={$themeStore} position="top-right" />

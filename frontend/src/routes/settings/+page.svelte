@@ -16,8 +16,9 @@
 	import AlertDialogTitle from '$lib/components/ui/alert-dialog-title.svelte';
 	import AlertDialogDescription from '$lib/components/ui/alert-dialog-description.svelte';
 	import AlertDialogFooter from '$lib/components/ui/alert-dialog-footer.svelte';
+	import { Separator } from '$lib/components/ui/separator';
 	import { toast } from 'svelte-sonner';
-	import { Eye, EyeOff, Save, RotateCcw, Settings, Lock, Unlock } from 'lucide-svelte';
+	import { Eye, EyeOff, Save, RotateCcw, Settings, Lock, Unlock, AlertCircle, Info } from 'lucide-svelte';
 
 	let settings = $state<SettingDisplay[]>([]);
 	let sections = $state<string[]>([]);
@@ -181,19 +182,21 @@
 	<title>System Settings - Let's Talk</title>
 </svelte:head>
 
-<div class="max-w-6xl mx-auto space-y-6">
+<div class="container mx-auto max-w-6xl space-y-6">
 	<!-- Header -->
 	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-3xl font-bold text-white flex items-center gap-2">
+		<div class="space-y-1">
+			<h1 class="text-3xl font-bold flex items-center gap-2">
 				<Settings class="w-8 h-8" />
 				System Settings
 			</h1>
-			<p class="text-slate-400 mt-1">Configure system behavior and application settings</p>
+			<p class="text-muted-foreground">Configure system behavior and application settings</p>
 		</div>
 		<div class="flex items-center gap-2">
 			{#if hasChanges}
-				<Button variant="outline" onclick={discardChanges}>Discard Changes</Button>
+				<Button variant="outline" onclick={discardChanges}>
+					Discard Changes
+				</Button>
 			{/if}
 			<Button variant="outline" onclick={restoreDefaults} disabled={restoring}>
 				{#if restoring}
@@ -216,117 +219,125 @@
 
 	{#if error}
 		<Alert variant="destructive">
+			<AlertCircle class="h-4 w-4" />
 			<AlertDescription>{error}</AlertDescription>
 		</Alert>
 	{/if}
 
-	<div class="transition-all duration-300 h-12 mb-2">
-		<div
-			class={`flex items-center px-4 py-2 rounded border text-sm font-medium transition-all duration-300
-		   ${hasChanges ? 'bg-yellow-900/80 border-yellow-500 text-yellow-200 opacity-100 visible' : 'bg-transparent border-transparent text-transparent opacity-0 invisible'}`}
-			style="height: 2.5rem;"
-		>
-			You have {pendingChanges.size} unsaved changes. Don't forget to save them.
-		</div>
-	</div>
+	<!-- Change notification -->
+	{#if hasChanges}
+		<Alert>
+			<Info class="h-4 w-4" />
+			<AlertDescription>
+				You have {pendingChanges.size} unsaved changes. Don't forget to save them.
+			</AlertDescription>
+		</Alert>
+	{/if}
 
 	{#if loading}
-		<div class="text-center py-8">
-			<div
-				class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"
-			></div>
-			<p class="text-muted mt-2">Loading settings...</p>
+		<div class="flex flex-col items-center justify-center py-12 space-y-4">
+			<div class="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+			<p class="text-muted-foreground">Loading settings...</p>
 		</div>
 	{:else if settings.length > 0}
 		<div class="space-y-6">
 			{#each sections as section}
-				<Card class="p-6">
-					<h2 class="text-lg font-semibold text-white mb-4">{section}</h2>
-					<div class="grid gap-6">
-						{#each settingsBySection().get(section) || [] as setting}
-							<div class="space-y-2">
-								<div class="flex items-center justify-between">
-									<Label for={setting.key} class="text-sm font-medium text-white">
-										{setting.key}
-									</Label>
+				<Card class="border-border bg-card">
+					<div class="p-6">
+						<h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+							{section}
+							<Badge variant="secondary" class="text-xs">
+								{settingsBySection().get(section)?.length || 0} settings
+							</Badge>
+						</h2>
+						
+						<Separator class="mb-6" />
+						
+						<div class="space-y-6">
+							{#each settingsBySection().get(section) || [] as setting}
+								<div class="space-y-3">
+									<div class="flex items-center justify-between">
+										<Label for={setting.key} class="text-sm font-medium flex items-center gap-2">
+											{setting.key}
+											{#if setting.is_secret}
+												<Badge variant="destructive" class="text-xs">
+													<Lock class="w-3 h-3 mr-1" />
+													Secret
+												</Badge>
+											{/if}
+											{#if setting.is_read_only}
+												<Badge variant="outline" class="text-xs">
+													<Lock class="w-3 h-3 mr-1" />
+													Read-only
+												</Badge>
+											{:else}
+												<Badge variant="secondary" class="text-xs">
+													<Unlock class="w-3 h-3 mr-1" />
+													Editable
+												</Badge>
+											{/if}
+										</Label>
+									</div>
+
+									{#if setting.description}
+										<p class="text-sm text-muted-foreground">{setting.description}</p>
+									{/if}
+
 									<div class="flex items-center gap-2">
-										{#if setting.is_secret}
-											<Badge variant="secondary" class="text-xs">
-												<Lock class="w-3 h-3 mr-1" />
-												Secret
-											</Badge>
-										{/if}
-										{#if setting.is_read_only}
-											<Badge variant="outline" class="text-xs">
-												<Lock class="w-3 h-3 mr-1" />
-												Read-only
-											</Badge>
+										{#if setting.data_type === 'boolean'}
+											<Switch
+												id={setting.key}
+												checked={getDisplayValue(setting) === 'true'}
+												onCheckedChange={(checked) =>
+													handleInputChange(setting.key, checked.toString())}
+												disabled={setting.is_read_only}
+											/>
 										{:else}
-											<Badge variant="secondary" class="text-xs">
-												<Unlock class="w-3 h-3 mr-1" />
-												Editable
-											</Badge>
+											<div class="flex-1 relative">
+												<Input
+													id={setting.key}
+													type={setting.is_secret && !secretVisibility.get(setting.key)
+														? 'password'
+														: 'text'}
+													value={getActualValue(setting)}
+													oninput={(e) => handleInputChange(setting.key, (e.target as HTMLInputElement)?.value || '')}
+													disabled={setting.is_read_only}
+													placeholder={setting.default_value}
+													class={`${pendingChanges.has(setting.key) ? 'border-yellow-500 ring-yellow-500' : ''}`}
+												/>
+												{#if setting.is_secret}
+													<button
+														type="button"
+														class="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground transition-colors"
+														onclick={() => toggleSecretVisibility(setting.key)}
+													>
+														{#if secretVisibility.get(setting.key)}
+															<EyeOff class="w-4 h-4 text-muted-foreground" />
+														{:else}
+															<Eye class="w-4 h-4 text-muted-foreground" />
+														{/if}
+													</button>
+												{/if}
+											</div>
 										{/if}
 									</div>
-								</div>
 
-								{#if setting.description}
-									<p class="text-xs text-slate-400">{setting.description}</p>
-								{/if}
-
-								<div class="flex items-center gap-2">
-									{#if setting.data_type === 'boolean'}
-										<Switch
-											id={setting.key}
-											checked={getDisplayValue(setting) === 'true'}
-											onCheckedChange={(checked) =>
-												handleInputChange(setting.key, checked.toString())}
-											disabled={setting.is_read_only}
-										/>
-									{:else}
-										<div class="flex-1 relative">
-											<Input
-												id={setting.key}
-												type={setting.is_secret && !secretVisibility.get(setting.key)
-													? 'password'
-													: 'text'}
-												value={getActualValue(setting)}
-												oninput={(e) => handleInputChange(setting.key, e.target.value)}
-												disabled={setting.is_read_only}
-												placeholder={setting.default_value}
-												class={`text-white placeholder:text-slate-400 bg-transparent border-slate-600 focus:ring-2 focus:ring-primary ${pendingChanges.has(setting.key) ? 'border-yellow-500' : ''}`}
-											/>
-											{#if setting.is_secret}
-												<button
-													type="button"
-													class="absolute inset-y-0 right-0 pr-3 flex items-center"
-													onclick={() => toggleSecretVisibility(setting.key)}
-												>
-													{#if secretVisibility.get(setting.key)}
-														<EyeOff class="w-4 h-4 text-slate-400 hover:text-white" />
-													{:else}
-														<Eye class="w-4 h-4 text-slate-400 hover:text-white" />
-													{/if}
-												</button>
-											{/if}
-										</div>
+									{#if setting.default_value !== getDisplayValue(setting)}
+										<p class="text-xs text-muted-foreground">
+											Default: {setting.default_value}
+										</p>
 									{/if}
 								</div>
-
-								{#if setting.default_value !== getDisplayValue(setting)}
-									<p class="text-xs text-slate-500">
-										Default: {setting.default_value}
-									</p>
-								{/if}
-							</div>
-						{/each}
+							{/each}
+						</div>
 					</div>
 				</Card>
 			{/each}
 		</div>
 	{:else}
-		<div class="text-center py-8">
-			<p class="text-muted">No settings found.</p>
+		<div class="flex flex-col items-center justify-center py-12 space-y-4">
+			<Settings class="w-16 h-16 text-muted-foreground" />
+			<p class="text-muted-foreground">No settings found.</p>
 		</div>
 	{/if}
 </div>
