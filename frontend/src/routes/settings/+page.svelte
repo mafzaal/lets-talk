@@ -235,7 +235,7 @@
 			<div
 				class="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"
 			></div>
-			<p class="text-slate-400 mt-2">Loading settings...</p>
+			<p class="text-muted mt-2">Loading settings...</p>
 		</div>
 	{:else if settings.length > 0}
 		<div class="space-y-6">
@@ -326,7 +326,7 @@
 		</div>
 	{:else}
 		<div class="text-center py-8">
-			<p class="text-slate-400">No settings found.</p>
+			<p class="text-muted">No settings found.</p>
 		</div>
 	{/if}
 </div>
@@ -344,7 +344,8 @@
 					</AlertDialogTitle>
 					<AlertDialogDescription>
 						{#snippet children()}
-							Are you sure you want to restore all settings to their default values? This action cannot be undone and will override any customizations you've made.
+							Are you sure you want to restore all settings to their default values? This action
+							cannot be undone and will override any customizations you've made.
 						{/snippet}
 					</AlertDialogDescription>
 				{/snippet}
