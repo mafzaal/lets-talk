@@ -28,6 +28,23 @@
 	import Input from '$lib/components/ui/input.svelte';
 	import Label from '$lib/components/ui/label.svelte';
 
+	// Helper function to get input value from event
+	function getInputValue(event: Event): string {
+		return (event.target as HTMLInputElement).value;
+	}
+
+	// Helper function to get number input value from event
+	function getNumberValue(event: Event): number {
+		const value = (event.target as HTMLInputElement).value;
+		return value ? parseInt(value) : 0;
+	}
+
+	// Helper function to get float input value from event
+	function getFloatValue(event: Event): number {
+		const value = (event.target as HTMLInputElement).value;
+		return value ? parseFloat(value) : 0;
+	}
+
 	let jobs: JobResponse[] = $state([]);
 	let reports: PipelineReport[] = $state([]);
 	let loading = $state(true);
@@ -41,14 +58,14 @@
 		job_id: '',
 		jobType: 'cron' as 'cron' | 'interval' | 'onetime',
 		// Cron fields
-		hour: undefined as number | undefined,
-		minute: 0,
+		hour: '' as string,
+		minute: '0',
 		day_of_week: undefined as string | undefined,
 		cron_expression: '',
 		// Interval fields
-		minutes: undefined as number | undefined,
-		hours: undefined as number | undefined,
-		days: undefined as number | undefined,
+		minutes: '' as string,
+		hours: '' as string,
+		days: '' as string,
 		// One-time fields
 		run_date: '',
 		// Job configuration
@@ -62,24 +79,24 @@
 			use_chunking: true,
 			chunking_strategy: 'semantic' as 'semantic' | 'text_splitter',
 			adaptive_chunking: true,
-			chunk_size: 1000,
-			chunk_overlap: 200,
+			chunk_size: '1000',
+			chunk_overlap: '200',
 			semantic_breakpoint_type: 'percentile' as 'percentile' | 'standard_deviation' | 'interquartile' | 'gradient',
-			semantic_breakpoint_threshold_amount: 95.0,
-			semantic_min_chunk_size: 100,
+			semantic_breakpoint_threshold_amount: '95.0',
+			semantic_min_chunk_size: '100',
 			collection_name: 'lets_talk_documents',
 			embedding_model: 'ollama:snowflake-arctic-embed2:latest',
 			force_recreate: false,
 			incremental_mode: 'auto',
 			checksum_algorithm: 'sha256',
 			auto_detect_changes: true,
-			incremental_fallback_threshold: 0.8,
+			incremental_fallback_threshold: '0.8',
 			enable_batch_processing: true,
-			batch_size: 50,
+			batch_size: '50',
 			enbable_performance_monitoring: true,
-			batch_pause_seconds: 0.1,
-			max_concurrent_operations: 5,
-			max_backup_files: 3,
+			batch_pause_seconds: '0.1',
+			max_concurrent_operations: '5',
+			max_backup_files: '3',
 			metadata_csv: 'blog_metadata.csv',
 			blog_stats_filename: 'blog_stats_latest.json',
 			blog_docs_filename: 'blog_docs.csv',
@@ -157,17 +174,26 @@
 		error = '';
 
 		try {
-			// Set job_id in config for tracking
+			// Convert string values to numbers for config
 			const config = {
 				...jobForm.config,
-				job_id: jobForm.job_id
+				job_id: jobForm.job_id,
+				chunk_size: parseInt(jobForm.config.chunk_size) || 1000,
+				chunk_overlap: parseInt(jobForm.config.chunk_overlap) || 200,
+				semantic_breakpoint_threshold_amount: parseFloat(jobForm.config.semantic_breakpoint_threshold_amount) || 95.0,
+				semantic_min_chunk_size: parseInt(jobForm.config.semantic_min_chunk_size) || 100,
+				incremental_fallback_threshold: parseFloat(jobForm.config.incremental_fallback_threshold) || 0.8,
+				batch_size: parseInt(jobForm.config.batch_size) || 50,
+				batch_pause_seconds: parseFloat(jobForm.config.batch_pause_seconds) || 0.1,
+				max_concurrent_operations: parseInt(jobForm.config.max_concurrent_operations) || 5,
+				max_backup_files: parseInt(jobForm.config.max_backup_files) || 3
 			};
 
 			if (jobForm.jobType === 'cron') {
 				await apiClient.createCronJob({
 					job_id: jobForm.job_id,
-					hour: jobForm.hour,
-					minute: jobForm.minute,
+					hour: jobForm.hour ? parseInt(jobForm.hour) : undefined,
+					minute: parseInt(jobForm.minute) || 0,
 					day_of_week: jobForm.day_of_week || undefined,
 					cron_expression: jobForm.cron_expression || undefined,
 					config
@@ -175,9 +201,9 @@
 			} else if (jobForm.jobType === 'interval') {
 				await apiClient.createIntervalJob({
 					job_id: jobForm.job_id,
-					minutes: jobForm.minutes,
-					hours: jobForm.hours,
-					days: jobForm.days,
+					minutes: jobForm.minutes ? parseInt(jobForm.minutes) : undefined,
+					hours: jobForm.hours ? parseInt(jobForm.hours) : undefined,
+					days: jobForm.days ? parseInt(jobForm.days) : undefined,
 					config
 				});
 			} else if (jobForm.jobType === 'onetime') {
@@ -211,13 +237,13 @@
 		jobForm = {
 			job_id: '',
 			jobType: 'cron',
-			hour: undefined,
-			minute: 0,
+			hour: '',
+			minute: '0',
 			day_of_week: undefined,
 			cron_expression: '',
-			minutes: undefined,
-			hours: undefined,
-			days: undefined,
+			minutes: '',
+			hours: '',
+			days: '',
 			run_date: '',
 			config: {
 				data_dir: 'data/',
@@ -229,24 +255,24 @@
 				use_chunking: true,
 				chunking_strategy: 'semantic' as 'semantic' | 'text_splitter',
 				adaptive_chunking: true,
-				chunk_size: 1000,
-				chunk_overlap: 200,
+				chunk_size: '1000',
+				chunk_overlap: '200',
 				semantic_breakpoint_type: 'percentile' as 'percentile' | 'standard_deviation' | 'interquartile' | 'gradient',
-				semantic_breakpoint_threshold_amount: 95.0,
-				semantic_min_chunk_size: 100,
+				semantic_breakpoint_threshold_amount: '95.0',
+				semantic_min_chunk_size: '100',
 				collection_name: 'lets_talk_documents',
 				embedding_model: 'ollama:snowflake-arctic-embed2:latest',
 				force_recreate: false,
 				incremental_mode: 'auto',
 				checksum_algorithm: 'sha256',
 				auto_detect_changes: true,
-				incremental_fallback_threshold: 0.8,
+				incremental_fallback_threshold: '0.8',
 				enable_batch_processing: true,
-				batch_size: 50,
+				batch_size: '50',
 				enbable_performance_monitoring: true,
-				batch_pause_seconds: 0.1,
-				max_concurrent_operations: 5,
-				max_backup_files: 3,
+				batch_pause_seconds: '0.1',
+				max_concurrent_operations: '5',
+				max_backup_files: '3',
 				metadata_csv: 'blog_metadata.csv',
 				blog_stats_filename: 'blog_stats_latest.json',
 				blog_docs_filename: 'blog_docs.csv',
@@ -568,7 +594,7 @@
 						placeholder="Enter unique job identifier"
 						class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 						oninput={(e) => {
-							jobForm.job_id = e.target.value;
+							jobForm.job_id = getInputValue(e);
 						}}
 					/>
 				</div>
@@ -600,7 +626,7 @@
 								placeholder="0 0 * * * (leave empty to use hour/minute/day fields)"
 								class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 								oninput={(e) => {
-									jobForm.cron_expression = e.target.value;
+									jobForm.cron_expression = getInputValue(e);
 								}}
 							/>
 						</div>
@@ -617,7 +643,7 @@
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.hour = e.target.value ? parseInt(e.target.value) : undefined;
+										jobForm.hour = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -632,7 +658,7 @@
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.minute = e.target.value ? parseInt(e.target.value) : 0;
+										jobForm.minute = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -673,7 +699,7 @@
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.minutes = e.target.value ? parseInt(e.target.value) : undefined;
+										jobForm.minutes = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -687,7 +713,7 @@
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.hours = e.target.value ? parseInt(e.target.value) : undefined;
+										jobForm.hours = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -701,7 +727,7 @@
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.days = e.target.value ? parseInt(e.target.value) : undefined;
+										jobForm.days = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -723,7 +749,7 @@
 								value={jobForm.run_date}
 								class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 								oninput={(e) => {
-									jobForm.run_date = e.target.value;
+									jobForm.run_date = getInputValue(e);
 								}}
 							/>
 						</div>
@@ -746,7 +772,7 @@
 									placeholder="data/"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.data_dir = e.target.value;
+										jobForm.config.data_dir = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -758,7 +784,7 @@
 									placeholder="*.md"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.data_dir_pattern = e.target.value;
+										jobForm.config.data_dir_pattern = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -773,7 +799,7 @@
 									placeholder="https://example.com"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.base_url = e.target.value;
+										jobForm.config.base_url = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -785,7 +811,7 @@
 									placeholder="https://blog.example.com"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.blog_base_url = e.target.value;
+										jobForm.config.blog_base_url = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -799,7 +825,7 @@
 								placeholder="https://example.com/page1, https://example.com/page2"
 								class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 								oninput={(e) => {
-									jobForm.config.web_urls = e.target.value.split(',').map(url => url.trim()).filter(url => url.length > 0);
+									jobForm.config.web_urls = getInputValue(e).split(',').map(url => url.trim()).filter(url => url.length > 0);
 								}}
 							/>
 						</div>
@@ -817,7 +843,7 @@
 									placeholder="lets_talk_documents"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.collection_name = e.target.value;
+										jobForm.config.collection_name = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -829,7 +855,7 @@
 									placeholder="ollama:snowflake-arctic-embed2:latest"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.embedding_model = e.target.value;
+										jobForm.config.embedding_model = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -872,7 +898,7 @@
 										value={jobForm.config.chunk_size}
 										class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 										oninput={(e) => {
-											jobForm.config.chunk_size = parseInt(e.target.value) || 1000;
+											jobForm.config.chunk_size = getInputValue(e);
 										}}
 									/>
 								</div>
@@ -889,7 +915,7 @@
 										value={jobForm.config.chunk_overlap}
 										class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 										oninput={(e) => {
-											jobForm.config.chunk_overlap = parseInt(e.target.value) || 200;
+											jobForm.config.chunk_overlap = getInputValue(e);
 										}}
 									/>
 								</div>
@@ -930,7 +956,7 @@
 											value={jobForm.config.semantic_breakpoint_threshold_amount}
 											class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 											oninput={(e) => {
-												jobForm.config.semantic_breakpoint_threshold_amount = parseFloat(e.target.value) || 95.0;
+												jobForm.config.semantic_breakpoint_threshold_amount = getInputValue(e);
 											}}
 										/>
 									</div>
@@ -944,7 +970,7 @@
 											value={jobForm.config.semantic_min_chunk_size}
 											class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 											oninput={(e) => {
-												jobForm.config.semantic_min_chunk_size = parseInt(e.target.value) || 100;
+												jobForm.config.semantic_min_chunk_size = getInputValue(e);
 											}}
 										/>
 									</div>
@@ -1039,7 +1065,7 @@
 									value={jobForm.config.batch_size}
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.batch_size = parseInt(e.target.value) || 50;
+										jobForm.config.batch_size = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -1054,7 +1080,7 @@
 									value={jobForm.config.batch_pause_seconds}
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.batch_pause_seconds = parseFloat(e.target.value) || 0.1;
+										jobForm.config.batch_pause_seconds = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -1068,7 +1094,7 @@
 									value={jobForm.config.max_concurrent_operations}
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.max_concurrent_operations = parseInt(e.target.value) || 5;
+										jobForm.config.max_concurrent_operations = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -1087,7 +1113,7 @@
 									placeholder="blog_metadata.csv"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.metadata_csv = e.target.value;
+										jobForm.config.metadata_csv = getInputValue(e);
 									}}
 								/>
 							</div>
@@ -1099,7 +1125,7 @@
 									placeholder="blog_stats_latest.json"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
-										jobForm.config.blog_stats_filename = e.target.value;
+										jobForm.config.blog_stats_filename = getInputValue(e);
 									}}
 								/>
 							</div>
