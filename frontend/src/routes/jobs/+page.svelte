@@ -50,7 +50,43 @@
 		hours: undefined as number | undefined,
 		days: undefined as number | undefined,
 		// One-time fields
-		run_date: ''
+		run_date: '',
+		// Job configuration
+		config: {
+			data_dir: 'data/',
+			data_dir_pattern: '*.md',
+			web_urls: [] as string[],
+			base_url: '',
+			blog_base_url: '',
+			index_only_published_posts: true,
+			use_chunking: true,
+			chunking_strategy: 'semantic' as 'semantic' | 'text_splitter',
+			adaptive_chunking: true,
+			chunk_size: 1000,
+			chunk_overlap: 200,
+			semantic_breakpoint_type: 'percentile' as 'percentile' | 'standard_deviation' | 'interquartile' | 'gradient',
+			semantic_breakpoint_threshold_amount: 95.0,
+			semantic_min_chunk_size: 100,
+			collection_name: 'lets_talk_documents',
+			embedding_model: 'ollama:snowflake-arctic-embed2:latest',
+			force_recreate: false,
+			incremental_mode: 'auto',
+			checksum_algorithm: 'sha256',
+			auto_detect_changes: true,
+			incremental_fallback_threshold: 0.8,
+			enable_batch_processing: true,
+			batch_size: 50,
+			enbable_performance_monitoring: true,
+			batch_pause_seconds: 0.1,
+			max_concurrent_operations: 5,
+			max_backup_files: 3,
+			metadata_csv: 'blog_metadata.csv',
+			blog_stats_filename: 'blog_stats_latest.json',
+			blog_docs_filename: 'blog_docs.csv',
+			health_report_filename: 'health_report.json',
+			ci_summary_filename: 'ci_summary.json',
+			build_info_filename: 'vector_store_build_info.json'
+		}
 	});
 
 	onMount(async () => {
@@ -106,24 +142,43 @@
 			return;
 		}
 
+		// Validate configuration
+		if (!jobForm.config.collection_name.trim()) {
+			error = 'Collection name is required';
+			return;
+		}
+		
+		if (!jobForm.config.embedding_model.trim()) {
+			error = 'Embedding model is required';
+			return;
+		}
+
 		creatingJob = true;
 		error = '';
 
 		try {
+			// Set job_id in config for tracking
+			const config = {
+				...jobForm.config,
+				job_id: jobForm.job_id
+			};
+
 			if (jobForm.jobType === 'cron') {
 				await apiClient.createCronJob({
 					job_id: jobForm.job_id,
 					hour: jobForm.hour,
 					minute: jobForm.minute,
 					day_of_week: jobForm.day_of_week || undefined,
-					cron_expression: jobForm.cron_expression || undefined
+					cron_expression: jobForm.cron_expression || undefined,
+					config
 				});
 			} else if (jobForm.jobType === 'interval') {
 				await apiClient.createIntervalJob({
 					job_id: jobForm.job_id,
 					minutes: jobForm.minutes,
 					hours: jobForm.hours,
-					days: jobForm.days
+					days: jobForm.days,
+					config
 				});
 			} else if (jobForm.jobType === 'onetime') {
 				if (!jobForm.run_date) {
@@ -136,7 +191,8 @@
 				
 				await apiClient.createOneTimeJob({
 					job_id: jobForm.job_id,
-					run_date: runDate
+					run_date: runDate,
+					config
 				});
 			}
 
@@ -162,7 +218,42 @@
 			minutes: undefined,
 			hours: undefined,
 			days: undefined,
-			run_date: ''
+			run_date: '',
+			config: {
+				data_dir: 'data/',
+				data_dir_pattern: '*.md',
+				web_urls: [],
+				base_url: '',
+				blog_base_url: '',
+				index_only_published_posts: true,
+				use_chunking: true,
+				chunking_strategy: 'semantic' as 'semantic' | 'text_splitter',
+				adaptive_chunking: true,
+				chunk_size: 1000,
+				chunk_overlap: 200,
+				semantic_breakpoint_type: 'percentile' as 'percentile' | 'standard_deviation' | 'interquartile' | 'gradient',
+				semantic_breakpoint_threshold_amount: 95.0,
+				semantic_min_chunk_size: 100,
+				collection_name: 'lets_talk_documents',
+				embedding_model: 'ollama:snowflake-arctic-embed2:latest',
+				force_recreate: false,
+				incremental_mode: 'auto',
+				checksum_algorithm: 'sha256',
+				auto_detect_changes: true,
+				incremental_fallback_threshold: 0.8,
+				enable_batch_processing: true,
+				batch_size: 50,
+				enbable_performance_monitoring: true,
+				batch_pause_seconds: 0.1,
+				max_concurrent_operations: 5,
+				max_backup_files: 3,
+				metadata_csv: 'blog_metadata.csv',
+				blog_stats_filename: 'blog_stats_latest.json',
+				blog_docs_filename: 'blog_docs.csv',
+				health_report_filename: 'health_report.json',
+				ci_summary_filename: 'ci_summary.json',
+				build_info_filename: 'vector_store_build_info.json'
+			}
 		};
 	}
 
@@ -359,6 +450,37 @@
 									</div>
 								</div>
 
+								<!-- Job Configuration -->
+								{#if job.config && Object.keys(job.config).length > 0}
+									<div class="mt-4 pt-4 border-t border-slate-700">
+										<h5 class="text-sm font-medium text-slate-400 mb-2">Pipeline Configuration</h5>
+										<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+											<div>
+												<span class="text-slate-400">Collection:</span>
+												<span class="text-slate-300 ml-2">{job.config.collection_name || 'N/A'}</span>
+											</div>
+											<div>
+												<span class="text-slate-400">Embedding Model:</span>
+												<span class="text-slate-300 ml-2">{job.config.embedding_model || 'N/A'}</span>
+											</div>
+											<div>
+												<span class="text-slate-400">Chunking Strategy:</span>
+												<span class="text-slate-300 ml-2">{job.config.chunking_strategy || 'N/A'}</span>
+											</div>
+											<div>
+												<span class="text-slate-400">Data Directory:</span>
+												<span class="text-slate-300 ml-2">{job.config.data_dir || 'N/A'}</span>
+											</div>
+											{#if job.config.web_urls && job.config.web_urls.length > 0}
+												<div class="md:col-span-2">
+													<span class="text-slate-400">Web URLs:</span>
+													<span class="text-slate-300 ml-2">{job.config.web_urls.join(', ')}</span>
+												</div>
+											{/if}
+										</div>
+									</div>
+								{/if}
+
 								<!-- Execution History -->
 								{#if getJobExecutionHistory(job.id).length > 0}
 									<div class="mt-4 pt-4 border-t border-slate-700">
@@ -417,7 +539,7 @@
 
 <!-- New Job Modal -->
 <Dialog bind:open={showNewJobModal}>
-	<DialogContent class="max-w-2xl bg-slate-900 border-slate-800">
+	<DialogContent class="max-w-4xl max-h-[90vh] bg-slate-900 border-slate-800 overflow-y-auto">
 		<DialogHeader>
 			<DialogTitle class="text-white">Create New Job</DialogTitle>
 			<DialogDescription class="text-slate-400">
@@ -425,7 +547,7 @@
 			</DialogDescription>
 		</DialogHeader>
 		
-		<div class="space-y-6">
+		<div class="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
 			{#if error}
 				<div class="p-4 bg-red-900/20 border border-red-500/50 rounded-md">
 					<div class="flex items-center space-x-2">
@@ -607,6 +729,383 @@
 						</div>
 					</div>
 				{/if}
+
+				<!-- Job Configuration -->
+				<div class="space-y-4 p-4 bg-slate-800/50 rounded-md">
+					<h4 class="text-slate-300 font-medium">Pipeline Configuration</h4>
+					
+					<!-- Data Sources -->
+					<div class="space-y-4">
+						<h5 class="text-sm font-medium text-slate-400">Data Sources</h5>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="space-y-2">
+								<Label for="dataDir" class="text-slate-300">Data Directory</Label>
+								<Input 
+									id="dataDir"
+									value={jobForm.config.data_dir}
+									placeholder="data/"
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.data_dir = e.target.value;
+									}}
+								/>
+							</div>
+							<div class="space-y-2">
+								<Label for="dataDirPattern" class="text-slate-300">File Pattern</Label>
+								<Input 
+									id="dataDirPattern"
+									value={jobForm.config.data_dir_pattern}
+									placeholder="*.md"
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.data_dir_pattern = e.target.value;
+									}}
+								/>
+							</div>
+						</div>
+						
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="space-y-2">
+								<Label for="baseUrl" class="text-slate-300">Base URL</Label>
+								<Input 
+									id="baseUrl"
+									value={jobForm.config.base_url}
+									placeholder="https://example.com"
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.base_url = e.target.value;
+									}}
+								/>
+							</div>
+							<div class="space-y-2">
+								<Label for="blogBaseUrl" class="text-slate-300">Blog Base URL</Label>
+								<Input 
+									id="blogBaseUrl"
+									value={jobForm.config.blog_base_url}
+									placeholder="https://blog.example.com"
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.blog_base_url = e.target.value;
+									}}
+								/>
+							</div>
+						</div>
+
+						<div class="space-y-2">
+							<Label for="webUrls" class="text-slate-300">Web URLs (comma-separated)</Label>
+							<Input 
+								id="webUrls"
+								value={jobForm.config.web_urls.join(', ')}
+								placeholder="https://example.com/page1, https://example.com/page2"
+								class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+								oninput={(e) => {
+									jobForm.config.web_urls = e.target.value.split(',').map(url => url.trim()).filter(url => url.length > 0);
+								}}
+							/>
+						</div>
+					</div>
+
+					<!-- Vector Store Configuration -->
+					<div class="space-y-4">
+						<h5 class="text-sm font-medium text-slate-400">Vector Store Configuration</h5>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="space-y-2">
+								<Label for="collectionName" class="text-slate-300">Collection Name *</Label>
+								<Input 
+									id="collectionName"
+									value={jobForm.config.collection_name}
+									placeholder="lets_talk_documents"
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.collection_name = e.target.value;
+									}}
+								/>
+							</div>
+							<div class="space-y-2">
+								<Label for="embeddingModel" class="text-slate-300">Embedding Model *</Label>
+								<Input 
+									id="embeddingModel"
+									value={jobForm.config.embedding_model}
+									placeholder="ollama:snowflake-arctic-embed2:latest"
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.embedding_model = e.target.value;
+									}}
+								/>
+							</div>
+						</div>
+					</div>
+
+					<!-- Chunking Configuration -->
+					<div class="space-y-4">
+						<h5 class="text-sm font-medium text-slate-400">Chunking Configuration</h5>
+						<div class="flex items-center space-x-3">
+							<input
+								type="checkbox"
+								id="useChunking"
+								bind:checked={jobForm.config.use_chunking}
+								class="w-4 h-4 text-blue-600 bg-slate-800 border-slate-700 rounded focus:ring-blue-500"
+							/>
+							<Label for="useChunking" class="text-slate-300">Enable Chunking</Label>
+						</div>
+						
+						{#if jobForm.config.use_chunking}
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div class="space-y-2">
+									<Label for="chunkingStrategy" class="text-slate-300">Chunking Strategy</Label>
+									<select 
+										id="chunkingStrategy"
+										bind:value={jobForm.config.chunking_strategy}
+										class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+									>
+										<option value="semantic">Semantic</option>
+										<option value="text_splitter">Text Splitter</option>
+									</select>
+								</div>
+								<div class="space-y-2">
+									<Label for="chunkSize" class="text-slate-300">Chunk Size</Label>
+									<Input 
+										id="chunkSize"
+										type="number"
+										min="100"
+										max="8000"
+										value={jobForm.config.chunk_size}
+										class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+										oninput={(e) => {
+											jobForm.config.chunk_size = parseInt(e.target.value) || 1000;
+										}}
+									/>
+								</div>
+							</div>
+							
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div class="space-y-2">
+									<Label for="chunkOverlap" class="text-slate-300">Chunk Overlap</Label>
+									<Input 
+										id="chunkOverlap"
+										type="number"
+										min="0"
+										max="1000"
+										value={jobForm.config.chunk_overlap}
+										class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+										oninput={(e) => {
+											jobForm.config.chunk_overlap = parseInt(e.target.value) || 200;
+										}}
+									/>
+								</div>
+								<div class="flex items-center space-x-3">
+									<input
+										type="checkbox"
+										id="adaptiveChunking"
+										bind:checked={jobForm.config.adaptive_chunking}
+										class="w-4 h-4 text-blue-600 bg-slate-800 border-slate-700 rounded focus:ring-blue-500"
+									/>
+									<Label for="adaptiveChunking" class="text-slate-300">Adaptive Chunking</Label>
+								</div>
+							</div>
+
+							{#if jobForm.config.chunking_strategy === 'semantic'}
+								<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+									<div class="space-y-2">
+										<Label for="semanticBreakpointType" class="text-slate-300">Breakpoint Type</Label>
+										<select 
+											id="semanticBreakpointType"
+											bind:value={jobForm.config.semantic_breakpoint_type}
+											class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+										>
+											<option value="percentile">Percentile</option>
+											<option value="standard_deviation">Standard Deviation</option>
+											<option value="interquartile">Interquartile</option>
+											<option value="gradient">Gradient</option>
+										</select>
+									</div>
+									<div class="space-y-2">
+										<Label for="semanticThreshold" class="text-slate-300">Threshold Amount</Label>
+										<Input 
+											id="semanticThreshold"
+											type="number"
+											min="0"
+											max="100"
+											step="0.1"
+											value={jobForm.config.semantic_breakpoint_threshold_amount}
+											class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+											oninput={(e) => {
+												jobForm.config.semantic_breakpoint_threshold_amount = parseFloat(e.target.value) || 95.0;
+											}}
+										/>
+									</div>
+									<div class="space-y-2">
+										<Label for="semanticMinChunkSize" class="text-slate-300">Min Chunk Size</Label>
+										<Input 
+											id="semanticMinChunkSize"
+											type="number"
+											min="10"
+											max="1000"
+											value={jobForm.config.semantic_min_chunk_size}
+											class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+											oninput={(e) => {
+												jobForm.config.semantic_min_chunk_size = parseInt(e.target.value) || 100;
+											}}
+										/>
+									</div>
+								</div>
+							{/if}
+						{/if}
+					</div>
+
+					<!-- Processing Configuration -->
+					<div class="space-y-4">
+						<h5 class="text-sm font-medium text-slate-400">Processing Configuration</h5>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="flex items-center space-x-3">
+								<input
+									type="checkbox"
+									id="indexOnlyPublished"
+									bind:checked={jobForm.config.index_only_published_posts}
+									class="w-4 h-4 text-blue-600 bg-slate-800 border-slate-700 rounded focus:ring-blue-500"
+								/>
+								<Label for="indexOnlyPublished" class="text-slate-300">Index Only Published Posts</Label>
+							</div>
+							<div class="flex items-center space-x-3">
+								<input
+									type="checkbox"
+									id="forceRecreate"
+									bind:checked={jobForm.config.force_recreate}
+									class="w-4 h-4 text-blue-600 bg-slate-800 border-slate-700 rounded focus:ring-blue-500"
+								/>
+								<Label for="forceRecreate" class="text-slate-300">Force Recreate Vector Store</Label>
+							</div>
+						</div>
+						
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="space-y-2">
+								<Label for="incrementalMode" class="text-slate-300">Incremental Mode</Label>
+								<select 
+									id="incrementalMode"
+									bind:value={jobForm.config.incremental_mode}
+									class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+								>
+									<option value="auto">Auto</option>
+									<option value="incremental">Incremental</option>
+									<option value="full">Full</option>
+								</select>
+							</div>
+							<div class="space-y-2">
+								<Label for="checksumAlgorithm" class="text-slate-300">Checksum Algorithm</Label>
+								<select 
+									id="checksumAlgorithm"
+									bind:value={jobForm.config.checksum_algorithm}
+									class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+								>
+									<option value="sha256">SHA256</option>
+									<option value="md5">MD5</option>
+								</select>
+							</div>
+						</div>
+					</div>
+
+					<!-- Performance Configuration -->
+					<div class="space-y-4">
+						<h5 class="text-sm font-medium text-slate-400">Performance Configuration</h5>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="flex items-center space-x-3">
+								<input
+									type="checkbox"
+									id="enableBatchProcessing"
+									bind:checked={jobForm.config.enable_batch_processing}
+									class="w-4 h-4 text-blue-600 bg-slate-800 border-slate-700 rounded focus:ring-blue-500"
+								/>
+								<Label for="enableBatchProcessing" class="text-slate-300">Enable Batch Processing</Label>
+							</div>
+							<div class="flex items-center space-x-3">
+								<input
+									type="checkbox"
+									id="enablePerformanceMonitoring"
+									bind:checked={jobForm.config.enbable_performance_monitoring}
+									class="w-4 h-4 text-blue-600 bg-slate-800 border-slate-700 rounded focus:ring-blue-500"
+								/>
+								<Label for="enablePerformanceMonitoring" class="text-slate-300">Enable Performance Monitoring</Label>
+							</div>
+						</div>
+						
+						<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+							<div class="space-y-2">
+								<Label for="batchSize" class="text-slate-300">Batch Size</Label>
+								<Input 
+									id="batchSize"
+									type="number"
+									min="1"
+									max="1000"
+									value={jobForm.config.batch_size}
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.batch_size = parseInt(e.target.value) || 50;
+									}}
+								/>
+							</div>
+							<div class="space-y-2">
+								<Label for="batchPauseSeconds" class="text-slate-300">Batch Pause (seconds)</Label>
+								<Input 
+									id="batchPauseSeconds"
+									type="number"
+									min="0"
+									max="10"
+									step="0.1"
+									value={jobForm.config.batch_pause_seconds}
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.batch_pause_seconds = parseFloat(e.target.value) || 0.1;
+									}}
+								/>
+							</div>
+							<div class="space-y-2">
+								<Label for="maxConcurrentOps" class="text-slate-300">Max Concurrent Operations</Label>
+								<Input 
+									id="maxConcurrentOps"
+									type="number"
+									min="1"
+									max="20"
+									value={jobForm.config.max_concurrent_operations}
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.max_concurrent_operations = parseInt(e.target.value) || 5;
+									}}
+								/>
+							</div>
+						</div>
+					</div>
+
+					<!-- Output Configuration -->
+					<div class="space-y-4">
+						<h5 class="text-sm font-medium text-slate-400">Output Configuration</h5>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div class="space-y-2">
+								<Label for="metadataCsv" class="text-slate-300">Metadata CSV</Label>
+								<Input 
+									id="metadataCsv"
+									value={jobForm.config.metadata_csv}
+									placeholder="blog_metadata.csv"
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.metadata_csv = e.target.value;
+									}}
+								/>
+							</div>
+							<div class="space-y-2">
+								<Label for="blogStatsFilename" class="text-slate-300">Blog Stats Filename</Label>
+								<Input 
+									id="blogStatsFilename"
+									value={jobForm.config.blog_stats_filename}
+									placeholder="blog_stats_latest.json"
+									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+									oninput={(e) => {
+										jobForm.config.blog_stats_filename = e.target.value;
+									}}
+								/>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 
