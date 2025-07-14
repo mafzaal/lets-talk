@@ -442,7 +442,7 @@
 					<Label for="jobId" class="text-slate-300">Job ID</Label>
 					<Input 
 						id="jobId"
-						bind:value={jobForm.job_id}
+						value={jobForm.job_id}
 						placeholder="Enter unique job identifier"
 						class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 						oninput={(e) => {
@@ -474,7 +474,7 @@
 							<Label for="cronExpression" class="text-slate-300">Cron Expression (optional)</Label>
 							<Input 
 								id="cronExpression"
-								bind:value={jobForm.cron_expression}
+								value={jobForm.cron_expression}
 								placeholder="0 0 * * * (leave empty to use hour/minute/day fields)"
 								class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 								oninput={(e) => {
@@ -491,7 +491,7 @@
 									type="number"
 									min="0"
 									max="23"
-									bind:value={jobForm.hour}
+									value={jobForm.hour}
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
@@ -506,7 +506,7 @@
 									type="number"
 									min="0"
 									max="59"
-									bind:value={jobForm.minute}
+									value={jobForm.minute}
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
@@ -547,7 +547,7 @@
 									id="minutes"
 									type="number"
 									min="0"
-									bind:value={jobForm.minutes}
+									value={jobForm.minutes}
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
@@ -561,7 +561,7 @@
 									id="hours"
 									type="number"
 									min="0"
-									bind:value={jobForm.hours}
+									value={jobForm.hours}
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
@@ -575,7 +575,7 @@
 									id="days"
 									type="number"
 									min="0"
-									bind:value={jobForm.days}
+									value={jobForm.days}
 									placeholder="0"
 									class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 									oninput={(e) => {
@@ -598,7 +598,7 @@
 							<Input 
 								id="runDate"
 								type="datetime-local"
-								bind:value={jobForm.run_date}
+								value={jobForm.run_date}
 								class="bg-slate-800 border-slate-700 text-white placeholder-slate-400"
 								oninput={(e) => {
 									jobForm.run_date = e.target.value;
