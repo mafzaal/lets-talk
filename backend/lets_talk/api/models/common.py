@@ -62,6 +62,58 @@ class JobConfig(BaseModel):
     build_info_filename: str
     job_id: Optional[str] = None
 
+    @classmethod
+    def with_defaults(cls) -> "JobConfig":
+        """Create a JobConfig with default values from the configuration."""
+        from lets_talk.shared.config import (
+            DATA_DIR, DATA_DIR_PATTERN, WEB_URLS, BASE_URL, BLOG_BASE_URL,
+            INDEX_ONLY_PUBLISHED_POSTS, USE_CHUNKING, CHUNKING_STRATEGY,
+            ADAPTIVE_CHUNKING, CHUNK_SIZE, CHUNK_OVERLAP, 
+            SEMANTIC_CHUNKER_BREAKPOINT_TYPE, SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
+            SEMANTIC_CHUNKER_MIN_CHUNK_SIZE, QDRANT_COLLECTION, EMBEDDING_MODEL,
+            FORCE_RECREATE, INCREMENTAL_MODE, CHECKSUM_ALGORITHM, AUTO_DETECT_CHANGES,
+            INCREMENTAL_FALLBACK_THRESHOLD, ENABLE_BATCH_PROCESSING, BATCH_SIZE,
+            ENABLE_PERFORMANCE_MONITORING, BATCH_PAUSE_SECONDS, MAX_CONCURRENT_OPERATIONS,
+            MAX_BACKUP_FILES, METADATA_CSV_FILE, BLOG_STATS_FILENAME, BLOG_DOCS_FILENAME,
+            HEALTH_REPORT_FILENAME, CI_SUMMARY_FILENAME, BUILD_INFO_FILENAME
+        )
+        
+        return cls(
+            data_dir=DATA_DIR,
+            data_dir_pattern=DATA_DIR_PATTERN,
+            web_urls=WEB_URLS,
+            base_url=BASE_URL,
+            blog_base_url=BLOG_BASE_URL,
+            index_only_published_posts=INDEX_ONLY_PUBLISHED_POSTS,
+            use_chunking=USE_CHUNKING,
+            chunking_strategy=CHUNKING_STRATEGY,
+            adaptive_chunking=ADAPTIVE_CHUNKING,
+            chunk_size=CHUNK_SIZE,
+            chunk_overlap=CHUNK_OVERLAP,
+            semantic_breakpoint_type=SEMANTIC_CHUNKER_BREAKPOINT_TYPE,
+            semantic_breakpoint_threshold_amount=SEMANTIC_CHUNKER_BREAKPOINT_THRESHOLD_AMOUNT,
+            semantic_min_chunk_size=SEMANTIC_CHUNKER_MIN_CHUNK_SIZE,
+            collection_name=QDRANT_COLLECTION,
+            embedding_model=EMBEDDING_MODEL,
+            force_recreate=FORCE_RECREATE,
+            incremental_mode=INCREMENTAL_MODE,
+            checksum_algorithm=CHECKSUM_ALGORITHM,
+            auto_detect_changes=AUTO_DETECT_CHANGES,
+            incremental_fallback_threshold=INCREMENTAL_FALLBACK_THRESHOLD,
+            enable_batch_processing=ENABLE_BATCH_PROCESSING,
+            batch_size=BATCH_SIZE,
+            enbable_performance_monitoring=ENABLE_PERFORMANCE_MONITORING,
+            batch_pause_seconds=BATCH_PAUSE_SECONDS,
+            max_concurrent_operations=MAX_CONCURRENT_OPERATIONS,
+            max_backup_files=MAX_BACKUP_FILES,
+            metadata_csv=METADATA_CSV_FILE,
+            blog_stats_filename=BLOG_STATS_FILENAME,
+            blog_docs_filename=BLOG_DOCS_FILENAME,
+            health_report_filename=HEALTH_REPORT_FILENAME,
+            ci_summary_filename=CI_SUMMARY_FILENAME,
+            build_info_filename=BUILD_INFO_FILENAME,
+        )
+
 
 
 class JobResponse(BaseModel):

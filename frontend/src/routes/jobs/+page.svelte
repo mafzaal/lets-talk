@@ -129,7 +129,17 @@
 	async function runPipeline(jobId: string) {
 		try {
 			runningJobs.add(jobId);
-			await apiClient.runPipeline();
+			
+			// Find the job configuration
+			const job = jobs.find(j => j.id === jobId);
+			if (!job) {
+				throw new Error('Job not found');
+			}
+			
+			// Use the job's configuration if available
+			const config = job.config || {};
+			
+			await apiClient.runPipeline(config);
 			// Refresh data after running
 			await loadData();
 		} catch (err) {
