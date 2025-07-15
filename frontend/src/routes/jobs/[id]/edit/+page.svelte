@@ -162,7 +162,7 @@
 				jobType: jobSchedule.jobType,
 				hour: jobSchedule.hour,
 				minute: jobSchedule.minute,
-				day_of_week: jobSchedule.day_of_week,
+				day_of_week: jobSchedule.day_of_week || undefined,
 				cron_expression: jobSchedule.cron_expression || undefined,
 				minutes: jobSchedule.minutes,
 				hours: jobSchedule.hours,
