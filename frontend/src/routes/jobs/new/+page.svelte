@@ -68,6 +68,12 @@
 	});
 
 	async function saveJob() {
+		// Debug logging
+		console.log('Job ID value:', jobSchedule.job_id);
+		console.log('Job ID length:', jobSchedule.job_id.length);
+		console.log('Job ID trimmed:', jobSchedule.job_id.trim());
+		console.log('Job ID trimmed length:', jobSchedule.job_id.trim().length);
+		
 		if (!jobSchedule.job_id.trim()) {
 			error = 'Job ID is required';
 			return;
@@ -202,4 +208,16 @@
 		mode="create"
 		disabled={loading}
 	/>
+
+	<!-- Debug Info -->
+	{#if error || success}
+		<Card class="p-6 bg-slate-900/20 border-slate-700">
+			<div class="text-sm text-slate-300">
+				<p><strong>Debug Info:</strong></p>
+				<p>Job ID: "{jobSchedule.job_id}" (length: {jobSchedule.job_id.length})</p>
+				<p>Collection Name: "{jobConfig.collection_name}"</p>
+				<p>Embedding Model: "{jobConfig.embedding_model}"</p>
+			</div>
+		</Card>
+	{/if}
 </div>

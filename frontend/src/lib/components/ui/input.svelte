@@ -14,13 +14,13 @@
 		step?: string;
 	}
 
-	let { id, type = 'text', value = '', placeholder, disabled = false, class: className = '', oninput, min, max, step, ...restProps }: Props = $props();
+	let { id, type = 'text', value = $bindable(''), placeholder, disabled = false, class: className = '', oninput, min, max, step, ...restProps }: Props = $props();
 </script>
 
 <input
 	{id}
 	{type}
-	{value}
+	bind:value
 	{placeholder}
 	{disabled}
 	{oninput}
