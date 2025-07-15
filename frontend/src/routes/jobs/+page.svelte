@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { apiClient, type JobResponse, type PipelineReport } from '$lib/api';
 	import Card from '$lib/components/ui/card.svelte';
 	import Button from '$lib/components/ui/button.svelte';
@@ -363,10 +364,7 @@
 			</div>
 			<Button 
 				class="bg-blue-600 hover:bg-blue-700" 
-				onclick={() => {
-					error = '';
-					showNewJobModal = true;
-				}}
+				onclick={() => goto('/jobs/new')}
 			>
 				<Plus class="w-4 h-4 mr-2" />
 				New Job
@@ -473,7 +471,11 @@
 												<Play class="w-4 h-4" />
 											{/if}
 										</Button>
-										<Button variant="ghost" size="sm">
+										<Button 
+											variant="ghost" 
+											size="sm"
+											onclick={() => goto(`/jobs/${job.id}/edit`)}
+										>
 											<Edit class="w-4 h-4" />
 										</Button>
 										<Button 
@@ -558,10 +560,7 @@
 						<p class="text-slate-500 mb-4">Get started by creating your first pipeline job</p>
 						<Button 
 							class="bg-blue-600 hover:bg-blue-700" 
-							onclick={() => {
-								error = '';
-								showNewJobModal = true;
-							}}
+							onclick={() => goto('/jobs/new')}
 						>
 							<Plus class="w-4 h-4 mr-2" />
 							Create Job

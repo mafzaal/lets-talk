@@ -230,6 +230,68 @@ async def create_onetime_job(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.get("/jobs/{job_id}")
+async def get_job(job_id: str, scheduler: PipelineScheduler = Depends(get_scheduler)):
+    """Get details of a specific scheduled job."""
+    try:
+        jobs = scheduler.list_jobs()
+        job = next((j for j in jobs if j['id'] == job_id), None)
+        if not job:
+            raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+        return JobResponse(**job)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/jobs/{job_id}")
+async def update_job(job_id: str, job_data: dict, scheduler: PipelineScheduler = Depends(get_scheduler)):
+    """Update a scheduled job."""
+    try:
+        # Remove the old job first
+        scheduler.remove_job(job_id)
+        
+        # Create new job with updated configuration
+        job_type = job_data.get('jobType', 'cron')
+        config = job_data.get('config', {})
+        
+        if job_type == 'cron':
+            scheduler.add_cron_job(
+                job_id=job_id,
+                hour=job_data.get('hour'),
+                minute=job_data.get('minute'),
+                day_of_week=job_data.get('day_of_week'),
+                cron_expression=job_data.get('cron_expression'),
+                config=config
+            )
+        elif job_type == 'interval':
+            scheduler.add_interval_job(
+                job_id=job_id,
+                minutes=job_data.get('minutes'),
+                hours=job_data.get('hours'),
+                days=job_data.get('days'),
+                config=config
+            )
+        elif job_type == 'onetime':
+            scheduler.add_one_time_job(
+                job_id=job_id,
+                run_date=job_data.get('run_date'),
+                config=config
+            )
+        
+        # Return the updated job
+        jobs = scheduler.list_jobs()
+        job = next((j for j in jobs if j['id'] == job_id), None)
+        if not job:
+            raise HTTPException(status_code=404, detail=f"Failed to update job '{job_id}'")
+        return JobResponse(**job)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.delete("/jobs/{job_id}")
 async def remove_job(job_id: str, scheduler: PipelineScheduler = Depends(get_scheduler)):
     """Remove a scheduled job."""
