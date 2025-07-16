@@ -35,7 +35,7 @@
 	<Tooltip.Root>
 		<Tooltip.Trigger>
 			<!-- Status indicator with tooltip -->
-			<div class="flex items-center space-x-2 text-sm group relative">
+			<div class="flex bg-card items-center space-x-2 text-sm group relative">
 				<div
 					class="w-2 h-2 rounded-full"
 					class:bg-green-500={state.health?.status === 'healthy' && !state.error}
