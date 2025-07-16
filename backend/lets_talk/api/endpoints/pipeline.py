@@ -22,7 +22,12 @@ async def run_pipeline(
     request: Optional[PipelineRunRequest] = None
 ):
     """Run the pipeline immediately with optional configuration."""
-    config = request.config if request and request.config else JobConfig()
+    # Use provided config or create one with defaults
+    if request and request.config:
+        config = request.config
+    else:
+        config = JobConfig.with_defaults()
+    
     pipeline_config = config.model_dump()
     pipeline_config["job_id"] = f"manual_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     

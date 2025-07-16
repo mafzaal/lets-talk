@@ -174,12 +174,15 @@ async def create_cron_job(
     try:
         pipeline_config = job_request.config.model_dump() if job_request.config else {}
         
+        # Convert empty day_of_week to None
+        day_of_week = job_request.day_of_week if job_request.day_of_week else None
+        
         job_id = scheduler.add_cron_job(
             job_id=job_request.job_id,
             cron_expression=job_request.cron_expression,
             hour=job_request.hour,
             minute=job_request.minute,
-            day_of_week=job_request.day_of_week,
+            day_of_week=day_of_week,
             pipeline_config=pipeline_config
         )
         
@@ -226,6 +229,73 @@ async def create_onetime_job(
         )
         
         return {"message": f"One-time job '{job_id}' created successfully", "job_id": job_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/jobs/{job_id}")
+async def get_job(job_id: str, scheduler: PipelineScheduler = Depends(get_scheduler)):
+    """Get details of a specific scheduled job."""
+    try:
+        jobs = scheduler.list_jobs()
+        job = next((j for j in jobs if j['id'] == job_id), None)
+        if not job:
+            raise HTTPException(status_code=404, detail=f"Job '{job_id}' not found")
+        return JobResponse(**job)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/jobs/{job_id}")
+async def update_job(job_id: str, job_data: dict, scheduler: PipelineScheduler = Depends(get_scheduler)):
+    """Update a scheduled job."""
+    try:
+        # Remove the old job first
+        scheduler.remove_job(job_id)
+        
+        # Create new job with updated configuration
+        job_type = job_data.get('jobType', 'cron')
+        config = job_data.get('config', {})
+        
+        if job_type == 'cron':
+            # Convert empty day_of_week to None
+            day_of_week = job_data.get('day_of_week')
+            if day_of_week == '':
+                day_of_week = None
+            
+            scheduler.add_cron_job(
+                job_id=job_id,
+                hour=job_data.get('hour'),
+                minute=job_data.get('minute'),
+                day_of_week=day_of_week,
+                cron_expression=job_data.get('cron_expression'),
+                config=config
+            )
+        elif job_type == 'interval':
+            scheduler.add_interval_job(
+                job_id=job_id,
+                minutes=job_data.get('minutes'),
+                hours=job_data.get('hours'),
+                days=job_data.get('days'),
+                config=config
+            )
+        elif job_type == 'onetime':
+            scheduler.add_one_time_job(
+                job_id=job_id,
+                run_date=job_data.get('run_date'),
+                config=config
+            )
+        
+        # Return the updated job
+        jobs = scheduler.list_jobs()
+        job = next((j for j in jobs if j['id'] == job_id), None)
+        if not job:
+            raise HTTPException(status_code=404, detail=f"Failed to update job '{job_id}'")
+        return JobResponse(**job)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -307,11 +377,16 @@ async def create_preset_job(
     
     try:
         if preset["type"] == "cron":
+            # Convert empty day_of_week to None
+            day_of_week = preset.get("day_of_week")
+            if day_of_week == '':
+                day_of_week = None
+            
             job_id = scheduler.add_cron_job(
                 job_id=job_id,
                 hour=preset.get("hour"),
                 minute=preset.get("minute", 0),
-                day_of_week=preset.get("day_of_week"),
+                day_of_week=day_of_week,
                 pipeline_config=pipeline_config
             )
         elif preset["type"] == "interval":
@@ -327,11 +402,17 @@ async def create_preset_job(
             job_ids = []
             for i, schedule in enumerate(preset["schedules"]):
                 sub_job_id = f"{job_id}_{i+1}"
+                
+                # Convert empty day_of_week to None
+                day_of_week = schedule.get("day_of_week")
+                if day_of_week == '':
+                    day_of_week = None
+                
                 sub_job_id = scheduler.add_cron_job(
                     job_id=sub_job_id,
                     hour=schedule.get("hour"),
                     minute=schedule.get("minute", 0),
-                    day_of_week=schedule.get("day_of_week"),
+                    day_of_week=day_of_week,
                     pipeline_config=pipeline_config
                 )
                 job_ids.append(sub_job_id)

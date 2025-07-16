@@ -19,12 +19,12 @@
 
 <Sidebar.Root>
 	<Sidebar.Header>
-		<div class="flex items-center space-x-2 py-5">
+		<a class="flex items-center space-x-2 py-5" href="/">
 			<div class="w-8 h-8 rounded-lg flex items-center justify-center">
 				<MessageCircle class="w-5 h-5" />
 			</div>
 			<span class="text-xl font-bold">Let's Talk</span>
-		</div>
+		</a>
 	</Sidebar.Header>
 	<Sidebar.Content>
 		<Sidebar.Group>
@@ -54,7 +54,6 @@
 					<Settings class="w-4 h-4 mr-2" />
 					<span>Settings</span>
 				</a>
-				<ThemeToggle />
 			</div>
 			<div class="flex items-center space-x-4">
 				<SystemStatus />

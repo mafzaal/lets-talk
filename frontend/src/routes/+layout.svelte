@@ -1,7 +1,8 @@
 <script lang="ts">
 	import '../app.css';
-	import Layout from '$lib/components/Layout.svelte';
-	import { page } from '$app/state';
+	import * as Sidebar from '$lib/components/ui/sidebar';
+	import AppSidebar from '$lib/components/app-sidebar.svelte';
+	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import { Toaster } from 'svelte-sonner';
 	import { themeStore } from '$lib/stores/theme';
 	import { onMount } from 'svelte';
@@ -12,23 +13,21 @@
 	onMount(() => {
 		themeStore.init();
 	});
-
-	// Only show layout for dashboard-related pages
-	let showLayout = $derived(
-		page.url.pathname.startsWith('/dashboard') ||
-			page.url.pathname.startsWith('/jobs') ||
-			page.url.pathname.startsWith('/analytics') ||
-			page.url.pathname.startsWith('/activity') ||
-			page.url.pathname.startsWith('/settings')
-	);
 </script>
 
-{#if showLayout}
-	<Layout>
-		{@render children()}
-	</Layout>
-{:else}
-	{@render children()}
-{/if}
+<!-- Sidebar using shadcn-svelte -->
+<Sidebar.Provider>
+	<AppSidebar />
+	<Sidebar.Inset>
+		<header class="flex h-16 shrink-0 items-center gap-2 border-b px-4 justify-between">
+			<Sidebar.Trigger class="-ml-1" />
+			<ThemeToggle />
+		</header>
+		<!-- Main content area -->
+		<main class="flex flex-1 flex-col gap-4 p-4">
+			{@render children()}
+		</main>
+	</Sidebar.Inset>
+</Sidebar.Provider>
 
 <Toaster theme={$themeStore} position="top-right" />
