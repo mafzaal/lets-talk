@@ -148,6 +148,10 @@ class ApiClient {
 		return this.request<JobResponse[]>('/scheduler/jobs');
 	}
 
+	async getJob(jobId: string): Promise<JobResponse> {
+		return this.request<JobResponse>(`/scheduler/jobs/${jobId}`);
+	}
+
 	async createCronJob(data: {
 		job_id: string;
 		hour?: number;
@@ -175,9 +179,27 @@ class ApiClient {
 		});
 	}
 
+	async createOneTimeJob(data: {
+		job_id: string;
+		run_date: string; // ISO date string
+		config?: JobConfig;
+	}): Promise<JobResponse> {
+		return this.request<JobResponse>('/scheduler/jobs/onetime', {
+			method: 'POST',
+			body: JSON.stringify(data),
+		});
+	}
+
 	async deleteJob(jobId: string): Promise<void> {
 		await this.request(`/scheduler/jobs/${jobId}`, {
 			method: 'DELETE',
+		});
+	}
+
+	async updateJob(jobId: string, data: any): Promise<JobResponse> {
+		return this.request<JobResponse>(`/scheduler/jobs/${jobId}`, {
+			method: 'PUT',
+			body: JSON.stringify(data),
 		});
 	}
 
