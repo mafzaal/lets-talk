@@ -147,16 +147,16 @@ def create_app() -> FastAPI:
         }
         
         # Add server information
-        openapi_schema["servers"] = [
-            {
-                "url": "/",
-                "description": "Development server"
-            },
-            {
-                "url": "https://api.example.com",
-                "description": "Production server"
-            }
-        ]
+        # openapi_schema["servers"] = [
+        #     {
+        #         "url": "/",
+        #         "description": "Development server"
+        #     },
+        #     {
+        #         "url": "https://api.example.com",
+        #         "description": "Production server"
+        #     }
+        # ]
         
         # Add security schemes (for future use)
         openapi_schema["components"]["securitySchemes"] = {
