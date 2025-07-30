@@ -16,31 +16,31 @@
 	"devDependencies": {
 		"@internationalized/date": "^3.8.2",
 		"@langchain/langgraph": "^0.3.1",
-		"@lucide/svelte": "^0.515.0",
+		"@lucide/svelte": "^0.532.0",
 		"@sveltejs/adapter-static": "^3.0.8",
-		"@sveltejs/kit": "^2.22.2",
-		"@sveltejs/vite-plugin-svelte": "^5.1.0",
+		"@sveltejs/kit": "^2.26.1",
+		"@sveltejs/vite-plugin-svelte": "^6.1.0",
 		"@tailwindcss/forms": "^0.5.9",
 		"@tailwindcss/typography": "^0.5.15",
 		"@tailwindcss/vite": "^4.1.11",
-		"bits-ui": "^2.8.10",
+		"bits-ui": "^2.8.13",
 		"clsx": "^2.1.1",
 		"formsnap": "^2.0.1",
-		"lucide-svelte": "^0.525.0",
+		"lucide-svelte": "^0.534.0",
 		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"remote": "link:@langchain/langgraph/remote",
 		"shadcn-svelte": "^1.0.6",
-		"svelte": "^5.35.4",
-		"svelte-check": "^4.2.2",
+		"svelte": "^5.37.1",
+		"svelte-check": "^4.3.0",
 		"sveltekit-superforms": "^2.27.1",
 		"tailwind-merge": "^3.3.1",
-		"tailwind-variants": "^1.0.0",
+		"tailwind-variants": "^2.0.1",
 		"tailwindcss": "^4.1.11",
-		"tw-animate-css": "^1.3.5",
+		"tw-animate-css": "^1.3.6",
 		"typescript": "^5.0.0",
-		"vite": "^6.2.6",
-		"vite-plugin-devtools-json": "^0.2.0"
+		"vite": "^7.0.6",
+		"vite-plugin-devtools-json": "^0.3.0"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [
@@ -48,8 +48,8 @@
 		]
 	},
 	"dependencies": {
-		"@langchain/langgraph-sdk": "^0.0.90",
-		"marked": "^16.0.0",
+		"@langchain/langgraph-sdk": "^0.0.92",
+		"marked": "^16.1.1",
 		"svelte-sonner": "^1.0.5"
 	}
 }
