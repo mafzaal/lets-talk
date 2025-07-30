@@ -18,8 +18,8 @@
 		"@langchain/langgraph": "^0.3.1",
 		"@lucide/svelte": "^0.532.0",
 		"@sveltejs/adapter-static": "^3.0.8",
-		"@sveltejs/kit": "^2.23.0",
-		"@sveltejs/vite-plugin-svelte": "^6.0.0",
+		"@sveltejs/kit": "^2.26.1",
+		"@sveltejs/vite-plugin-svelte": "^6.1.0",
 		"@tailwindcss/forms": "^0.5.9",
 		"@tailwindcss/typography": "^0.5.15",
 		"@tailwindcss/vite": "^4.1.11",
@@ -31,8 +31,8 @@
 		"prettier-plugin-svelte": "^3.3.3",
 		"remote": "link:@langchain/langgraph/remote",
 		"shadcn-svelte": "^1.0.6",
-		"svelte": "^5.36.0",
-		"svelte-check": "^4.2.2",
+		"svelte": "^5.37.1",
+		"svelte-check": "^4.3.0",
 		"sveltekit-superforms": "^2.27.1",
 		"tailwind-merge": "^3.3.1",
 		"tailwind-variants": "^1.0.0",
@@ -49,7 +49,7 @@
 	},
 	"dependencies": {
 		"@langchain/langgraph-sdk": "^0.0.92",
-		"marked": "^16.0.0",
+		"marked": "^16.1.1",
 		"svelte-sonner": "^1.0.5"
 	}
 }
