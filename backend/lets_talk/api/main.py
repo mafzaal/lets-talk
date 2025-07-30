@@ -159,18 +159,18 @@ def create_app() -> FastAPI:
         # ]
         
         # Add security schemes (for future use)
-        # openapi_schema["components"]["securitySchemes"] = {
-        #     "APIKeyHeader": {
-        #         "type": "apiKey",
-        #         "in": "header",
-        #         "name": "X-API-Key"
-        #     },
-        #     "BearerAuth": {
-        #         "type": "http",
-        #         "scheme": "bearer",
-        #         "bearerFormat": "JWT"
-        #     }
-        # }
+        openapi_schema["components"]["securitySchemes"] = {
+            "APIKeyHeader": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-API-Key"
+            },
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
         
         app.openapi_schema = openapi_schema
         return app.openapi_schema
