@@ -147,30 +147,30 @@ def create_app() -> FastAPI:
         }
         
         # Add server information
-        openapi_schema["servers"] = [
-            {
-                "url": "/",
-                "description": "Development server"
-            },
-            {
-                "url": "https://api.example.com",
-                "description": "Production server"
-            }
-        ]
+        # openapi_schema["servers"] = [
+        #     {
+        #         "url": "/",
+        #         "description": "Development server"
+        #     },
+        #     {
+        #         "url": "https://api.example.com",
+        #         "description": "Production server"
+        #     }
+        # ]
         
         # Add security schemes (for future use)
-        openapi_schema["components"]["securitySchemes"] = {
-            "APIKeyHeader": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "X-API-Key"
-            },
-            "BearerAuth": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT"
-            }
-        }
+        # openapi_schema["components"]["securitySchemes"] = {
+        #     "APIKeyHeader": {
+        #         "type": "apiKey",
+        #         "in": "header",
+        #         "name": "X-API-Key"
+        #     },
+        #     "BearerAuth": {
+        #         "type": "http",
+        #         "scheme": "bearer",
+        #         "bearerFormat": "JWT"
+        #     }
+        # }
         
         app.openapi_schema = openapi_schema
         return app.openapi_schema
