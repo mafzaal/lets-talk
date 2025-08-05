@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 
 [[package]]
@@ -1427,7 +1427,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/0e/72/a3add0e4eec4eb9e2
 
 [[package]]
 name = "langgraph"
-version = "0.6.1"
+version = "0.6.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "langchain-core" },
@@ -1437,9 +1437,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "xxhash" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/12/4a30f766de571bfc319e70c2c0f4d050c0576e15c2249dc75ad122706a5d/langgraph-0.6.1.tar.gz", hash = "sha256:e4399ac5ad0b70f58fa28d6fe05a41b84c15959f270d6d1a86edab4e92ae148b", size = 449723, upload-time = "2025-07-29T20:45:28.438Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/d8/ecedf01b3e90ad288343eeb06d91d8511e049ee0b16d7f3c146baeed2a49/langgraph-0.6.3.tar.gz", hash = "sha256:0d2280d295133dc34ccc12eae1ad4d82ee847b009c59801de418068fa9248e1b", size = 452277, upload-time = "2025-08-03T11:21:35.74Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/90/e37e2bc19bee81f859bfd61526d977f54ec5d8e036fa091f2cfe4f19560b/langgraph-0.6.1-py3-none-any.whl", hash = "sha256:2736027faeb6cd5c0f1ab51a5345594cfcb5eb5beeb5ac1799a58fcecf4b4eae", size = 151874, upload-time = "2025-07-29T20:45:26.998Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/93/7836486f6c18b0b11e6bde5bc0f318947e610637aa5231081bd4adf79eb9/langgraph-0.6.3-py3-none-any.whl", hash = "sha256:733efd8c59b9915e582619da40f2ab5ebb121319a4d7718adef82d6db07547eb", size = 152463, upload-time = "2025-08-03T11:21:34.002Z" },
 ]
 
 [[package]]
