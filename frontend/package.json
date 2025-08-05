@@ -27,7 +27,7 @@
 		"bits-ui": "^2.8.13",
 		"clsx": "^2.1.1",
 		"formsnap": "^2.0.1",
-		"lucide-svelte": "^0.534.0",
+		"lucide-svelte": "^0.536.0",
 		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.3.3",
 		"remote": "link:@langchain/langgraph/remote",
