@@ -22,8 +22,8 @@ importers:
         specifier: ^3.8.2
         version: 3.8.2
       '@langchain/langgraph':
-        specifier: ^0.3.1
-        version: 0.3.12(@langchain/core@0.3.66)(zod-to-json-schema@3.24.6(zod@3.25.76))
+        specifier: ^0.4.2
+        version: 0.4.2(@langchain/core@0.3.66)(zod-to-json-schema@3.24.6(zod@3.25.76))
       '@lucide/svelte':
         specifier: ^0.532.0
         version: 0.532.0(svelte@5.37.1)
@@ -324,14 +324,14 @@ packages:
     resolution: {integrity: sha512-d3SgSDOlgOjdIbReIXVQl9HaQzKqO/5+E+o3kJwoKXLGP9dxi7+lMyaII7yv7G8/aUxMWLwFES9zc1jFoeJEZw==}
     engines: {node: '>=18'}
 
-  '@langchain/langgraph-checkpoint@0.0.18':
-    resolution: {integrity: sha512-IS7zJj36VgY+4pf8ZjsVuUWef7oTwt1y9ylvwu0aLuOn1d0fg05Om9DLm3v2GZ2Df6bhLV1kfWAM0IAl9O5rQQ==}
+  '@langchain/langgraph-checkpoint@0.1.0':
+    resolution: {integrity: sha512-7oY5b0VQSxcV3DgoHdXiCgBhEzml/ZjZfKNeuq6oZ3ggcdUICa/fzrIBbFju6gxPU8ly93s0OsjF4yURnHw70Q==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': '>=0.2.31 <0.4.0'
 
-  '@langchain/langgraph-sdk@0.0.104':
-    resolution: {integrity: sha512-wUO6GMy65Y7DsWtjTJ3dA59enrZy2wN4o48AMYN7dF7u/PMXXYyBjBCKSzgVWqO6uWH2yNpyGDrcMwKuk5kQLA==}
+  '@langchain/langgraph-sdk@0.0.105':
+    resolution: {integrity: sha512-3DD1W1wnbP48807qq+5gY248mFcwwNGqKdmZt05P3zeLpfP5Sfm6ELzVvqHGpr+qumP0yGRZs/7qArYGXRRfcQ==}
     peerDependencies:
       '@langchain/core': '>=0.2.31 <0.4.0'
       react: ^18 || ^19
@@ -358,8 +358,8 @@ packages:
       react-dom:
         optional: true
 
-  '@langchain/langgraph@0.3.12':
-    resolution: {integrity: sha512-4jKvfmxxgQyKnCvXdFbcKt6MdfaJoQ2WWqBR16o2E6D2RxqHvnLMMClZh4FSd6WYw39z5LGWvzRapFbRMqxu1A==}
+  '@langchain/langgraph@0.4.2':
+    resolution: {integrity: sha512-QAxeBIjamn2T2hlqCi+qC8k3Bv/bE/j0VGA+qR+z8NizSbGeD2uftqAYIrk3YtYLWIwk0kIICKcmTz8dKIWzog==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': '>=0.3.58 < 0.4.0'
@@ -872,8 +872,8 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
-  langsmith@0.3.49:
-    resolution: {integrity: sha512-hVLpGzTDq4dFffScKuF9yIuwXqp6LJCsvxK4UjmLae+oEodfnFIQ6yVmNyhxFnm3QuRl1NY8qLFul3k+R1YnGQ==}
+  langsmith@0.3.50:
+    resolution: {integrity: sha512-yosW6sR0EFnMnYKKyBmcqTNknDVOs+dUfcswWk80JoRxox6WEyel7hmSkSzabP/GmTs0hXbrtc+lZwpJWSnI0w==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -1511,7 +1511,7 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.20
-      langsmith: 0.3.49
+      langsmith: 0.3.50
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -1524,12 +1524,12 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
 
-  '@langchain/langgraph-checkpoint@0.0.18(@langchain/core@0.3.66)':
+  '@langchain/langgraph-checkpoint@0.1.0(@langchain/core@0.3.66)':
     dependencies:
       '@langchain/core': 0.3.66
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@0.0.104(@langchain/core@0.3.66)':
+  '@langchain/langgraph-sdk@0.0.105(@langchain/core@0.3.66)':
     dependencies:
       '@types/json-schema': 7.0.15
       p-queue: 6.6.2
@@ -1547,11 +1547,11 @@ snapshots:
     optionalDependencies:
       '@langchain/core': 0.3.66
 
-  '@langchain/langgraph@0.3.12(@langchain/core@0.3.66)(zod-to-json-schema@3.24.6(zod@3.25.76))':
+  '@langchain/langgraph@0.4.2(@langchain/core@0.3.66)(zod-to-json-schema@3.24.6(zod@3.25.76))':
     dependencies:
       '@langchain/core': 0.3.66
-      '@langchain/langgraph-checkpoint': 0.0.18(@langchain/core@0.3.66)
-      '@langchain/langgraph-sdk': 0.0.104(@langchain/core@0.3.66)
+      '@langchain/langgraph-checkpoint': 0.1.0(@langchain/core@0.3.66)
+      '@langchain/langgraph-sdk': 0.0.105(@langchain/core@0.3.66)
       uuid: 10.0.0
       zod: 3.25.76
     optionalDependencies:
@@ -2023,7 +2023,7 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  langsmith@0.3.49:
+  langsmith@0.3.50:
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
