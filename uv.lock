@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 
 [[package]]
@@ -1403,7 +1403,7 @@ wheels = [
 
 [[package]]
 name = "langchain-together"
-version = "0.3.0"
+version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1411,9 +1411,9 @@ dependencies = [
     { name = "langchain-openai" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/24/c4/64b92524121eaf4e805ade7ea68e71d52eab5e8fdad9b6b8e62f5a99eff4/langchain_together-0.3.0.tar.gz", hash = "sha256:c8a96377e49c065526435f766c6e1c7da3f7d054361326f079de8bd368ea76f2", size = 10247, upload-time = "2025-01-10T17:06:08.729Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/67/b2f8a2ab856fe962905c3cdb2c96d531f6cf7ae74b55c6c0380b52f6c99d/langchain_together-0.3.1.tar.gz", hash = "sha256:123a3d6da11c3a32c6e7653f9b52a7793789ddba5a871a2392db0ee3d389be78", size = 10664, upload-time = "2025-08-01T17:14:21.877Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a8/69/b3cbcf5b43acbc098c012ef75035fb0dc1e0f227f5161329ef9884a25ba4/langchain_together-0.3.0-py3-none-any.whl", hash = "sha256:4dcb4f6858c910c23d2268da1ed5f54e8cd01224ecf086dc7a8adbacdc6cb686", size = 12338, upload-time = "2025-01-10T17:06:06.678Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/94/69a4cae7c37a5619c610cc443ca8cdad5495438aed3f72fa936ed38cadf3/langchain_together-0.3.1-py3-none-any.whl", hash = "sha256:f6638c3a1db2732a3e62ed0fdfbac0653765f0e561e7082320952731846945b2", size = 12879, upload-time = "2025-08-01T17:14:20.888Z" },
 ]
 
 [[package]]
