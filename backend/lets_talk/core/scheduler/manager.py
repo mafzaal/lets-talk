@@ -2,7 +2,7 @@
 import os
 import logging
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Union
 
@@ -103,7 +103,7 @@ class PipelineScheduler:
     def _job_executed(self, event):
         """Handle job execution events."""
         self.job_stats["jobs_executed"] += 1
-        self.job_stats["last_execution"] = datetime.now().isoformat()
+        self.job_stats["last_execution"] = datetime.now(timezone.utc).isoformat()
         logger.info(f"Job executed successfully: {event.job_id}")
     
     def _job_error(self, event):
@@ -112,7 +112,7 @@ class PipelineScheduler:
         self.job_stats["last_error"] = {
             "job_id": event.job_id,
             "exception": str(event.exception),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         logger.error(f"Job failed: {event.job_id}, error: {event.exception}")
     
@@ -263,7 +263,7 @@ class PipelineScheduler:
         try:
             job = self.scheduler.get_job(job_id)
             if job:
-                job.modify(next_run_time=datetime.now())
+                job.modify(next_run_time=datetime.now(timezone.utc))
                 logger.info(f"Triggered immediate execution of job: {job_id}")
             else:
                 raise ValueError(f"Job {job_id} not found")

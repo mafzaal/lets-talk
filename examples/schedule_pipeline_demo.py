@@ -14,7 +14,7 @@ Make sure the FastAPI server is running first:
 
 import requests
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional
 
 class PipelineSchedulerClient:
@@ -193,7 +193,7 @@ def demo_job_creation():
     # One-time job in 5 minutes
     print("\n   🎯 Creating one-time job for 5 minutes from now...")
     try:
-        run_time = datetime.now() + timedelta(minutes=5)
+        run_time = datetime.now(timezone.utc) + timedelta(minutes=5)
         config = {
             "incremental_mode": "auto",
             "force_recreate": False,

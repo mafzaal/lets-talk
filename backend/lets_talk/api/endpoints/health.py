@@ -1,6 +1,6 @@
 """Health check API endpoints."""
 from fastapi import APIRouter
-from datetime import datetime
+from datetime import datetime, timezone
 
 from lets_talk.api.models.health import HealthResponse
 from lets_talk.api.dependencies import get_scheduler_instance
@@ -82,7 +82,7 @@ async def health_check():
     
     return HealthResponse(
         status="healthy",
-        timestamp=datetime.now(),
+        timestamp=datetime.now(timezone.utc),
         scheduler_status=scheduler_status,
         version="1.0.0"
     )

@@ -4,7 +4,7 @@ import os
 import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from lets_talk.core.pipeline.processors import PipelineProcessor
 from lets_talk.shared.config import (
@@ -118,7 +118,7 @@ def run_pipeline(
     Returns:
         Dict containing pipeline execution results
     """
-    start_time = datetime.now()
+    start_time = datetime.now(timezone.utc)
     if job_id is None:
         job_id = f"pipeline_{start_time.strftime('%Y%m%d_%H%M%S')}"
     
@@ -226,7 +226,7 @@ def run_pipeline(
             result['errors'].append(f"Health check failed: {e}")
         
         # Log final summary
-        end_time = datetime.now()
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
         
         logger.info("\n" + "="*80)
@@ -251,7 +251,7 @@ def run_pipeline(
         result['errors'].append(str(e))
         
         # Calculate duration even for failures
-        end_time = datetime.now()
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
         result['duration_seconds'] = duration
         

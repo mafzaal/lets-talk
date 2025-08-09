@@ -1,9 +1,10 @@
-"""Contact form tool for user inquiries."""
+"""Contact form tool for external API use."""
 import logging
 import os
 import json
 import re
-from datetime import datetime
+from typing import Any, Dict
+from datetime import datetime, timezone
 from pathlib import Path
 from langchain_core.tools import tool
 
@@ -64,7 +65,7 @@ def contact_form_tool(name: str, email: str, subject: str, message: str) -> str:
             "email": email.strip().lower(),
             "subject": subject.strip(),
             "message": message.strip(),
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "user_agent": "AI Chat Assistant",
             "ip_address": "internal",
             "status": "pending"
@@ -75,7 +76,7 @@ def contact_form_tool(name: str, email: str, subject: str, message: str) -> str:
         contact_dir.mkdir(parents=True, exist_ok=True)
         
         # Create filename with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
         filename = f"contact_{timestamp}.json"
         file_path = contact_dir / filename
         
@@ -137,7 +138,7 @@ def mark_contact_as_processed(filename: str) -> bool:
             submission = json.load(f)
         
         submission['status'] = 'processed'
-        submission['processed_timestamp'] = datetime.now().isoformat()
+        submission['processed_timestamp'] = datetime.now(timezone.utc).isoformat()
         
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(submission, f, indent=2, ensure_ascii=False)

@@ -5,7 +5,7 @@ Contact Us tool implementation.
 import logging
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from langchain_core.tools import tool
 
 # Set up logging
@@ -61,7 +61,7 @@ def contact_form_tool(name: str, email: str, subject: str, message: str) -> str:
         # Save the contact request to a local file for demonstration
         # In a production environment, this would typically use an email API or database
         contact_data = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "name": name,
             "email": email,
             "subject": subject,
@@ -72,7 +72,7 @@ def contact_form_tool(name: str, email: str, subject: str, message: str) -> str:
         os.makedirs("./data/contact_submissions", exist_ok=True)
         
         # Generate a unique filename based on timestamp
-        filename = f"./db/contact_submissions/contact_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        filename = f"./db/contact_submissions/contact_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.json"
         
         # Save the contact data to a JSON file
         with open(filename, 'w') as f:

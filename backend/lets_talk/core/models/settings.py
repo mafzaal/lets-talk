@@ -4,7 +4,7 @@ from __future__ import annotations
 from sqlalchemy import Column, String, Text, Boolean, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 import os
 from pathlib import Path
@@ -26,8 +26,8 @@ class Setting(Base):
     section = Column(String(100), nullable=False)  # e.g., "General", "API", "Database"
     description = Column(Text, nullable=True)
     is_read_only = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     def __repr__(self):
         return f"<Setting(key='{self.key}', section='{self.section}', is_read_only={self.is_read_only})>"
