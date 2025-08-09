@@ -47,6 +47,69 @@ STATS_OUTPUT_DIR = os.environ.get("STATS_OUTPUT_DIR", f"{OUTPUT_DIR}/stats")
 # For MySQL: mysql://user:password@host:port/database
 DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{OUTPUT_DIR}/lets_talk.db")
 
+
+def sanitize_database_url_for_logging(database_url: str) -> str:
+    """
+    Sanitize database URL for safe logging by masking the password.
+    
+    Args:
+        database_url: The database URL to sanitize
+        
+    Returns:
+        Sanitized database URL with password masked
+        
+    Examples:
+        postgresql://user:password@host:5432/db -> postgresql://user:***@host:5432/db
+        sqlite:///path/to/db.db -> sqlite:///path/to/db.db (unchanged)
+    """
+    try:
+        import re
+        
+        # First check if this looks like a valid database URL
+        if not database_url or not isinstance(database_url, str):
+            return "<database_url_masked_for_security>"
+        
+        # Check if it has a valid scheme
+        if not re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*://', database_url):
+            return "<database_url_masked_for_security>"
+        
+        # For SQLite URLs (file paths), return as-is since they don't have passwords
+        if database_url.startswith('sqlite:'):
+            return database_url
+        
+        # Find all @ symbols - the last one should separate credentials from hostname
+        at_positions = [i for i, char in enumerate(database_url) if char == '@']
+        
+        if not at_positions:
+            # No @ symbol, so no credentials
+            return database_url
+        
+        # Use the last @ as the separator between credentials and host
+        last_at = at_positions[-1]
+        before_at = database_url[:last_at]
+        after_at = database_url[last_at:]
+        
+        # Find the scheme end
+        scheme_end = before_at.find('://') + 3
+        if scheme_end == 2:  # find() returned -1, so no ://
+            return "<database_url_masked_for_security>"
+        
+        credentials_part = before_at[scheme_end:]
+        
+        # Check if there's a username:password pattern
+        if ':' in credentials_part:
+            username, password = credentials_part.split(':', 1)
+            # Reconstruct with masked password
+            return database_url[:scheme_end] + username + ':***' + after_at
+        else:
+            # No password, return as-is
+            return database_url
+        
+    except Exception:
+        # If anything fails, return a generic safe message
+        return "<database_url_masked_for_security>"
+
+
 # Migration configuration
 AUTO_MIGRATE_ON_STARTUP = os.environ.get("AUTO_MIGRATE_ON_STARTUP", "True").lower() == "true"
 

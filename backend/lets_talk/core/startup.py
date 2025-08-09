@@ -10,7 +10,8 @@ from lets_talk.shared.config import (
     AUTO_MIGRATE_ON_STARTUP, 
     DATABASE_URL, 
     LOGGER_NAME,
-    OUTPUT_DIR
+    OUTPUT_DIR,
+    sanitize_database_url_for_logging
 )
 from lets_talk.core.migrations.integration import (
     migrate_on_startup,
@@ -138,7 +139,7 @@ def initialize_database_system() -> Dict[str, Any]:
     
     try:
         logger.info("Initializing database system...")
-        logger.info(f"Database URL: {DATABASE_URL}")
+        logger.info(f"Database URL: {sanitize_database_url_for_logging(DATABASE_URL)}")
         logger.info(f"Auto-migrate on startup: {AUTO_MIGRATE_ON_STARTUP}")
         
         # Ensure output directory exists
@@ -358,7 +359,7 @@ def get_startup_health_info() -> Dict[str, Any]:
                 "total_migrations": db_health["total_migrations"]
             },
             "configuration": {
-                "database_url": DATABASE_URL,
+                "database_url": sanitize_database_url_for_logging(DATABASE_URL),
                 "auto_migrate_enabled": AUTO_MIGRATE_ON_STARTUP,
                 "output_directory": OUTPUT_DIR
             }

@@ -1,12 +1,14 @@
 volumes:
     langgraph-data:
         driver: local
+    langgraph-data-7:
+        driver: local
     qdrant-storage:
         driver: local
 
 services:
     langgraph-redis:
-        image: redis:6
+        image: redis:8
         healthcheck:
             test: redis-cli ping
             interval: 5s
@@ -14,7 +16,7 @@ services:
             retries: 5
         restart: unless-stopped
     langgraph-postgres:
-        image: postgres:16
+        image: postgres:17
         env_file:
             - .env.prod
         environment:
@@ -22,7 +24,7 @@ services:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_DB}
         volumes:
-            - langgraph-data:/var/lib/postgresql/data
+            - langgraph-data-7:/var/lib/postgresql/data
         healthcheck:
             test: pg_isready -U postgres
             start_period: 10s
@@ -68,7 +70,7 @@ services:
             DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_USER}@langgraph-postgres:5432/${LETS_TALK_DB}?sslmode=disable
             TZ: ${TZ:-UTC}
         restart: unless-stopped
-    
+
     nginx-proxy:
         image: nginx:alpine
         ports:

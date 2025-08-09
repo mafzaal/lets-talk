@@ -12,7 +12,7 @@ from alembic.runtime.migration import MigrationContext
 from alembic.environment import EnvironmentContext
 from sqlalchemy import create_engine
 
-from lets_talk.shared.config import DATABASE_URL, LOGGER_NAME
+from lets_talk.shared.config import DATABASE_URL, LOGGER_NAME, sanitize_database_url_for_logging
 
 logger = logging.getLogger(f"{LOGGER_NAME}.migrations")
 
@@ -43,7 +43,7 @@ class MigrationManager:
         self.config.set_main_option("sqlalchemy.url", DATABASE_URL)
         
         logger.info(f"Migration manager initialized with config: {self.alembic_cfg_path}")
-        logger.info(f"Using database URL: {DATABASE_URL}")
+        logger.info(f"Using database URL: {sanitize_database_url_for_logging(DATABASE_URL)}")
     
     def get_current_revision(self) -> Optional[str]:
         """Get the current database revision."""
