@@ -1,5 +1,5 @@
 volumes:
-    postgresql-storage:
+    postgres-storage:
         driver: local
     qdrant-storage:
         driver: local
@@ -29,7 +29,7 @@ services:
             LETS_TALK_DB: ${LETS_TALK_DB:-lets_talk}
             TZ: ${TZ:-UTC}
         volumes:
-            - postgresql-storage:/var/lib/postgresql/data
+            - postgres-storage:/var/lib/postgresql/data
             - /etc/localtime:/etc/localtime:ro
             - /etc/timezone:/etc/timezone:ro
         healthcheck:

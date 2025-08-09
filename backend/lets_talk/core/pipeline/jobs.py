@@ -205,6 +205,22 @@ def simple_pipeline_job(job_config: Optional[Dict[str, Any]] = None) -> Dict[str
             result["artifacts"].append(str(report_path))
             logger.info(f"Job report saved to: {report_path}")
         
+        # Check if this is a first-time setup job and mark completion
+        from lets_talk.shared.config import FIRST_TIME_JOB_ID
+        if job_id == FIRST_TIME_JOB_ID:
+            try:
+                from lets_talk.core.first_time import complete_first_time_setup
+                setup_completed = complete_first_time_setup()
+                if setup_completed:
+                    logger.info("🎉 First-time setup completed successfully!")
+                    result["first_time_setup_completed"] = True
+                else:
+                    logger.warning("Failed to mark first-time setup as completed")
+                    result["first_time_setup_completed"] = False
+            except Exception as e:
+                logger.warning(f"Error completing first-time setup: {e}")
+                result["first_time_setup_completed"] = False
+        
         logger.info(f"Pipeline job completed successfully: {job_id}")
         return result
         

@@ -6,12 +6,17 @@ from datetime import datetime
 from typing import Dict, Any, Optional, Union
 from pathlib import Path
 
+
+
+
 from lets_talk.shared.config import (
     AUTO_MIGRATE_ON_STARTUP, 
     DATABASE_URL, 
     LOGGER_NAME,
     OUTPUT_DIR,
-    sanitize_database_url_for_logging
+    sanitize_database_url_for_logging,
+    FIRST_TIME_DETECTION_ENABLED,
+    FIRST_TIME_RUN_PIPELINE_JOB
 )
 from lets_talk.core.migrations.integration import (
     migrate_on_startup,
@@ -20,8 +25,19 @@ from lets_talk.core.migrations.integration import (
 )
 from lets_talk.core.database import ensure_database_exists
 
+
 logger = logging.getLogger(f"{LOGGER_NAME}.startup")
 
+# Global variable to store startup info for shutdown
+_startup_info = None
+
+def set_startup_info(info: Dict[str, Any]) -> None:
+    global _startup_info    
+    _startup_info = info
+
+def get_startup_info() -> Optional[Dict[str, Any]]:
+    global _startup_info
+    return _startup_info
 
 def display_startup_banner() -> None:
     """Display a beautiful startup banner with application information."""
@@ -350,6 +366,14 @@ def log_startup_summary(startup_info: Dict[str, Any]) -> None:
         if current_rev:
             logger.info(f"📊 Database at revision: {current_rev[:8]}")
     
+    # Log first-time setup information
+    if startup_info.get("first_time_detected"):
+        logger.info("🎉 First-time execution detected!")
+        if startup_info.get("first_time_job_created"):
+            logger.info("⏰ First-time pipeline job scheduled")
+        elif startup_info.get("first_time_job_initialized"):
+            logger.info("ℹ️  First-time job setup completed (may already exist)")
+    
     # Log warnings and errors
     for warning in startup_info.get("warnings", []):
         logger.warning(f"⚠️  {warning}")
@@ -507,6 +531,78 @@ def initialize_default_jobs(scheduler_instance, fail_on_error: bool = False) -> 
         return status
 
 
+def initialize_first_time_job(scheduler_instance, fail_on_error: bool = False) -> Dict[str, Any]:
+    """Initialize first-time setup job if this is the first execution.
+    
+    Args:
+        scheduler_instance: The scheduler instance to add jobs to
+        fail_on_error: Whether to fail startup if first-time job creation fails
+        
+    Returns:
+        Dict containing first-time job initialization status
+    """
+    status = {
+        "success": False,
+        "first_time_detected": False,
+        "first_time_job_created": False,
+        "errors": [],
+        "warnings": []
+    }
+    
+    if not scheduler_instance:
+        status["warnings"].append("No scheduler instance provided, skipping first-time job initialization")
+        return status
+    
+    try:
+        # Import here to avoid circular imports
+        from lets_talk.core.first_time import is_first_time_execution, setup_first_time_execution_job
+        
+        logger.info("Checking for first-time execution...")
+        is_first_time = is_first_time_execution()
+        status["first_time_detected"] = is_first_time
+        
+        if is_first_time:
+            logger.info("🎉 First-time execution detected! Setting up initial pipeline job...")
+            
+            first_time_status = setup_first_time_execution_job(scheduler_instance)
+            status["first_time_job_created"] = first_time_status["job_created"]
+            
+            if first_time_status["success"]:
+                logger.info("✅ First-time pipeline job setup completed")
+                status["success"] = True
+                status["warnings"].extend(first_time_status.get("warnings", []))
+            else:
+                error_msg = f"Failed to setup first-time job: {first_time_status['errors']}"
+                logger.error(error_msg)
+                status["errors"].extend(first_time_status["errors"])
+                
+                if fail_on_error:
+                    raise StartupError(error_msg)
+                else:
+                    logger.warning("Continuing without first-time job")
+                    status["success"] = True
+        else:
+            logger.info("Not first-time execution - skipping first-time job setup")
+            status["success"] = True
+        
+        return status
+        
+    except StartupError:
+        raise
+    except Exception as e:
+        error_msg = f"Error during first-time job initialization: {e}"
+        logger.error(error_msg)
+        status["errors"].append(error_msg)
+        
+        if fail_on_error:
+            raise StartupError(error_msg)
+        else:
+            logger.warning("Continuing without first-time job initialization")
+            status["success"] = True
+            
+        return status
+
+
 def startup_fastapi_application(
     app_name: str = "FastAPI API Server",
     scheduler_config: Optional[Dict[str, Any]] = None,
@@ -595,6 +691,26 @@ def startup_fastapi_application(
             logger.warning("Skipping default jobs initialization (scheduler not available)")
             startup_info["warnings"].append("Default jobs skipped (scheduler not available)")
         
+        # Step 4: Initialize first-time job if needed (only if scheduler was initialized)
+        if scheduler_status["success"] and scheduler_status["scheduler_instance"]:
+            logger.info("Step 4: First-time job initialization")
+            first_time_status = initialize_first_time_job(
+                scheduler_status["scheduler_instance"],
+                fail_on_error=False  # Never fail startup for first-time job issues
+            )
+            
+            startup_info["first_time_status"] = first_time_status
+            startup_info["first_time_job_initialized"] = first_time_status["success"]
+            startup_info["first_time_detected"] = first_time_status["first_time_detected"]
+            startup_info["first_time_job_created"] = first_time_status["first_time_job_created"]
+            
+            if not first_time_status["success"]:
+                startup_info["errors"].extend(first_time_status["errors"])
+            startup_info["warnings"].extend(first_time_status["warnings"])
+        else:
+            logger.warning("Skipping first-time job initialization (scheduler not available)")
+            startup_info["warnings"].append("First-time job skipped (scheduler not available)")
+        
         # Determine overall success
         # Success if database is ready OR we're allowed to continue without it
         # AND scheduler is working (or we're allowed to continue without it)
@@ -611,7 +727,8 @@ def startup_fastapi_application(
             error_msg = f"Critical failures in: {', '.join(critical_failures)}"
             startup_info["errors"].append(error_msg)
             logger.error(f"❌ {app_name} startup failed: {error_msg}")
-        
+
+        set_startup_info(startup_info)
         return startup_info
         
     except StartupError:

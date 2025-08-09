@@ -26,6 +26,16 @@ class HealthResponse(BaseModel):
         description="Current API version",
         examples=["1.0.0"]
     )
+    first_time_setup: Optional[dict] = Field(
+        None,
+        description="First-time setup status information",
+        examples=[{
+            "detection_enabled": True,
+            "is_first_time": False,
+            "setup_completed": True,
+            "job_scheduled": False
+        }]
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -33,7 +43,13 @@ class HealthResponse(BaseModel):
                 "status": "healthy",
                 "timestamp": "2025-06-18T10:30:00Z",
                 "scheduler_status": "running",
-                "version": "1.0.0"
+                "version": "1.0.0",
+                "first_time_setup": {
+                    "detection_enabled": True,
+                    "is_first_time": False,
+                    "setup_completed": True,
+                    "job_scheduled": False
+                }
             }
         }
     }

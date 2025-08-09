@@ -211,6 +211,13 @@ DEFAULT_JOB_INCREMENTAL_MODE = os.environ.get("DEFAULT_JOB_INCREMENTAL_MODE", "a
 DEFAULT_JOB_CI_MODE = os.environ.get("DEFAULT_JOB_CI_MODE", "False").lower() == "true"
 DEFAULT_JOB_DRY_RUN = os.environ.get("DEFAULT_JOB_DRY_RUN", "False").lower() == "true"
 
+# First-time execution detection and setup configuration
+FIRST_TIME_DETECTION_ENABLED = os.environ.get("FIRST_TIME_DETECTION_ENABLED", "True").lower() == "true"
+FIRST_TIME_RUN_PIPELINE_JOB = os.environ.get("FIRST_TIME_RUN_PIPELINE_JOB", "True").lower() == "true"
+FIRST_TIME_JOB_ID = os.environ.get("FIRST_TIME_JOB_ID", "first_time_pipeline_setup")
+FIRST_TIME_JOB_DELAY_SECONDS = int(os.environ.get("FIRST_TIME_JOB_DELAY_SECONDS", "30"))
+FIRST_TIME_JOB_FORCE_RECREATE = os.environ.get("FIRST_TIME_JOB_FORCE_RECREATE", "True").lower() == "true"
+
 
 T = TypeVar("T", bound="Configuration")
 

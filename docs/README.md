@@ -7,6 +7,8 @@ This directory contains comprehensive documentation for the Let's Talk system.
 ### 📖 Main Guides
 
 - **[Architecture Documentation](ARCHITECTURE.md)** - Complete system architecture overview
+- **[First-Time Startup Process](FIRST_TIME_STARTUP.md)** - Automatic first-time detection and setup
+- **[First-Time Startup Quick Reference](FIRST_TIME_STARTUP_QUICK_REFERENCE.md)** - Quick commands and troubleshooting
 - **[Migration Guide](MIGRATION_GUIDE.md)** - Migrate from legacy to new structure
 - **[Pipeline Usage Guide](PIPELINE_USAGE_GUIDE.md)** - Comprehensive guide for using the pipeline
 - **[Pipeline Quick Reference](PIPELINE_QUICK_REFERENCE.md)** - Quick commands and common scenarios
