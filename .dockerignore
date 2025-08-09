@@ -1,67 +1,107 @@
+# Python cache and compiled files
 __pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
 *.pyd
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Database files
 *.db
 *.sqlite3
+
+# Log files
 *.log
-*.pot
-*.mo
+
+# Environment files
 *.env
-.env.*
-uv.lock
-artifacts/
-db/
-public/
-node_modules/
+.env*
+
+# Build and package files
 *.egg-info/
+**/*.egg-info/
+uv.lock
+dist/
+build/
+
+# IDE and editor files
 .DS_Store
 .idea/
 .vscode/
+*.swp
+*.tmp
+
+# Archive files
 *.zip
 *.tar.gz
 *.bak
-*.swp
-*.tmp
+
+# Testing and coverage
 *.coverage
 htmlcov/
 .tox/
 .pytest_cache/
-.coverage
+**/.pytest_cache/
 .cache
 *.mypy_cache/
-*.pytest_cache/
+**/*.mypy_cache/
 *.ipynb_checkpoints/
+**/*.ipynb_checkpoints/
 
-# Ignore test output
+# Test output
 *.out
 *.test
 
-# Ignore local dev files
-local_settings.py
+# Version control and CI/CD
 .git/
 .gitattributes
-.python-version
-.github/
 .gitignore
+.github/
+.python-version
+
+# Local development files
+local_settings.py
 .langgraph_api/
 .venv/
-.dockerignore
+venv/
+**/.venv/
+**/venv/
+
+# Project directories not needed in container
 artifacts/
-CONTRIBUTING.md
 data/
 db/
 docs/
-Dokerfile
-docker-compose.yml
 evals/
-REPORT.md
+frontend/
+output/
+public/
 scripts/
 stats/
 tests/
 py-src/notebooks/
-lets_talk.egg-info/
-frontend/
-output/
+node_modules/
+**/node_modules/
+
+# Docker and deployment files
+.dockerignore
+Dockerfile
+docker-compose.yml
 start-docker.sh
-data/
+
+# Documentation and project files
+CONTRIBUTING.md
+REPORT.md
+README.md
+ACCESS_CONTROL_README.md
+SECURITY.md
+LICENSE
+lets-talk.code-workspace
+test_data/
+examples/
+Makefile
+pytest.ini
+start*dev.sh
+
