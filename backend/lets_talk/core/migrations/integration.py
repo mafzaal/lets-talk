@@ -52,6 +52,8 @@ def check_database_health() -> dict:
         
         if not status["is_up_to_date"]:
             logger.warning(f"Database has {len(status['pending_migrations'])} pending migrations")
+        else:
+            logger.info(f"Database has {len(status['pending_migrations'])} pending migrations")
         
         return health_info
         

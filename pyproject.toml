@@ -24,6 +24,7 @@ dependencies = [
     "libmagic>=1.0",
     "pandas>=2.2.3",
     "psutil>=7.0.0",
+    "psycopg2-binary>=2.9.0",
     "python-dotenv>=1.1.0",
     "pydantic>=2.5.0",
     "qdrant-client>=1.14.2",
