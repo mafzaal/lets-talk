@@ -1,31 +1,37 @@
 volumes:
-    langgraph-data:
-        driver: local
-    langgraph-data-7:
+    postgresql-storage:
         driver: local
     qdrant-storage:
         driver: local
 
 services:
-    langgraph-redis:
+    redis:
         image: redis:8
         healthcheck:
             test: redis-cli ping
             interval: 5s
             timeout: 1s
             retries: 5
+        volumes:
+           - /etc/localtime:/etc/localtime:ro
+           - /etc/timezone:/etc/timezone:ro
+        environment:
+            TZ: ${TZ:-UTC}
         restart: unless-stopped
-    langgraph-postgres:
+    postgres:
         image: postgres:17
         env_file:
             - .env.prod
         environment:
-            POSTGRES_DB: ${POSTGRES_DB}
-            POSTGRES_USER: ${POSTGRES_USER}
+            LANGGRAPH_DB: ${LANGGRAPH_DB:-langgraph_db}
+            POSTGRES_USER: ${POSTGRES_USER:-postgres}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-            LETS_TALK_DB: ${LETS_TALK_DB}
+            LETS_TALK_DB: ${LETS_TALK_DB:-lets_talk}
+            TZ: ${TZ:-UTC}
         volumes:
-            - langgraph-data-7:/var/lib/postgresql/data
+            - postgresql-storage:/var/lib/postgresql/data
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
         healthcheck:
             test: pg_isready -U postgres
             start_period: 10s
@@ -33,35 +39,32 @@ services:
             retries: 5
             interval: 5s
         restart: unless-stopped
-    langgraph-qdrant:
+    qdrant:
         image: qdrant/qdrant
         volumes:
             - qdrant-storage:/qdrant/storage
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+        environment:
+            TZ: ${TZ:-UTC}
         restart: unless-stopped
         healthcheck:
             test: ["CMD", "curl", "-f", "http://localhost:6333/collections"]
             interval: 10s
             timeout: 5s
             retries: 5
-    lets-talk-api:
+    api:
         build:
             context: .
             dockerfile: Dockerfile
-
         ports:
             - "9124:8000"
-        # healthcheck:
-        #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-        #     interval: 30s
-        #     timeout: 10s
-        #     retries: 3
-        #     start_period: 40s
         depends_on:
-            langgraph-redis:
+            redis:
                 condition: service_healthy
-            langgraph-postgres:
+            postgres:
                 condition: service_healthy
-            langgraph-qdrant:
+            qdrant:
                 condition: service_started
         env_file:
             - .env.prod
@@ -71,25 +74,29 @@ services:
            - /etc/localtime:/etc/localtime:ro
            - /etc/timezone:/etc/timezone:ro
         environment:
-            REDIS_URI: redis://langgraph-redis:6379
-            QDRANT_URL: http://langgraph-qdrant:6333
-            POSTGRES_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@langgraph-postgres:5432/${POSTGRES_DB}?sslmode=disable
-            DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@langgraph-postgres:5432/${LETS_TALK_DB}?sslmode=disable
+            REDIS_URI: redis://redis:6379
+            QDRANT_URL: http://qdrant:6333
+            POSTGRES_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${LANGGRAPH_DB}?sslmode=disable
+            DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${LETS_TALK_DB}?sslmode=disable
             TZ: ${TZ:-UTC}
         restart: unless-stopped
 
-    nginx-proxy:
+    proxy:
         image: nginx:alpine
         ports:
             - "9123:80"
         depends_on:
-            lets-talk-api:
-                condition: service_healthy
+            api:
+                condition: service_started
         env_file:
             - .env.auth
         volumes:
             - ./nginx.conf.template:/etc/nginx/nginx.conf.template:ro
             - ./nginx-startup.sh:/docker-entrypoint.d/nginx-startup.sh:ro
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+        environment:
+            TZ: ${TZ:-UTC}
         command: ["/docker-entrypoint.d/nginx-startup.sh"]
         restart: unless-stopped
     

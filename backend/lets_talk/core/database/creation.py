@@ -13,13 +13,13 @@ logger = logging.getLogger(f"{LOGGER_NAME}.database.creation")
 
 def create_database_if_not_exists() -> bool:
     """
-    Create the database if it doesn't exist.
+    Create the required databases if they don't exist.
     
     This function works by connecting to the default database (usually 'postgres')
-    and creating the target database if it doesn't exist.
+    and creating both the lets_talk and langgraph databases if they don't exist.
     
     Returns:
-        bool: True if database exists or was created successfully, False otherwise
+        bool: True if all databases exist or were created successfully, False otherwise
     """
     try:
         # Parse the database URL
@@ -37,7 +37,8 @@ def create_database_if_not_exists() -> bool:
         target_db_name = parsed.path.lstrip('/')
         
         # Get environment variables for database names
-        postgres_db = os.environ.get("POSTGRES_DB", "postgres")
+        postgres_db = "postgres"
+        langgraph_db = os.environ.get("LANGGRAPH_DB", "langgraph")
         lets_talk_db = os.environ.get("LETS_TALK_DB", "lets_talk")
         
         # Use the target database name from environment or URL
@@ -46,7 +47,13 @@ def create_database_if_not_exists() -> bool:
         else:
             target_db_name = lets_talk_db
         
-        logger.info(f"Checking if database '{target_db_name}' exists...")
+        # Create list of unique databases to create
+        databases_to_create = list(set([target_db_name, langgraph_db]))
+        
+        if len(databases_to_create) == 1:
+            logger.info(f"LANGGRAPH_DB and LETS_TALK_DB point to the same database: '{databases_to_create[0]}'")
+        
+        logger.info(f"Checking if databases {databases_to_create} exist...")
         
         # Create connection URL to the default PostgreSQL database
         default_db_url = f"postgresql://{username}:{password}@{host}:{port}/{postgres_db}"
@@ -55,20 +62,21 @@ def create_database_if_not_exists() -> bool:
         engine = sa.create_engine(default_db_url, isolation_level='AUTOCOMMIT')
         
         with engine.connect() as conn:
-            # Check if the target database exists
-            result = conn.execute(
-                sa.text("SELECT 1 FROM pg_database WHERE datname = :db_name"),
-                {"db_name": target_db_name}
-            )
-            
-            if result.fetchone():
-                logger.info(f"Database '{target_db_name}' already exists")
-                return True
-            
-            # Create the database
-            logger.info(f"Creating database '{target_db_name}'...")
-            conn.execute(sa.text(f'CREATE DATABASE "{target_db_name}"'))
-            logger.info(f"Database '{target_db_name}' created successfully")
+            # Create each database if it doesn't exist
+            for db_name in databases_to_create:
+                # Check if the database exists
+                result = conn.execute(
+                    sa.text("SELECT 1 FROM pg_database WHERE datname = :db_name"),
+                    {"db_name": db_name}
+                )
+                
+                if result.fetchone():
+                    logger.info(f"Database '{db_name}' already exists")
+                else:
+                    # Create the database
+                    logger.info(f"Creating database '{db_name}'...")
+                    conn.execute(sa.text(f'CREATE DATABASE "{db_name}"'))
+                    logger.info(f"Database '{db_name}' created successfully")
             
         engine.dispose()
         return True
