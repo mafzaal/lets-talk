@@ -1,6 +1,8 @@
 """Application startup and initialization utilities."""
 import logging
 import sys
+import platform
+from datetime import datetime
 from typing import Dict, Any, Optional, Union
 from pathlib import Path
 
@@ -17,6 +19,91 @@ from lets_talk.core.migrations.integration import (
 )
 
 logger = logging.getLogger(f"{LOGGER_NAME}.startup")
+
+
+def display_startup_banner() -> None:
+    """Display a beautiful startup banner with application information."""
+    try:
+        # Import version info
+        from lets_talk import __version__, __author__, __email__
+        
+        # Get system information
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        platform_info = platform.platform()
+        hostname = platform.node()
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Database type detection
+        db_type = "Unknown"
+        if DATABASE_URL.startswith("sqlite"):
+            db_type = "SQLite"
+        elif DATABASE_URL.startswith("postgresql"):
+            db_type = "PostgreSQL"
+        elif DATABASE_URL.startswith("mysql"):
+            db_type = "MySQL"
+        
+        # Truncate long strings for better formatting
+        platform_short = platform_info[:40] + "..." if len(platform_info) > 40 else platform_info
+        output_dir_short = OUTPUT_DIR[:35] + "..." if len(OUTPUT_DIR) > 35 else OUTPUT_DIR
+        hostname_short = hostname[:20] + "..." if len(hostname) > 20 else hostname
+        
+        # Create the banner with horizontal separators only
+        banner_lines = [
+            "═══════════════════════════════════════════════════════════════════════════════",
+            "",
+            "  ██▓    ▓█████▄▄▄█████▓  ██████    ▄▄▄█████▓ ▄▄▄       ██▓    ██ ▄█▀",
+            " ▓██▒    ▓█   ▀▓  ██▒ ▓▒▒██    ▒    ▓  ██▒ ▓▒▒████▄    ▓██▒    ██▄█▒",
+            " ▒██░    ▒███  ▒ ▓██░ ▒░░ ▓██▄      ▒ ▓██░ ▒░▒██  ▀█▄  ▒██░   ▓███▄░",
+            " ▒██░    ▒▓█  ▄░ ▓██▓ ░   ▒   ██▒   ░ ▓██▓ ░ ░██▄▄▄▄██ ▒██░   ▓██ █▄",
+            " ░██████▒░▒████▒ ▒██▒ ░ ▒██████▒▒     ▒██▒ ░  ▓█   ▓██▒░██████▒▒██▒ █▄",
+            " ░ ▒░▓  ░░░ ▒░ ░ ▒ ░░   ▒ ▒▓▒ ▒ ░     ▒ ░░    ▒▒   ▓▒█░░ ▒░▓  ░▒ ▒▒ ▓▒",
+            " ░ ░ ▒  ░ ░ ░  ░   ░    ░ ░▒  ░ ░       ░      ▒   ▒▒ ░░ ░ ▒  ░░ ░▒ ▒░",
+            "   ░ ░      ░    ░      ░  ░  ░       ░        ░   ▒     ░ ░   ░ ░░ ░",
+            "     ░  ░   ░  ░           ░                       ░  ░    ░  ░░  ░",
+            "",
+            "                      AI-Driven Chat for Websites",
+            "",
+            "═══════════════════════════════════════════════════════════════════════════════",
+            "",
+            " 📋 Application Information",
+            f"     Version: {__version__:<15} Author: {__author__}",
+            f"     Email: {__email__}",
+            "",
+            " 🖥️  System Information",
+            f"     Platform: {platform_short}",
+            f"     Python: {python_version:<12} Hostname: {hostname_short}",
+            f"     Started: {current_time}",
+            "",
+            " ⚙️  Configuration",
+            f"     Database: {db_type:<12} Auto-migrate: {str(AUTO_MIGRATE_ON_STARTUP)}",
+            f"     Output Dir: {output_dir_short}",
+            "",
+            " 🚀 Starting application components...",
+            "",
+            "═══════════════════════════════════════════════════════════════════════════════"
+        ]
+        
+        banner = "\n" + "\n".join(banner_lines)
+        
+        # Print banner line by line to ensure proper formatting
+        for line in banner.strip().split('\n'):
+            print(line)
+        
+        # Also log the startup
+        logger.info("Let's Talk application starting...")
+        logger.info(f"Version: {__version__} | Python: {python_version} | Platform: {platform_info}")
+        logger.info(f"Database: {db_type} | Auto-migrate: {AUTO_MIGRATE_ON_STARTUP}")
+        
+    except Exception as e:
+        # Fallback simple banner if there's any issue
+        simple_banner = """
+═══════════════════════════════════════════════════════════════
+  🚀 Let's Talk - AI-Driven Chat for Websites
+═══════════════════════════════════════════════════════════════
+"""
+        print(simple_banner)
+        logger.info("Let's Talk application starting...")
+        logger.warning(f"Could not display full banner: {e}")
 
 
 class StartupError(Exception):
@@ -186,11 +273,62 @@ def log_startup_summary(startup_info: Dict[str, Any]) -> None:
     """Log a summary of the startup process."""
     app_name = startup_info.get("app_name", "Application")
     
-    if startup_info["success"]:
-        logger.info(f"✅ {app_name} started successfully")
-    else:
-        logger.error(f"❌ {app_name} startup failed")
+    # Create a beautiful completion banner
+    try:
+        from lets_talk import __version__
+        
+        if startup_info["success"]:
+            db_status = "Initialized" if startup_info.get('database_initialized') else 'Failed'
+            scheduler_status = "Running" if startup_info.get('scheduler_initialized') else 'Failed'
+            jobs_status = "Ready" if startup_info.get('default_jobs_initialized') else 'Failed'
+            
+            completion_lines = [
+                "═══════════════════════════════════════════════════════════════════════════════",
+                "",
+                f" 🎉 STARTUP COMPLETE - Let's Talk v{__version__} is ready!",
+                "",
+                f" ✅ Database: {db_status:<13} ✅ Scheduler: {scheduler_status}",
+                f" ✅ Jobs: {jobs_status:<17} 🚀 Status: Ready to serve requests!",
+                "",
+                " 📡 API Server running on all interfaces",
+                " 🔍 Health checks available at /health",
+                " 📚 API Documentation at /docs",
+                "",
+                "═══════════════════════════════════════════════════════════════════════════════"
+            ]
+            
+            print("\n".join(completion_lines))
+            logger.info(f"✅ {app_name} started successfully")
+        else:
+            db_icon = "✅ OK" if startup_info.get('database_initialized') else '❌ Failed'
+            scheduler_icon = "✅ OK" if startup_info.get('scheduler_initialized') else '❌ Failed'
+            jobs_icon = "✅ OK" if startup_info.get('default_jobs_initialized') else '❌ Failed'
+            status_text = "✅ Operational" if startup_info['success'] else '❌ Degraded'
+            
+            error_lines = [
+                "═══════════════════════════════════════════════════════════════════════════════",
+                "",
+                f" ⚠️  STARTUP ISSUES - Let's Talk v{__version__} started with warnings",
+                "",
+                f" Database: {db_icon:<11} Scheduler: {scheduler_icon}",
+                f" Jobs: {jobs_icon:<15} Status: {status_text}",
+                "",
+                " ⚠️  Check logs for details on any failed components",
+                "",
+                "═══════════════════════════════════════════════════════════════════════════════"
+            ]
+            
+            print("\n".join(error_lines))
+            logger.error(f"❌ {app_name} startup completed with issues")
     
+    except Exception as e:
+        # Fallback to simple logging
+        if startup_info["success"]:
+            logger.info(f"✅ {app_name} started successfully")
+        else:
+            logger.error(f"❌ {app_name} startup failed")
+    
+    # Detailed component status
     if startup_info.get("database_initialized"):
         db_status = startup_info.get("database_status", {})
         if db_status.get("migrations_applied"):
@@ -200,6 +338,7 @@ def log_startup_summary(startup_info: Dict[str, Any]) -> None:
         if current_rev:
             logger.info(f"📊 Database at revision: {current_rev[:8]}")
     
+    # Log warnings and errors
     for warning in startup_info.get("warnings", []):
         logger.warning(f"⚠️  {warning}")
     
@@ -390,6 +529,9 @@ def startup_fastapi_application(
     }
     
     try:
+        # Display startup banner first
+        display_startup_banner()
+        
         logger.info(f"Starting {app_name} with full startup sequence...")
         
         # Step 1: Initialize database system
@@ -509,6 +651,28 @@ def shutdown_application(
         # Add other component shutdowns here as needed
         
         if shutdown_status["success"]:
+            # Display shutdown banner
+            try:
+                from lets_talk import __version__
+                
+                components_text = ', '.join(shutdown_status['components_shutdown']) + ' stopped'
+                
+                shutdown_lines = [
+                    "═══════════════════════════════════════════════════════════════════════════════",
+                    "",
+                    f" 👋 SHUTDOWN COMPLETE - Let's Talk v{__version__} has stopped gracefully",
+                    "",
+                    f" ✅ {components_text}",
+                    "",
+                    " Thank you for using Let's Talk! 🚀",
+                    "",
+                    "═══════════════════════════════════════════════════════════════════════════════"
+                ]
+                
+                print("\n".join(shutdown_lines))
+            except Exception:
+                pass
+            
             logger.info("✅ Application shutdown completed successfully")
         else:
             logger.warning("⚠️ Application shutdown completed with errors")
