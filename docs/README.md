@@ -7,6 +7,8 @@ This directory contains comprehensive documentation for the Let's Talk system.
 ### 📖 Main Guides
 
 - **[Architecture Documentation](ARCHITECTURE.md)** - Complete system architecture overview
+- **[First-Time Startup Process](FIRST_TIME_STARTUP.md)** - Automatic first-time detection and setup
+- **[First-Time Startup Quick Reference](FIRST_TIME_STARTUP_QUICK_REFERENCE.md)** - Quick commands and troubleshooting
 - **[Migration Guide](MIGRATION_GUIDE.md)** - Migrate from legacy to new structure
 - **[Pipeline Usage Guide](PIPELINE_USAGE_GUIDE.md)** - Comprehensive guide for using the pipeline
 - **[Pipeline Quick Reference](PIPELINE_QUICK_REFERENCE.md)** - Quick commands and common scenarios
@@ -40,8 +42,8 @@ cd py-src && uv run python -m lets_talk.core.pipeline.engine --force-recreate
 # Start the FastAPI server
 cd py-src && uv run python lets_talk/main.py
 
-# Or start Chainlit interface
-chainlit run py-src/app.py --host 0.0.0.0 --port 7860
+# Or use the web frontend
+cd frontend && pnpm dev
 ```
 
 ### 3. Daily Usage

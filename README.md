@@ -40,7 +40,7 @@ Let’s Talk combines several AI technologies:
 - **Vector Database:** Qdrant for efficient content indexing
 - **Language Models:** GPT-4o-mini for production, with GPT-4.1 for evaluation, plus support for integrating other LLMs and providers
 - **Orchestration:** LangChain and LangGraph for the complete RAG workflow
-- **Interface:** Chainlit for prototyping, with future Svelte component integration
+- **Interface:** Custom Svelte component integrated with the blog's design
 
 ## Try It For Yourself!
 
@@ -98,6 +98,9 @@ Let's Talk features a modular, layered architecture for maintainability and scal
 # Install dependencies
 uv install
 
+# Set up database (auto-migrates on startup by default)
+export DATABASE_URL="sqlite:///./output/lets_talk.db"
+
 # Run the API server
 cd py-src && uv run python lets_talk/main.py
 
@@ -106,7 +109,13 @@ cd py-src && uv run python -m lets_talk.core.pipeline.engine
 
 # Use scheduler CLI
 cd py-src && uv run python -m lets_talk.core.scheduler.cli --help
+
+# Manage database migrations manually (if needed)
+./migrate.sh status
+./migrate.sh upgrade
 ```
+
+For detailed setup and configuration, see the [documentation](docs/).
 
 ### Import Examples
 

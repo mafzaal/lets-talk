@@ -1,10 +1,13 @@
-"""Pipeline execution API endpoints."""
-from typing import Optional
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from pathlib import Path
+"""Pipeline management API endpoints."""
+
 import json
 import logging
-from datetime import datetime
+from typing import Dict, Any, Optional
+from pathlib import Path
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
+from fastapi.responses import JSONResponse
+
+from datetime import datetime, timezone
 
 from lets_talk.api.models.pipeline import (
     PipelineRunRequest, PipelineRunResponse, PipelineReportsResponse
@@ -29,7 +32,7 @@ async def run_pipeline(
         config = JobConfig.with_defaults()
     
     pipeline_config = config.model_dump()
-    pipeline_config["job_id"] = f"manual_run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    pipeline_config["job_id"] = f"manual_run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
     
     # Use background task to avoid blocking the API
     from lets_talk.core.pipeline.jobs import simple_pipeline_job

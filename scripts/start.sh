@@ -1,1 +1,3 @@
-uv run chainlit run ./py-src/app.py --port 8000
+#!/bin/bash
+# Start the backend server
+cd "$(dirname "$0")/.." && uv run python main.py

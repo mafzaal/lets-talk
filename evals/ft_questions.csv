@@ -1405,7 +1405,7 @@ Building the Research Agent required integrating several cutting-edge technologi
 
 - **LangChain**: Provides the foundation for LLM application development
 - **LangGraph**: Enables sophisticated workflow orchestration 
-- **Chainlit**: Powers the interactive chat interface
+- **Svelte Frontend**: Powers the interactive chat interface
 - **Qdrant**: Serves as the vector database for document embeddings
 - **OpenAI**: Supplies the GPT-4o language model and embeddings
 - **Tavily/DuckDuckGo**: Delivers web search capabilities
@@ -1421,7 +1421,7 @@ Building the Research Agent required integrating several cutting-edge technologi
 
 - **LangChain**: Provides the foundation for LLM application development
 - **LangGraph**: Enables sophisticated workflow orchestration 
-- **Chainlit**: Powers the interactive chat interface
+- **Svelte Frontend**: Powers the interactive chat interface
 - **Qdrant**: Serves as the vector database for document embeddings
 - **OpenAI**: Supplies the GPT-4o language model and embeddings
 - **Tavily/DuckDuckGo**: Delivers web search capabilities

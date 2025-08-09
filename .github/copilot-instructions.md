@@ -9,6 +9,7 @@ This file provides guidelines for GitHub Copilot to interact with this repositor
 - Execute Python scripts with `uv run` instead of directly using the Python interpreter
 - For virtual environments, use `uv venv` to create them
 - When generating requirements files, use `uv pip freeze` instead of `pip freeze`
+- Always use `uv run python <script>` to run Python scripts
 
 
 ## Frontend (Svelte 5, SvelteKit, shadcn-svelte) and JS/TS Package Management

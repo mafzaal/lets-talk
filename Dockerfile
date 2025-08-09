@@ -1,6 +1,7 @@
 FROM langchain/langgraph-api:3.13-wolfi
 
-
+# Install timezone data for proper timezone handling
+RUN apk add --no-cache tzdata
 
 # -- Adding local package . --
 ADD . /deps/lets-talk

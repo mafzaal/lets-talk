@@ -13,6 +13,7 @@ backend_dir = Path(__file__).parent / "backend"
 sys.path.insert(0, str(backend_dir))
 
 from lets_talk.core.pipeline.engine import run_pipeline
+from lets_talk.core.startup import startup_application, log_startup_summary
 
 
 def setup_logging():
@@ -43,6 +44,23 @@ if __name__ == "__main__":
     
     print("Starting the lets-talk pipeline...")
     logger.info("Pipeline execution started")
+    
+    # Initialize application (including database migrations)
+    try:
+        logger.info("Initializing application...")
+        startup_info = startup_application(
+            app_name="Pipeline Script",
+            require_database=True,
+            fail_on_migration_error=False  # Continue even if database fails
+        )
+        log_startup_summary(startup_info)
+        
+        if not startup_info["success"]:
+            logger.warning("Application initialization had issues, but continuing with pipeline execution")
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize application: {e}")
+        logger.warning("Continuing with pipeline execution despite initialization errors")
     
     try:
         # Run the pipeline with default configuration

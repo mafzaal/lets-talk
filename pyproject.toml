@@ -1,6 +1,6 @@
 [project]
 name = "lets-talk"
-version = "0.1.1"
+version = "0.1.5"
 description = "Let's Talk is AI driven chat for websites"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -24,6 +24,7 @@ dependencies = [
     "libmagic>=1.0",
     "pandas>=2.2.3",
     "psutil>=7.0.0",
+    "psycopg2-binary>=2.9.0",
     "python-dotenv>=1.1.0",
     "pydantic>=2.5.0",
     "qdrant-client>=1.14.2",
@@ -33,6 +34,7 @@ dependencies = [
     "uvicorn>=0.24.0",
     "websockets>=15.0.1",
     "python-frontmatter>=1.1.0",
+    "alembic>=1.16.4",
 ]
 
 
@@ -61,7 +63,6 @@ dev = [
     "langgraph-cli[inmem]>=0.2.10",
     "langchain-huggingface>=0.2.0",
     "unstructured[md]>=0.17.2",
-    "chainlit>=2.5.5",
 ]
 
 [tool.pytest.ini_options]

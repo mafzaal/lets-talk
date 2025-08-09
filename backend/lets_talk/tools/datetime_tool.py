@@ -23,8 +23,8 @@ def get_current_datetime() -> str:
     Returns:
         Tool object for providing current date and time
     """
-    now = datetime.datetime.now()
-    formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.datetime.now(datetime.timezone.utc)
+    formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S UTC")
     weekday = now.strftime("%A")
     
     result = {
@@ -39,7 +39,7 @@ def get_current_datetime() -> str:
         "hour": now.hour,
         "minute": now.minute,
         "second": now.second,
-        "timezone": str(datetime.datetime.now().astimezone().tzinfo)
+        "timezone": "UTC"
     }
     
     # Convert to string representation that's easier for LLMs to parse

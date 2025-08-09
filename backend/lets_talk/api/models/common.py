@@ -1,7 +1,7 @@
 """Common API models shared across endpoints."""
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -132,5 +132,5 @@ class BaseResponse(BaseModel):
     
     def __init__(self, **data):
         if 'timestamp' not in data:
-            data['timestamp'] = datetime.now()
+            data['timestamp'] = datetime.now(timezone.utc)
         super().__init__(**data)

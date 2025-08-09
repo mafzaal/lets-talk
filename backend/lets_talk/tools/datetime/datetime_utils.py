@@ -22,8 +22,8 @@ def get_current_datetime() -> str:
     Returns:
         str: A formatted string containing all current datetime information
     """
-    now = datetime.datetime.now()
-    formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.datetime.now(datetime.timezone.utc)
+    formatted_datetime = now.strftime("%Y-%m-%d %H:%M:%S UTC")
     weekday = now.strftime("%A")
     
     result = {
@@ -38,7 +38,7 @@ def get_current_datetime() -> str:
         "hour": now.hour,
         "minute": now.minute,
         "second": now.second,
-        "timezone": str(datetime.datetime.now().astimezone().tzinfo)
+        "timezone": "UTC"
     }
     
     # Convert to string representation that's easier for LLMs to parse
@@ -58,8 +58,8 @@ def parse_datetime(date_string: str, format_string: str = "%Y-%m-%d %H:%M:%S") -
 
 
 def get_timezone_aware_now() -> datetime.datetime:
-    """Get current datetime with timezone information."""
-    return datetime.datetime.now().astimezone()
+    """Get current datetime with timezone information (UTC)."""
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 def calculate_time_difference(start: datetime.datetime, end: datetime.datetime) -> datetime.timedelta:

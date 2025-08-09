@@ -3,8 +3,8 @@ events {
 }
 
 http {
-    upstream langgraph_api {
-        server langgraph-api:8000;
+    upstream lets_talk_api {
+        server api:8000;
     }
 
     # Rate limiting for anonymous users
@@ -34,7 +34,7 @@ http {
         location ~ ^/threads {
             limit_req zone=public_api burst=10 nodelay;
             
-            proxy_pass http://langgraph_api;
+            proxy_pass http://lets_talk_api;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -90,7 +90,7 @@ http {
             proxy_hide_header Access-Control-Allow-Headers;
             proxy_hide_header Access-Control-Allow-Credentials;
             
-            proxy_pass http://langgraph_api;
+            proxy_pass http://lets_talk_api;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -106,7 +106,7 @@ http {
             
             limit_req zone=auth_api burst=20 nodelay;
             
-            proxy_pass http://langgraph_api;
+            proxy_pass http://lets_talk_api;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -133,7 +133,7 @@ http {
             
             limit_req zone=auth_api burst=50 nodelay;
             
-            proxy_pass http://langgraph_api;
+            proxy_pass http://lets_talk_api;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

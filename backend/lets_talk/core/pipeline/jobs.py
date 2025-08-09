@@ -1,7 +1,7 @@
 """Pipeline job implementations."""
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from pathlib import Path
 
@@ -88,7 +88,7 @@ def simple_pipeline_job(job_config: Optional[Dict[str, Any]] = None) -> Dict[str
             final_job_config[field_name] = job_config[field_name]
     
     # Extract additional configuration parameters for backwards compatibility
-    job_id = job_config.get("job_id", f"pipeline_job_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+    job_id = job_config.get("job_id", f"pipeline_job_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}")
     ci_mode = job_config.get("ci_mode", False)
     dry_run = job_config.get("dry_run", False)
     
@@ -98,7 +98,7 @@ def simple_pipeline_job(job_config: Optional[Dict[str, Any]] = None) -> Dict[str
     qdrant_url = job_config.get("qdrant_url", QDRANT_URL)
     should_save_stats = job_config.get("should_save_stats", SHOULD_SAVE_STATS)
     health_check = job_config.get("health_check", False)
-    start_time = datetime.now()
+    start_time = datetime.now(timezone.utc)
     
     logger.info(f"Starting pipeline job: {job_id}")
     logger.info(f"Configuration: force_recreate={final_job_config['force_recreate']}, ci_mode={ci_mode}, dry_run={dry_run}")
@@ -189,7 +189,7 @@ def simple_pipeline_job(job_config: Optional[Dict[str, Any]] = None) -> Dict[str
                 result["message"] = f"Pipeline execution failed: {e}"
                 result["errors"] = [str(e)]
         
-        end_time = datetime.now()
+        end_time = datetime.now(timezone.utc)
         result["end_time"] = end_time.isoformat()
         result["duration_seconds"] = (end_time - start_time).total_seconds()
         
@@ -205,11 +205,27 @@ def simple_pipeline_job(job_config: Optional[Dict[str, Any]] = None) -> Dict[str
             result["artifacts"].append(str(report_path))
             logger.info(f"Job report saved to: {report_path}")
         
+        # Check if this is a first-time setup job and mark completion
+        from lets_talk.shared.config import FIRST_TIME_JOB_ID
+        if job_id == FIRST_TIME_JOB_ID:
+            try:
+                from lets_talk.core.first_time import complete_first_time_setup
+                setup_completed = complete_first_time_setup()
+                if setup_completed:
+                    logger.info("🎉 First-time setup completed successfully!")
+                    result["first_time_setup_completed"] = True
+                else:
+                    logger.warning("Failed to mark first-time setup as completed")
+                    result["first_time_setup_completed"] = False
+            except Exception as e:
+                logger.warning(f"Error completing first-time setup: {e}")
+                result["first_time_setup_completed"] = False
+        
         logger.info(f"Pipeline job completed successfully: {job_id}")
         return result
         
     except Exception as e:
-        end_time = datetime.now()
+        end_time = datetime.now(timezone.utc)
         error_result = {
             "job_id": job_id,
             "status": "failed",

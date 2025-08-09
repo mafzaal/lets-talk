@@ -4,12 +4,12 @@ from __future__ import annotations
 from sqlalchemy import Column, String, Text, Boolean, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 import os
 from pathlib import Path
 
-from lets_talk.shared.config import OUTPUT_DIR
+from lets_talk.shared.config import OUTPUT_DIR, DATABASE_URL
 
 Base = declarative_base()
 
@@ -26,8 +26,8 @@ class Setting(Base):
     section = Column(String(100), nullable=False)  # e.g., "General", "API", "Database"
     description = Column(Text, nullable=True)
     is_read_only = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     def __repr__(self):
         return f"<Setting(key='{self.key}', section='{self.section}', is_read_only={self.is_read_only})>"
@@ -36,7 +36,7 @@ class Setting(Base):
 def get_settings_database_url() -> str:
     """Get the database URL for settings storage."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    return f"sqlite:///{OUTPUT_DIR}/settings.db"
+    return DATABASE_URL
 
 
 def create_settings_engine():
@@ -61,6 +61,17 @@ def get_settings_session():
 
 def init_settings_db():
     """Initialize the settings database and tables."""
+    # Import migration integration here to avoid circular imports
+    from lets_talk.core.migrations.integration import initialize_database
+    
+    # Use migrations to initialize database
+    migration_success = initialize_database()
+    
+    if not migration_success:
+        # Fallback to direct table creation for development
+        engine = create_settings_engine()
+        create_settings_tables(engine)
+        return engine
+    
     engine = create_settings_engine()
-    create_settings_tables(engine)
     return engine
