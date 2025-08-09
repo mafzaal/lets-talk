@@ -1,7 +1,7 @@
 """Application startup and initialization utilities."""
 import logging
 import sys
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 from pathlib import Path
 
 from lets_talk.shared.config import (
@@ -231,3 +231,293 @@ def get_startup_health_info() -> Dict[str, Any]:
             "database": {"healthy": False},
             "configuration": {}
         }
+
+
+def initialize_scheduler_system(
+    scheduler_type: str = "background",
+    max_workers: int = 20,
+    enable_persistence: Optional[bool] = None,
+    fail_on_error: bool = False
+) -> Dict[str, Any]:
+    """Initialize the scheduler system.
+    
+    Args:
+        scheduler_type: Type of scheduler to create
+        max_workers: Maximum number of worker threads
+        enable_persistence: Whether to enable persistent storage (None = auto-decide based on DB health)
+        fail_on_error: Whether to fail startup if scheduler initialization fails
+        
+    Returns:
+        Dict containing scheduler initialization status and instance
+    """
+    status = {
+        "success": False,
+        "scheduler_instance": None,
+        "persistence_enabled": False,
+        "errors": [],
+        "warnings": []
+    }
+    
+    try:
+        from lets_talk.core.scheduler.manager import PipelineScheduler
+        
+        logger.info("Initializing scheduler system...")
+        
+        # Auto-decide persistence based on database health if not specified
+        if enable_persistence is None:
+            db_health = check_database_health()
+            enable_persistence = db_health["healthy"]
+            logger.info(f"Auto-decided persistence: {enable_persistence} (based on DB health)")
+        
+        # Create scheduler instance
+        scheduler_instance = PipelineScheduler(
+            scheduler_type=scheduler_type,
+            max_workers=max_workers,
+            enable_persistence=bool(enable_persistence)
+        )
+        
+        # Start the scheduler
+        scheduler_instance.start()
+        logger.info(f"Scheduler started successfully (persistence: {enable_persistence})")
+        
+        status.update({
+            "success": True,
+            "scheduler_instance": scheduler_instance,
+            "persistence_enabled": enable_persistence
+        })
+        
+        return status
+        
+    except Exception as e:
+        error_msg = f"Failed to initialize scheduler: {e}"
+        logger.error(error_msg)
+        status["errors"].append(error_msg)
+        
+        if fail_on_error:
+            raise StartupError(error_msg)
+        else:
+            logger.warning("Continuing without scheduler")
+            
+        return status
+
+
+def initialize_default_jobs(scheduler_instance, fail_on_error: bool = False) -> Dict[str, Any]:
+    """Initialize default jobs if enabled.
+    
+    Args:
+        scheduler_instance: The scheduler instance to add jobs to
+        fail_on_error: Whether to fail startup if default job creation fails
+        
+    Returns:
+        Dict containing default job initialization status
+    """
+    status = {
+        "success": False,
+        "default_job_created": False,
+        "errors": [],
+        "warnings": []
+    }
+    
+    if not scheduler_instance:
+        status["warnings"].append("No scheduler instance provided, skipping default job initialization")
+        return status
+    
+    try:
+        logger.info("Initializing default jobs...")
+        default_job_success = scheduler_instance.initialize_default_job_if_needed()
+        
+        if default_job_success:
+            logger.info("Default job initialized successfully")
+            status.update({
+                "success": True,
+                "default_job_created": True
+            })
+        else:
+            warning_msg = "Default job initialization returned False (may be disabled or already exists)"
+            logger.info(warning_msg)
+            status.update({
+                "success": True,  # Still success, just no job created
+                "warnings": [warning_msg]
+            })
+        
+        return status
+        
+    except Exception as e:
+        error_msg = f"Failed to initialize default jobs: {e}"
+        logger.error(error_msg)
+        status["errors"].append(error_msg)
+        
+        if fail_on_error:
+            raise StartupError(error_msg)
+        else:
+            logger.warning("Continuing without default job initialization")
+            status["success"] = True  # Don't fail startup for default job issues
+            
+        return status
+
+
+def startup_fastapi_application(
+    app_name: str = "FastAPI API Server",
+    scheduler_config: Optional[Dict[str, Any]] = None,
+    fail_on_migration_error: bool = False,
+    fail_on_scheduler_error: bool = False,
+    fail_on_default_job_error: bool = False
+) -> Dict[str, Any]:
+    """Complete startup sequence for FastAPI application.
+    
+    Args:
+        app_name: Name of the application
+        scheduler_config: Optional scheduler configuration
+        fail_on_migration_error: Whether to fail if database migration fails
+        fail_on_scheduler_error: Whether to fail if scheduler initialization fails
+        fail_on_default_job_error: Whether to fail if default job creation fails
+        
+    Returns:
+        Dict containing complete startup status and instances
+    """
+    startup_info = {
+        "app_name": app_name,
+        "success": False,
+        "database_initialized": False,
+        "scheduler_initialized": False,
+        "default_jobs_initialized": False,
+        "database_status": {},
+        "scheduler_status": {},
+        "default_jobs_status": {},
+        "scheduler_instance": None,
+        "errors": [],
+        "warnings": []
+    }
+    
+    try:
+        logger.info(f"Starting {app_name} with full startup sequence...")
+        
+        # Step 1: Initialize database system
+        logger.info("Step 1: Database initialization")
+        db_status = initialize_database_system()
+        startup_info["database_status"] = db_status
+        startup_info["database_initialized"] = db_status["success"]
+        
+        if not db_status["success"] and fail_on_migration_error:
+            error_msg = f"Database initialization failed for {app_name}"
+            startup_info["errors"].extend(db_status["errors"])
+            raise StartupError(f"{error_msg}: {', '.join(db_status['errors'])}")
+        elif not db_status["success"]:
+            startup_info["warnings"].append("Database initialization failed but continuing")
+        
+        # Step 2: Initialize scheduler system
+        logger.info("Step 2: Scheduler initialization")
+        scheduler_config = scheduler_config or {}
+        scheduler_status = initialize_scheduler_system(
+            scheduler_type=scheduler_config.get("scheduler_type", "background"),
+            max_workers=scheduler_config.get("max_workers", 20),
+            enable_persistence=scheduler_config.get("enable_persistence"),
+            fail_on_error=fail_on_scheduler_error
+        )
+        
+        startup_info["scheduler_status"] = scheduler_status
+        startup_info["scheduler_initialized"] = scheduler_status["success"]
+        startup_info["scheduler_instance"] = scheduler_status["scheduler_instance"]
+        
+        if not scheduler_status["success"]:
+            startup_info["errors"].extend(scheduler_status["errors"])
+            startup_info["warnings"].extend(scheduler_status["warnings"])
+        
+        # Step 3: Initialize default jobs (only if scheduler was initialized)
+        if scheduler_status["success"] and scheduler_status["scheduler_instance"]:
+            logger.info("Step 3: Default jobs initialization")
+            default_jobs_status = initialize_default_jobs(
+                scheduler_status["scheduler_instance"],
+                fail_on_error=fail_on_default_job_error
+            )
+            
+            startup_info["default_jobs_status"] = default_jobs_status
+            startup_info["default_jobs_initialized"] = default_jobs_status["success"]
+            
+            if not default_jobs_status["success"]:
+                startup_info["errors"].extend(default_jobs_status["errors"])
+            startup_info["warnings"].extend(default_jobs_status["warnings"])
+        else:
+            logger.warning("Skipping default jobs initialization (scheduler not available)")
+            startup_info["warnings"].append("Default jobs skipped (scheduler not available)")
+        
+        # Determine overall success
+        # Success if database is ready OR we're allowed to continue without it
+        # AND scheduler is working (or we're allowed to continue without it)
+        critical_failures = []
+        if not startup_info["database_initialized"] and fail_on_migration_error:
+            critical_failures.append("database")
+        if not startup_info["scheduler_initialized"] and fail_on_scheduler_error:
+            critical_failures.append("scheduler")
+        
+        if not critical_failures:
+            startup_info["success"] = True
+            logger.info(f"✅ {app_name} startup completed successfully")
+        else:
+            error_msg = f"Critical failures in: {', '.join(critical_failures)}"
+            startup_info["errors"].append(error_msg)
+            logger.error(f"❌ {app_name} startup failed: {error_msg}")
+        
+        return startup_info
+        
+    except StartupError:
+        raise
+    except Exception as e:
+        error_msg = f"Unexpected error during {app_name} startup: {e}"
+        logger.exception(error_msg)
+        startup_info["errors"].append(error_msg)
+        return startup_info
+
+
+def shutdown_application(
+    startup_info: Dict[str, Any],
+    timeout: int = 30
+) -> Dict[str, Any]:
+    """Graceful shutdown of application components.
+    
+    Args:
+        startup_info: The startup info dict containing component instances
+        timeout: Timeout in seconds for shutdown operations
+        
+    Returns:
+        Dict containing shutdown status
+    """
+    shutdown_status = {
+        "success": True,
+        "components_shutdown": [],
+        "errors": [],
+        "warnings": []
+    }
+    
+    try:
+        logger.info("Starting application shutdown sequence...")
+        
+        # Shutdown scheduler if it exists
+        scheduler_instance = startup_info.get("scheduler_instance")
+        if scheduler_instance:
+            try:
+                logger.info("Shutting down scheduler...")
+                scheduler_instance.shutdown(wait=True)
+                shutdown_status["components_shutdown"].append("scheduler")
+                logger.info("Scheduler shut down successfully")
+            except Exception as e:
+                error_msg = f"Error shutting down scheduler: {e}"
+                logger.error(error_msg)
+                shutdown_status["errors"].append(error_msg)
+                shutdown_status["success"] = False
+        
+        # Add other component shutdowns here as needed
+        
+        if shutdown_status["success"]:
+            logger.info("✅ Application shutdown completed successfully")
+        else:
+            logger.warning("⚠️ Application shutdown completed with errors")
+        
+        return shutdown_status
+        
+    except Exception as e:
+        error_msg = f"Unexpected error during shutdown: {e}"
+        logger.exception(error_msg)
+        shutdown_status["errors"].append(error_msg)
+        shutdown_status["success"] = False
+        return shutdown_status

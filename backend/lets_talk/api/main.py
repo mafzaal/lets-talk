@@ -9,89 +9,89 @@ import logging
 
 from lets_talk.api.dependencies import set_scheduler_instance
 from lets_talk.api.endpoints import scheduler, pipeline, health, settings
-from lets_talk.core.scheduler.manager import PipelineScheduler
-from lets_talk.core.startup import startup_application, log_startup_summary
+from lets_talk.core.startup import (
+    startup_fastapi_application, 
+    shutdown_application,
+    log_startup_summary
+)
 from lets_talk.shared.config import LOGGER_NAME
 
 # Set up logging
 logger = logging.getLogger(f"{LOGGER_NAME}.api")
 
+# Global variable to store startup info for shutdown
+_startup_info = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager for startup and shutdown tasks."""
-    # Startup code
-    startup_info = None
-    scheduler_instance = None
+    global _startup_info
     
+    # Startup sequence
     try:
-        # Initialize application with database migrations
-        logger.info("Starting FastAPI application startup sequence...")
-        startup_info = startup_application(
+        logger.info("Starting FastAPI application...")
+        
+        # Use consolidated startup system
+        _startup_info = startup_fastapi_application(
             app_name="FastAPI API Server",
-            require_database=True,
-            fail_on_migration_error=False  # Don't fail completely if migration fails
+            scheduler_config={
+                "scheduler_type": "background",
+                "max_workers": 20,
+                "enable_persistence": None  # Auto-decide based on DB health
+            },
+            fail_on_migration_error=False,  # Don't fail completely if migration fails
+            fail_on_scheduler_error=False,  # Don't fail completely if scheduler fails  
+            fail_on_default_job_error=False  # Don't fail completely if default job fails
         )
         
         # Log startup summary
-        log_startup_summary(startup_info)
+        log_startup_summary(_startup_info)
         
-        # Only start scheduler if database initialization was successful
-        if startup_info["database_initialized"]:
-            logger.info("Database ready, initializing scheduler...")
-            scheduler_instance = PipelineScheduler(
-                scheduler_type="background",
-                max_workers=20,
-                enable_persistence=True
-            )
-            scheduler_instance.start()
-            set_scheduler_instance(scheduler_instance)
-            logger.info("Pipeline scheduler started successfully")
-            
-            # Initialize default job if enabled and needed
-            try:
-                scheduler_instance.initialize_default_job_if_needed()
-            except Exception as e:
-                logger.warning(f"Failed to initialize default job: {e}")
-                # Don't fail startup if default job creation fails
-            
+        # Set scheduler instance for dependency injection
+        if _startup_info.get("scheduler_instance"):
+            set_scheduler_instance(_startup_info["scheduler_instance"])
+            logger.info("Scheduler instance set for FastAPI dependencies")
         else:
-            logger.warning("Database not ready, scheduler will use memory-only storage")
-            # Start scheduler without persistence
-            scheduler_instance = PipelineScheduler(
-                scheduler_type="background",
-                max_workers=20,
-                enable_persistence=False
-            )
-            scheduler_instance.start()
-            set_scheduler_instance(scheduler_instance)
-            logger.info("Pipeline scheduler started with memory storage")
-            
-            # Initialize default job if enabled and needed
-            try:
-                scheduler_instance.initialize_default_job_if_needed()
-            except Exception as e:
-                logger.warning(f"Failed to initialize default job: {e}")
-                # Don't fail startup if default job creation fails
-            
+            logger.warning("No scheduler instance available for FastAPI dependencies")
+        
+        # Log final startup status
+        if _startup_info["success"]:
+            logger.info("🚀 FastAPI application startup completed successfully")
+        else:
+            logger.warning("⚠️ FastAPI application started with some issues")
+            for error in _startup_info.get("errors", []):
+                logger.error(f"   • {error}")
+        
     except Exception as e:
-        logger.error(f"Failed to complete startup sequence: {e}")
+        logger.error(f"Failed to start FastAPI application: {e}")
         logger.exception("Startup error details:")
-        # Log what we know about the startup status
-        if startup_info:
-            log_startup_summary(startup_info)
         # Continue with minimal functionality
         logger.warning("Continuing with minimal functionality...")
+        _startup_info = {
+            "success": False,
+            "errors": [str(e)],
+            "scheduler_instance": None
+        }
     
     yield
     
-    # Shutdown code
+    # Shutdown sequence
     try:
-        if scheduler_instance:
-            scheduler_instance.shutdown()
-            logger.info("Pipeline scheduler shut down successfully")
+        logger.info("Shutting down FastAPI application...")
+        if _startup_info:
+            shutdown_status = shutdown_application(_startup_info, timeout=30)
+            if shutdown_status["success"]:
+                logger.info("✅ FastAPI application shutdown completed successfully")
+            else:
+                logger.warning("⚠️ FastAPI application shutdown completed with issues")
+                for error in shutdown_status.get("errors", []):
+                    logger.error(f"   • {error}")
+        else:
+            logger.info("No startup info available, skipping component shutdown")
     except Exception as e:
-        logger.error(f"Error shutting down scheduler: {e}")
+        logger.error(f"Error during FastAPI application shutdown: {e}")
+        logger.exception("Shutdown error details:")
 
 
 def create_app() -> FastAPI:

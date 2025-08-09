@@ -1,6 +1,6 @@
 [project]
 name = "lets-talk"
-version = "0.1.1"
+version = "0.1.5"
 description = "Let's Talk is AI driven chat for websites"
 readme = "README.md"
 requires-python = ">=3.13"
