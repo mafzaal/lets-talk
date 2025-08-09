@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any
 import os
 from pathlib import Path
 
-from lets_talk.shared.config import OUTPUT_DIR
+from lets_talk.shared.config import OUTPUT_DIR, DATABASE_URL
 
 Base = declarative_base()
 
@@ -36,7 +36,7 @@ class Setting(Base):
 def get_settings_database_url() -> str:
     """Get the database URL for settings storage."""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    return f"sqlite:///{OUTPUT_DIR}/settings.db"
+    return DATABASE_URL
 
 
 def create_settings_engine():

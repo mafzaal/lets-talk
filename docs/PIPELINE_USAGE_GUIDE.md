@@ -194,6 +194,7 @@ uv run python lets_talk/pipeline.py --dry-run --incremental
 | `VECTOR_STORAGE_PATH` | Vector database path | Required |
 | `QDRANT_COLLECTION` | Collection name | `lets_talk_documents` |
 | `EMBEDDING_MODEL` | Embedding model | `ollama:snowflake-arctic-embed2:latest` |
+| `DATABASE_URL` | Database URL for settings and scheduler | `sqlite:///output/lets_talk.db` |
 
 ### Output Configuration
 

@@ -17,7 +17,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 
-from lets_talk.shared.config import OUTPUT_DIR, LOGGER_NAME
+from lets_talk.shared.config import OUTPUT_DIR, LOGGER_NAME, DATABASE_URL
 
 logger = logging.getLogger(f"{LOGGER_NAME}.scheduler")
 
@@ -41,9 +41,9 @@ class PipelineScheduler:
         if enable_persistence and job_store_url:
             self.job_store_url = job_store_url
         elif enable_persistence:
-            # Default SQLite job store in output directory
+            # Use configured database URL
             os.makedirs(OUTPUT_DIR, exist_ok=True)
-            self.job_store_url = f"sqlite:///{OUTPUT_DIR}/scheduler_jobs.db"
+            self.job_store_url = DATABASE_URL
         else:
             self.job_store_url = None
         

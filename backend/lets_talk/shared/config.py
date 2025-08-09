@@ -41,6 +41,11 @@ OUTPUT_DIR = os.environ.get("OUTPUT_DIR", "output/")
 # Output directory for statistics and artifacts
 STATS_OUTPUT_DIR = os.environ.get("STATS_OUTPUT_DIR", f"{OUTPUT_DIR}/stats")
 
+# Database configuration
+# Default SQLite database in output directory
+# For PostgreSQL: postgresql://user:password@host:port/database
+# For MySQL: mysql://user:password@host:port/database
+DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{OUTPUT_DIR}/lets_talk.db")
 
 # Output filenames configuration
 METADATA_CSV_FILE = os.environ.get("METADATA_CSV_FILE", f"blog_metadata.csv")
