@@ -70,7 +70,6 @@ This solution transforms passive reading into interactive dialogue, enhancing in
    - [07_Fine_Tune_Eval](/py-src/notebooks/07_Fine_Tune_Eval.ipynb)
     
 7. **User Interface**: 
-   - **Current**: Chainlit - Rapid prototyping with built-in chat UI components
    - **Production**: Custom Svelte component - Lightweight, responsive interface integrating with the blog's design
 
 ## Serving & Inference

@@ -40,8 +40,8 @@ cd py-src && uv run python -m lets_talk.core.pipeline.engine --force-recreate
 # Start the FastAPI server
 cd py-src && uv run python lets_talk/main.py
 
-# Or start Chainlit interface
-chainlit run py-src/app.py --host 0.0.0.0 --port 7860
+# Or use the web frontend
+cd frontend && pnpm dev
 ```
 
 ### 3. Daily Usage

@@ -1,5 +1,5 @@
 .PHONY: help install install-dev test test-verbose test-unit test-integration test-slow test-coverage
-.PHONY: lint format clean build run run-dev run-chainlit run-backend run-docker
+.PHONY: lint format clean build run run-dev run-backend run-docker
 .PHONY: docker-build docker-up docker-down docker-logs
 .PHONY: build-vector-store start-services stop-services health-check
 .PHONY: freeze requirements docs
@@ -102,10 +102,6 @@ run: ## Run the main application
 run-dev: ## Run the application in development mode
 	@echo "$(GREEN)Running application in development mode...$(NC)"
 	uv run python -m backend.app
-
-run-chainlit: ## Run the Chainlit interface
-	@echo "$(GREEN)Starting Chainlit interface...$(NC)"
-	uv run chainlit run backend/app.py -w
 
 run-backend: ## Run the FastAPI backend
 	@echo "$(GREEN)Starting FastAPI backend...$(NC)"
@@ -211,7 +207,7 @@ setup-prod: ## Setup for production
 dev: ## Start development environment
 	@echo "$(GREEN)Starting development environment...$(NC)"
 	$(MAKE) start-services
-	$(MAKE) run-chainlit
+	$(MAKE) run-backend
 
 notebook: ## Start Jupyter notebook server
 	@echo "$(GREEN)Starting Jupyter notebook server...$(NC)"
@@ -258,7 +254,6 @@ status: ## Show project status
 # Emergency stops
 kill: ## Force stop all related processes
 	@echo "$(RED)Force stopping all processes...$(NC)"
-	pkill -f "chainlit" || true
 	pkill -f "uvicorn" || true
 	pkill -f "jupyter" || true
 	$(MAKE) docker-down

@@ -42,14 +42,12 @@ local_settings.py
 .git/
 .gitattributes
 .python-version
-.chainlit/
 .github/
 .gitignore
 .langgraph_api/
 .venv/
 .dockerignore
 artifacts/
-chainlit.md
 CONTRIBUTING.md
 data/
 db/

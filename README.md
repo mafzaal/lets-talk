@@ -40,7 +40,7 @@ Let’s Talk combines several AI technologies:
 - **Vector Database:** Qdrant for efficient content indexing
 - **Language Models:** GPT-4o-mini for production, with GPT-4.1 for evaluation, plus support for integrating other LLMs and providers
 - **Orchestration:** LangChain and LangGraph for the complete RAG workflow
-- **Interface:** Chainlit for prototyping, with future Svelte component integration
+- **Interface:** Custom Svelte component integrated with the blog's design
 
 ## Try It For Yourself!
 

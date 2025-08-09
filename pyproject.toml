@@ -62,7 +62,6 @@ dev = [
     "langgraph-cli[inmem]>=0.2.10",
     "langchain-huggingface>=0.2.0",
     "unstructured[md]>=0.17.2",
-    "chainlit>=2.5.5",
 ]
 
 [tool.pytest.ini_options]

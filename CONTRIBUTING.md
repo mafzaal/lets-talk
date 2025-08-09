@@ -52,8 +52,8 @@ TheDataGuy Chat is a Q&A chatbot powered by the content from [TheDataGuy blog](h
    # Start the API server
    cd py-src && uv run python lets_talk/main.py
    
-   # Or for Chainlit interface
-   chainlit run py-src/app.py --host 0.0.0.0 --port 7860
+   # Or for the web frontend
+   cd frontend && pnpm dev
    ```
 
 ### Using Docker
@@ -101,7 +101,6 @@ lets-talk/
 │   │       ├── constants.py # Constants
 │   │       ├── exceptions.py # Custom exceptions
 │   │       └── prompts/   # LLM templates
-│   ├── app.py             # Chainlit entry point
 │   └── notebooks/         # Jupyter notebooks for analysis
 ├── db/                    # Vector database storage
 ├── evals/                 # Evaluation datasets and results
