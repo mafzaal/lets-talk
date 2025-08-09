@@ -98,6 +98,9 @@ Let's Talk features a modular, layered architecture for maintainability and scal
 # Install dependencies
 uv install
 
+# Set up database (auto-migrates on startup by default)
+export DATABASE_URL="sqlite:///./output/lets_talk.db"
+
 # Run the API server
 cd py-src && uv run python lets_talk/main.py
 
@@ -106,7 +109,13 @@ cd py-src && uv run python -m lets_talk.core.pipeline.engine
 
 # Use scheduler CLI
 cd py-src && uv run python -m lets_talk.core.scheduler.cli --help
+
+# Manage database migrations manually (if needed)
+./migrate.sh status
+./migrate.sh upgrade
 ```
+
+For detailed setup and configuration, see the [documentation](docs/).
 
 ### Import Examples
 

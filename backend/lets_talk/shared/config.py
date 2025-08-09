@@ -47,6 +47,9 @@ STATS_OUTPUT_DIR = os.environ.get("STATS_OUTPUT_DIR", f"{OUTPUT_DIR}/stats")
 # For MySQL: mysql://user:password@host:port/database
 DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{OUTPUT_DIR}/lets_talk.db")
 
+# Migration configuration
+AUTO_MIGRATE_ON_STARTUP = os.environ.get("AUTO_MIGRATE_ON_STARTUP", "True").lower() == "true"
+
 # Output filenames configuration
 METADATA_CSV_FILE = os.environ.get("METADATA_CSV_FILE", f"blog_metadata.csv")
 BLOG_STATS_FILENAME = os.environ.get("BLOG_STATS_FILENAME", "blog_stats_latest.json")

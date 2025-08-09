@@ -10,6 +10,7 @@ import logging
 from lets_talk.api.dependencies import set_scheduler_instance
 from lets_talk.api.endpoints import scheduler, pipeline, health, settings
 from lets_talk.core.scheduler.manager import PipelineScheduler
+from lets_talk.core.startup import startup_application, log_startup_summary
 from lets_talk.shared.config import LOGGER_NAME
 
 # Set up logging
@@ -19,27 +20,58 @@ logger = logging.getLogger(f"{LOGGER_NAME}.api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager for startup and shutdown tasks."""
-    # Startup code - initialize scheduler in background mode
+    # Startup code
+    startup_info = None
+    scheduler_instance = None
+    
     try:
-        scheduler_instance = PipelineScheduler(
-            scheduler_type="background",
-            max_workers=20,
-            enable_persistence=True
+        # Initialize application with database migrations
+        logger.info("Starting FastAPI application startup sequence...")
+        startup_info = startup_application(
+            app_name="FastAPI API Server",
+            require_database=True,
+            fail_on_migration_error=False  # Don't fail completely if migration fails
         )
-        scheduler_instance.start()
-        set_scheduler_instance(scheduler_instance)
-        logger.info("Pipeline scheduler started successfully")
+        
+        # Log startup summary
+        log_startup_summary(startup_info)
+        
+        # Only start scheduler if database initialization was successful
+        if startup_info["database_initialized"]:
+            logger.info("Database ready, initializing scheduler...")
+            scheduler_instance = PipelineScheduler(
+                scheduler_type="background",
+                max_workers=20,
+                enable_persistence=True
+            )
+            scheduler_instance.start()
+            set_scheduler_instance(scheduler_instance)
+            logger.info("Pipeline scheduler started successfully")
+        else:
+            logger.warning("Database not ready, scheduler will use memory-only storage")
+            # Start scheduler without persistence
+            scheduler_instance = PipelineScheduler(
+                scheduler_type="background",
+                max_workers=20,
+                enable_persistence=False
+            )
+            scheduler_instance.start()
+            set_scheduler_instance(scheduler_instance)
+            logger.info("Pipeline scheduler started with memory storage")
+            
     except Exception as e:
-        logger.error(f"Failed to start scheduler: {e}")
-        # Don't set scheduler instance if initialization failed
+        logger.error(f"Failed to complete startup sequence: {e}")
+        logger.exception("Startup error details:")
+        # Log what we know about the startup status
+        if startup_info:
+            log_startup_summary(startup_info)
+        # Continue with minimal functionality
+        logger.warning("Continuing with minimal functionality...")
     
     yield
     
     # Shutdown code
-    scheduler_instance = None
     try:
-        from lets_talk.api.dependencies import get_scheduler_instance
-        scheduler_instance = get_scheduler_instance()
         if scheduler_instance:
             scheduler_instance.shutdown()
             logger.info("Pipeline scheduler shut down successfully")

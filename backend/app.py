@@ -6,6 +6,27 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 from lets_talk.config import (CREATE_VECTOR_DB,VECTOR_STORAGE_PATH)
+from lets_talk.core.startup import startup_application, log_startup_summary
+import logging
+
+# Setup logging for the app
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Initialize application with database migrations
+try:
+    logger.info("Initializing Chainlit application...")
+    startup_info = startup_application(
+        app_name="Chainlit Chat Application",
+        require_database=True,
+        fail_on_migration_error=False
+    )
+    log_startup_summary(startup_info)
+    if not startup_info["success"]:
+        logger.warning("Application initialization had issues, but continuing...")
+except Exception as e:
+    logger.error(f"Failed to initialize application: {e}")
+    logger.warning("Continuing with application startup despite initialization errors")
 
 
 

@@ -61,6 +61,17 @@ def get_settings_session():
 
 def init_settings_db():
     """Initialize the settings database and tables."""
+    # Import migration integration here to avoid circular imports
+    from lets_talk.core.migrations.integration import initialize_database
+    
+    # Use migrations to initialize database
+    migration_success = initialize_database()
+    
+    if not migration_success:
+        # Fallback to direct table creation for development
+        engine = create_settings_engine()
+        create_settings_tables(engine)
+        return engine
+    
     engine = create_settings_engine()
-    create_settings_tables(engine)
     return engine

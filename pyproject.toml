@@ -33,6 +33,7 @@ dependencies = [
     "uvicorn>=0.24.0",
     "websockets>=15.0.1",
     "python-frontmatter>=1.1.0",
+    "alembic>=1.16.4",
 ]
 
 
