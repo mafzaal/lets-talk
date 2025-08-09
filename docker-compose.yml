@@ -65,6 +65,7 @@ services:
             REDIS_URI: redis://langgraph-redis:6379
             QDRANT_URL: http://langgraph-qdrant:6333
             POSTGRES_URI:  postgres://${POSTGRES_USER}:${POSTGRES_USER}@langgraph-postgres:5432/${POSTGRES_DB}?sslmode=disable
+            DATABASE_URL:  postgres://${POSTGRES_USER}:${POSTGRES_USER}@langgraph-postgres:5432/${LETS_TALK_DB}?sslmode=disable
         restart: unless-stopped
     
     nginx-proxy:
