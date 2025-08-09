@@ -18,6 +18,7 @@ from lets_talk.core.migrations.integration import (
     check_database_health,
     initialize_database
 )
+from lets_talk.core.database import ensure_database_exists
 
 logger = logging.getLogger(f"{LOGGER_NAME}.startup")
 
@@ -144,6 +145,16 @@ def initialize_database_system() -> Dict[str, Any]:
         
         # Ensure output directory exists
         ensure_output_directory()
+        
+        # Step 1: Ensure database exists
+        logger.info("Step 1: Database initialization")
+        logger.info("Initializing database system...")
+        db_exists = ensure_database_exists()
+        if not db_exists:
+            error_msg = "Failed to ensure database exists"
+            logger.error(error_msg)
+            status["errors"].append(error_msg)
+            return status
         
         # Check database health first
         logger.info("Checking database health...")

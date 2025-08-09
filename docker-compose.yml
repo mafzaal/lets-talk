@@ -22,7 +22,8 @@ services:
         environment:
             POSTGRES_DB: ${POSTGRES_DB}
             POSTGRES_USER: ${POSTGRES_USER}
-            POSTGRES_PASSWORD: ${POSTGRES_DB}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            LETS_TALK_DB: ${LETS_TALK_DB}
         volumes:
             - langgraph-data-7:/var/lib/postgresql/data
         healthcheck:
@@ -66,8 +67,8 @@ services:
         environment:
             REDIS_URI: redis://langgraph-redis:6379
             QDRANT_URL: http://langgraph-qdrant:6333
-            POSTGRES_URI: postgresql://${POSTGRES_USER}:${POSTGRES_USER}@langgraph-postgres:5432/${POSTGRES_DB}?sslmode=disable
-            DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_USER}@langgraph-postgres:5432/${LETS_TALK_DB}?sslmode=disable
+            POSTGRES_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@langgraph-postgres:5432/${POSTGRES_DB}?sslmode=disable
+            DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@langgraph-postgres:5432/${LETS_TALK_DB}?sslmode=disable
             TZ: ${TZ:-UTC}
         restart: unless-stopped
 
