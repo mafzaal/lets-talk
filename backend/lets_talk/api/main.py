@@ -47,6 +47,14 @@ async def lifespan(app: FastAPI):
             scheduler_instance.start()
             set_scheduler_instance(scheduler_instance)
             logger.info("Pipeline scheduler started successfully")
+            
+            # Initialize default job if enabled and needed
+            try:
+                scheduler_instance.initialize_default_job_if_needed()
+            except Exception as e:
+                logger.warning(f"Failed to initialize default job: {e}")
+                # Don't fail startup if default job creation fails
+            
         else:
             logger.warning("Database not ready, scheduler will use memory-only storage")
             # Start scheduler without persistence
@@ -58,6 +66,13 @@ async def lifespan(app: FastAPI):
             scheduler_instance.start()
             set_scheduler_instance(scheduler_instance)
             logger.info("Pipeline scheduler started with memory storage")
+            
+            # Initialize default job if enabled and needed
+            try:
+                scheduler_instance.initialize_default_job_if_needed()
+            except Exception as e:
+                logger.warning(f"Failed to initialize default job: {e}")
+                # Don't fail startup if default job creation fails
             
     except Exception as e:
         logger.error(f"Failed to complete startup sequence: {e}")

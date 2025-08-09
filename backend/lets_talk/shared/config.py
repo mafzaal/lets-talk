@@ -139,6 +139,15 @@ LOG_FORMAT = os.environ.get("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
 LOGGER_NAME = os.environ.get("LOGGER_NAME", "lets_talk")
 
+# Default job scheduling configuration
+DEFAULT_JOB_ENABLED = os.environ.get("DEFAULT_JOB_ENABLED", "True").lower() == "true"
+DEFAULT_JOB_ID = os.environ.get("DEFAULT_JOB_ID", "default_pipeline_job")
+DEFAULT_JOB_CRON_HOUR = int(os.environ.get("DEFAULT_JOB_CRON_HOUR", "2"))
+DEFAULT_JOB_CRON_MINUTE = int(os.environ.get("DEFAULT_JOB_CRON_MINUTE", "0"))
+DEFAULT_JOB_INCREMENTAL_MODE = os.environ.get("DEFAULT_JOB_INCREMENTAL_MODE", "auto")
+DEFAULT_JOB_CI_MODE = os.environ.get("DEFAULT_JOB_CI_MODE", "False").lower() == "true"
+DEFAULT_JOB_DRY_RUN = os.environ.get("DEFAULT_JOB_DRY_RUN", "False").lower() == "true"
+
 
 T = TypeVar("T", bound="Configuration")
 
