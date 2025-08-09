@@ -158,31 +158,51 @@ class MigrationManager:
             "is_up_to_date": False
         }
         
-        if history:
-            head_revision = None
-            for migration in history:
-                if migration.is_head:
-                    head_revision = migration.revision
-                
-                if migration.is_current:
-                    # All migrations after current are pending
-                    found_current = False
-                    for m in reversed(history):
-                        if m.revision == current_rev:
-                            found_current = True
-                            continue
-                        if found_current:
-                            status["pending_migrations"].append({
-                                "revision": m.revision,
-                                "description": m.description
-                            })
-                        else:
-                            status["applied_migrations"].append({
-                                "revision": m.revision,
-                                "description": m.description
-                            })
-            
-            status["is_up_to_date"] = current_rev == head_revision
+        if not history:
+            # No migrations exist, consider up to date if no current revision
+            status["is_up_to_date"] = current_rev is None
+            return status
+        
+        # Find the head revision
+        head_revision = None
+        for migration in history:
+            if migration.is_head:
+                head_revision = migration.revision
+                break
+        
+        # If no current revision in database, all migrations are pending
+        if current_rev is None:
+            status["pending_migrations"] = [{
+                "revision": migration.revision,
+                "description": migration.description
+            } for migration in history]
+            status["is_up_to_date"] = False
+            return status
+        
+        # Find current migration and determine pending/applied
+        current_found = False
+        for migration in history:
+            if migration.revision == current_rev:
+                current_found = True
+                # Current migration is not included in applied or pending
+                continue
+            elif not current_found:
+                # Migrations before current (newer migrations) are pending
+                status["pending_migrations"].append({
+                    "revision": migration.revision,
+                    "description": migration.description
+                })
+            else:
+                # Migrations after current (older migrations) are applied
+                status["applied_migrations"].append({
+                    "revision": migration.revision,
+                    "description": migration.description
+                })
+        
+        # Check if database is up to date
+        status["is_up_to_date"] = (current_rev == head_revision and 
+                                   head_revision is not None and 
+                                   len(status["pending_migrations"]) == 0)
         
         return status
     
