@@ -6,9 +6,6 @@ from datetime import datetime
 from typing import Dict, Any, Optional, Union
 from pathlib import Path
 
-
-
-
 from lets_talk.shared.config import (
     AUTO_MIGRATE_ON_STARTUP, 
     DATABASE_URL, 
@@ -28,16 +25,7 @@ from lets_talk.core.database import ensure_database_exists
 
 logger = logging.getLogger(f"{LOGGER_NAME}.startup")
 
-# Global variable to store startup info for shutdown
-_startup_info = None
 
-def set_startup_info(info: Dict[str, Any]) -> None:
-    global _startup_info    
-    _startup_info = info
-
-def get_startup_info() -> Optional[Dict[str, Any]]:
-    global _startup_info
-    return _startup_info
 
 def display_startup_banner() -> None:
     """Display a beautiful startup banner with application information."""
@@ -258,6 +246,9 @@ def startup_application(
     }
     
     try:
+        # Display startup banner first
+        display_startup_banner()
+
         logger.info(f"Starting {app_name}...")
         
         if require_database:
@@ -281,6 +272,7 @@ def startup_application(
         
         startup_info["success"] = True
         logger.info(f"{app_name} startup completed successfully")
+        
         
         return startup_info
         
@@ -637,8 +629,7 @@ def startup_fastapi_application(
     }
     
     try:
-        # Display startup banner first
-        display_startup_banner()
+
         
         logger.info(f"Starting {app_name} with full startup sequence...")
         
@@ -728,7 +719,7 @@ def startup_fastapi_application(
             startup_info["errors"].append(error_msg)
             logger.error(f"❌ {app_name} startup failed: {error_msg}")
 
-        set_startup_info(startup_info)
+        
         return startup_info
         
     except StartupError:

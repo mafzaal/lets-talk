@@ -104,4 +104,6 @@ examples/
 Makefile
 pytest.ini
 start*dev.sh
+test_*.py
+test_*.sh
 
