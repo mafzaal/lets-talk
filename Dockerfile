@@ -27,3 +27,10 @@ RUN uv pip uninstall --system pip setuptools wheel && rm /usr/bin/uv /usr/bin/uv
 # -- End of pip removal --
 
 WORKDIR /deps/lets-talk
+
+
+# Make entrypoint executable
+RUN chmod +x /deps/lets-talk/entrypoint.sh
+
+# Set our custom entrypoint
+ENTRYPOINT ["/deps/lets-talk/entrypoint.sh"]
