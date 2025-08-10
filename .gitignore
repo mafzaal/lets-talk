@@ -165,7 +165,6 @@ cython_debug/
 
 output/
 build/
-start-docker.sh
 data/
 !backend/**/data
 db.backup/
