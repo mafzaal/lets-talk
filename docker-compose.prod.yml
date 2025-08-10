@@ -1,0 +1,105 @@
+volumes:
+    postgres-storage:
+        driver: local
+    qdrant-storage:
+        driver: local
+
+# Global environment variables
+x-common-variables: &common-variables
+    TZ: ${TZ:-UTC}
+
+services:
+    redis:
+        image: redis:8
+        healthcheck:
+            test: redis-cli ping
+            interval: 5s
+            timeout: 1s
+            retries: 5
+        volumes: 
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+        environment: *common-variables
+        restart: unless-stopped
+
+    postgres:
+        image: postgres:17
+        environment:
+            <<: *common-variables
+            POSTGRES_USER: ${POSTGRES_USER:-postgres}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            # Fixed database names since they're internal
+            LANGGRAPH_DB: langgraph_db
+            LETS_TALK_DB: lets_talk
+        volumes:
+            - postgres-storage:/var/lib/postgresql/data
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+        healthcheck:
+            test: pg_isready -U ${POSTGRES_USER:-postgres}
+            start_period: 10s
+            timeout: 1s
+            retries: 5
+            interval: 5s
+        restart: unless-stopped
+
+    qdrant:
+        image: qdrant/qdrant
+        volumes:
+            - qdrant-storage:/qdrant/storage
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+        environment: *common-variables
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:6333/collections"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    api:
+        image: ghcr.io/mafzaal/lets-talk:latest
+        ports:
+            - "${API_PORT:-9124}:8000"
+        depends_on:
+            redis:
+                condition: service_healthy
+            postgres:
+                condition: service_healthy
+            qdrant:
+                condition: service_started
+        env_file:
+            - .env.prod
+        volumes:
+            # Simplified volume mapping with sensible defaults
+            - ${DATA_DIR:-./data}:/app/data
+            - ${OUTPUT_DIR:-./output}:/app/output
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+        environment:
+            <<: *common-variables
+            # Hardcoded internal service URLs
+            REDIS_URI: redis://redis:6379
+            QDRANT_URL: http://qdrant:6333
+            # Simplified database URLs with fixed database names
+            POSTGRES_URI: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/langgraph_db?sslmode=disable
+            DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/lets_talk?sslmode=disable
+        restart: unless-stopped
+
+    proxy:
+        image: nginx:alpine
+        ports:
+            - "${PROXY_PORT:-9123}:80"
+        depends_on:
+            api:
+                condition: service_started
+        env_file:
+            - .env.auth
+        volumes:
+            - ./nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+            - ./nginx-startup.sh:/docker-entrypoint.d/nginx-startup.sh:ro
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+        environment: *common-variables
+        command: ["/docker-entrypoint.d/nginx-startup.sh"]
+        restart: unless-stopped
