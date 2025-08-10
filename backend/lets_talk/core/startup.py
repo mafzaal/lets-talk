@@ -84,7 +84,6 @@ def display_startup_banner() -> None:
             f"     Database: {db_type:<12} Auto-migrate: {str(AUTO_MIGRATE_ON_STARTUP)}",
             f"     Output Dir: {output_dir_short}",
             "",
-            " 🚀 Starting application components...",
             "",
             "═══════════════════════════════════════════════════════════════════════════════"
         ]

@@ -1,9 +1,6 @@
 #!/bin/sh
 set -e
 
-# echo "==============================================================================="
-# echo "🚀 Let's Talk Container Entrypoint"
-# echo "==============================================================================="
 
 # Function to handle cleanup on exit
 cleanup() {
@@ -32,10 +29,6 @@ cd /deps/lets-talk
 # echo "🐍 Python version: $(python --version)"
 # echo ""
 
-# Phase 1: Run application startup (database migrations, scheduler setup, etc.)
-# echo "==============================================================================="
-# echo "📋 Phase 1: Application Initialization"
-# echo "==============================================================================="
 
 # echo "🔧 Running application startup script..."
 if ! python startup_application.py; then
@@ -63,8 +56,7 @@ echo "==========================================================================
 
 # Check if there's a custom entrypoint script to run
 if [ -f "/storage/entrypoint.sh" ] && [ -x "/storage/entrypoint.sh" ]; then
-    echo "🔧 Found custom entrypoint script at /storage/entrypoint.sh"
-    echo "📝 Executing custom entrypoint..."
+    echo "📝 Executing LangGraph entrypoint..."
     exec /storage/entrypoint.sh "$@"
 else
     echo "📝 No custom entrypoint found, proceeding with default startup"

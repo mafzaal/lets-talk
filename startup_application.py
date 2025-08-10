@@ -44,9 +44,7 @@ def main():
         # Set up application logger
         logger = logging.getLogger(f"{LOGGER_NAME}.startup_main")
         
-        logger.info("=" * 79)
-        logger.info("🚀 Starting Let's Talk Application Initialization")
-        logger.info("=" * 79)
+
         
         # Run the complete startup sequence
         # This includes database initialization, migrations, scheduler setup, etc.
@@ -57,11 +55,9 @@ def main():
         )
         
         # Log detailed startup summary
-        log_startup_summary(startup_info)
+        # log_startup_summary(startup_info)
         
         if startup_info["success"]:
-            logger.info("✅ Application startup completed successfully")
-            logger.info("🌐 Ready to start web server...")
             exit_code = 0
         else:
             logger.error("❌ Application startup failed")
@@ -79,9 +75,7 @@ def main():
         
     finally:
         print("=" * 79)
-        if exit_code == 0:
-            print("🎉 Startup completed - proceeding to web server")
-        else:
+        if exit_code != 0:
             print("💥 Startup failed - container will exit")
         print("=" * 79)
     
