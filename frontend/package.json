@@ -24,7 +24,7 @@
 		"@tailwindcss/typography": "^0.5.15",
 		"@tailwindcss/vite": "^4.1.11",
 		"acorn": "^8.15.0",
-		"bits-ui": "^2.9.1",
+		"bits-ui": "^2.9.2",
 		"clsx": "^2.1.1",
 		"formsnap": "^2.0.1",
 		"lucide-svelte": "^0.536.0",
