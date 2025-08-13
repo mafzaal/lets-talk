@@ -49,8 +49,8 @@ importers:
         specifier: ^8.15.0
         version: 8.15.0
       bits-ui:
-        specifier: ^2.9.1
-        version: 2.9.1(@internationalized/date@3.8.2)(svelte@5.38.0)
+        specifier: ^2.9.2
+        version: 2.9.2(@internationalized/date@3.8.2)(svelte@5.38.0)
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -686,8 +686,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  bits-ui@2.9.1:
-    resolution: {integrity: sha512-Fdtc1TKppfEio6fl0XzkrDG8DSvfbYJdrOh4j5KzaGh0kYA6BskMGIXL4JmsZxUS+O5ESFypNjrQ9z9qs3xAdQ==}
+  bits-ui@2.9.2:
+    resolution: {integrity: sha512-GGbyr4oVKtHin//Q0AhlygkasmfWt328VjsnmB3sP+h8Sh+Eyghm+1AQ8o+xQMDCYbdL35JZ9UZGTZYTMar4Uw==}
     engines: {node: '>=20'}
     peerDependencies:
       '@internationalized/date': ^3.8.1
@@ -1821,7 +1821,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  bits-ui@2.9.1(@internationalized/date@3.8.2)(svelte@5.38.0):
+  bits-ui@2.9.2(@internationalized/date@3.8.2)(svelte@5.38.0):
     dependencies:
       '@floating-ui/core': 1.7.3
       '@floating-ui/dom': 1.7.3
