@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@langchain/langgraph-sdk':
-        specifier: ^0.0.105
-        version: 0.0.105(@langchain/core@0.3.66)
+        specifier: ^0.0.107
+        version: 0.0.107(@langchain/core@0.3.66)
       marked:
         specifier: ^16.1.2
         version: 16.1.2
@@ -330,8 +330,8 @@ packages:
     peerDependencies:
       '@langchain/core': '>=0.2.31 <0.4.0'
 
-  '@langchain/langgraph-sdk@0.0.105':
-    resolution: {integrity: sha512-3DD1W1wnbP48807qq+5gY248mFcwwNGqKdmZt05P3zeLpfP5Sfm6ELzVvqHGpr+qumP0yGRZs/7qArYGXRRfcQ==}
+  '@langchain/langgraph-sdk@0.0.107':
+    resolution: {integrity: sha512-2qzboDgYH8KJNz7q2Yzvj6H9i4iZUYfZnB7xY+Dkye6yvI+2m1fFIdpP/Ppu+eFvoIUAsbDHDF+wvR4F11kS3Q==}
     peerDependencies:
       '@langchain/core': '>=0.2.31 <0.4.0'
       react: ^18 || ^19
@@ -1529,7 +1529,7 @@ snapshots:
       '@langchain/core': 0.3.66
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@0.0.105(@langchain/core@0.3.66)':
+  '@langchain/langgraph-sdk@0.0.107(@langchain/core@0.3.66)':
     dependencies:
       '@types/json-schema': 7.0.15
       p-queue: 6.6.2
