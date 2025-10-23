@@ -2634,7 +2634,7 @@ wheels = [
 
 [[package]]
 name = "ragas"
-version = "0.3.5"
+version = "0.3.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "appdirs" },
@@ -2658,9 +2658,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2f/40/c342893abd6f73eb2b20a562e1560cc87f18b8316a12288f03642febab24/ragas-0.3.5.tar.gz", hash = "sha256:164d5c0a96048d9c9373aa3e9123f0096649abbd2b58e747c2f0a454da6c2d6b", size = 43027900, upload-time = "2025-09-17T19:13:52.766Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/23/1c/771d37575d2237d669905ad689d2e99268f8e36668be03ec792dbc0747c6/ragas-0.3.7.tar.gz", hash = "sha256:8db0d4fa1a5fc784087cc1e584f730e9646b0dfbbdff21d66f816c0fb70ed1a8", size = 43426926, upload-time = "2025-10-14T16:22:13.315Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/75/4c/56338824441cefe5bab2b47350805f9fbf5ec85de78645452da461c9c174/ragas-0.3.5-py3-none-any.whl", hash = "sha256:3e917b12dc90ef692776263f66d220df40ff0573d2a96c8868198629f8b35206", size = 284321, upload-time = "2025-09-17T19:13:50.065Z" },
+    { url = "https://files.pythonhosted.org/packages/18/94/9c35f6347aedc95e66679db87f0638e0ab02d40907a71c25428c60599524/ragas-0.3.7-py3-none-any.whl", hash = "sha256:14c19d43340bc38b23c491073db2b5d09b9ae3b1feb7f36790181a04a542321f", size = 317609, upload-time = "2025-10-14T16:22:11.36Z" },
 ]
 
 [[package]]
