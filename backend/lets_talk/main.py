@@ -8,7 +8,7 @@ from lets_talk.agents.react_agent import ReactAgent
 from lets_talk.agents.rag_agent import RAGAgent
 
 
-reat_agent = ReactAgent().agent
+react_agent = ReactAgent().agent
 rag_agent = RAGAgent().graph
 
 
