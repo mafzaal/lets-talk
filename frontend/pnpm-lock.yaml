@@ -25,8 +25,8 @@ importers:
         specifier: ^0.4.9
         version: 0.4.9(@langchain/core@0.3.79)(zod-to-json-schema@3.25.0(zod@4.1.12))
       '@lucide/svelte':
-        specifier: ^0.539.0
-        version: 0.539.0(svelte@5.43.15)
+        specifier: ^0.554.0
+        version: 0.554.0(svelte@5.43.15)
       '@sveltejs/adapter-static':
         specifier: ^3.0.10
         version: 3.0.10(@sveltejs/kit@2.49.0(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.15)(vite@7.2.4(jiti@2.6.1)(lightningcss@1.30.2)))(svelte@5.43.15)(vite@7.2.4(jiti@2.6.1)(lightningcss@1.30.2)))
@@ -369,8 +369,8 @@ packages:
       zod-to-json-schema:
         optional: true
 
-  '@lucide/svelte@0.539.0':
-    resolution: {integrity: sha512-OWhw4BhHO+owmOE/ijSNLnw/flbW2/DsLzMHAeM8oEjLsO0xE6glX0ADCDwxKItTs5ZJYssfyGNXxMXrea173w==}
+  '@lucide/svelte@0.554.0':
+    resolution: {integrity: sha512-CM6wLEH8uk3WBpC42t8R0hF7SlQrsYEL6qGuXdB99xKZwKglpWmX5XgYu7FIYOCBYOyC1rm4dNhIe6uF9pOXqw==}
     peerDependencies:
       svelte: ^5
 
@@ -1567,7 +1567,7 @@ snapshots:
       - react
       - react-dom
 
-  '@lucide/svelte@0.539.0(svelte@5.43.15)':
+  '@lucide/svelte@0.554.0(svelte@5.43.15)':
     dependencies:
       svelte: 5.43.15
 
