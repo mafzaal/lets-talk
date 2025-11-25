@@ -50,7 +50,7 @@
 	},
 	"dependencies": {
 		"@langchain/langgraph-sdk": "^1.0.2",
-		"marked": "^16.4.2",
+		"marked": "^17.0.1",
 		"svelte-sonner": "^1.0.6"
 	}
 }
