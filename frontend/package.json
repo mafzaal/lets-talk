@@ -28,7 +28,7 @@
 		"clsx": "^2.1.1",
 		"formsnap": "^2.0.1",
 		"lucide-svelte": "^0.554.0",
-		"prettier": "^3.6.2",
+		"prettier": "^3.7.3",
 		"prettier-plugin-svelte": "^3.4.0",
 		"remote": "link:@langchain/langgraph/remote",
 		"shadcn-svelte": "^1.0.12",
