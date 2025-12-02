@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@langchain/langgraph-sdk':
-        specifier: ^1.0.2
-        version: 1.0.2(@langchain/core@1.1.0)
+        specifier: ^1.0.3
+        version: 1.0.3(@langchain/core@1.1.0)
       marked:
         specifier: ^17.0.1
         version: 17.0.1
@@ -331,8 +331,8 @@ packages:
     peerDependencies:
       '@langchain/core': ^1.0.1
 
-  '@langchain/langgraph-sdk@1.0.2':
-    resolution: {integrity: sha512-r3noE2KouUdfRCmHxZcS06Io8I3jplEXA+ORpYECa89VAdHWaknWRJMIBBwVJkQQJ9fvNBmOmyfTcbRkeTTakw==}
+  '@langchain/langgraph-sdk@1.0.3':
+    resolution: {integrity: sha512-6M4i0XsVO5Eb2vv/3OtIPHW3UqO4zYyXl6AOfS0Jf6d7JiWiSXqzLN8UoS0hpu1ItkcW1j575CRiP/6jn6XXFg==}
     peerDependencies:
       '@langchain/core': ^1.0.1
       react: ^18 || ^19
@@ -879,8 +879,8 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
-  langsmith@0.3.81:
-    resolution: {integrity: sha512-NFmp7TDrrbCE6TIfHqutN9xhdgvx0EOhULVo8bDW+ib5idprwjMTvmS0S1n9uVFwjN03zU2zVEWViXnwy5XPrw==}
+  langsmith@0.3.82:
+    resolution: {integrity: sha512-RTcxtRm0zp2lV+pMesMW7EZSsIlqN7OmR2F6sZ/sOFQwmcLVl+VErMPV4VkX4Sycs4/EIAFT5hpr36EqiHoikQ==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -1510,7 +1510,7 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.3.81
+      langsmith: 0.3.82
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 7.1.0
@@ -1527,7 +1527,7 @@ snapshots:
       '@langchain/core': 1.1.0
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@1.0.2(@langchain/core@1.1.0)':
+  '@langchain/langgraph-sdk@1.0.3(@langchain/core@1.1.0)':
     dependencies:
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -1539,7 +1539,7 @@ snapshots:
     dependencies:
       '@langchain/core': 1.1.0
       '@langchain/langgraph-checkpoint': 1.0.0(@langchain/core@1.1.0)
-      '@langchain/langgraph-sdk': 1.0.2(@langchain/core@1.1.0)
+      '@langchain/langgraph-sdk': 1.0.3(@langchain/core@1.1.0)
       uuid: 10.0.0
       zod: 4.1.12
     optionalDependencies:
@@ -2018,13 +2018,12 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  langsmith@0.3.81:
+  langsmith@0.3.82:
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
       console-table-printer: 2.15.0
       p-queue: 6.6.2
-      p-retry: 4.6.2
       semver: 7.7.3
       uuid: 10.0.0
 
