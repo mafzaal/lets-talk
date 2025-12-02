@@ -58,8 +58,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1(svelte@5.43.15)(sveltekit-superforms@2.28.1(@sveltejs/kit@2.49.0(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.43.15)(vite@7.2.4(jiti@2.6.1)(lightningcss@1.30.2)))(svelte@5.43.15)(vite@7.2.4(jiti@2.6.1)(lightningcss@1.30.2)))(@types/json-schema@7.0.15)(esbuild@0.25.12)(svelte@5.43.15)(typescript@5.9.3))
       lucide-svelte:
-        specifier: ^0.554.0
-        version: 0.554.0(svelte@5.43.15)
+        specifier: ^0.555.0
+        version: 0.555.0(svelte@5.43.15)
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -879,8 +879,8 @@ packages:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
 
-  langsmith@0.3.81:
-    resolution: {integrity: sha512-NFmp7TDrrbCE6TIfHqutN9xhdgvx0EOhULVo8bDW+ib5idprwjMTvmS0S1n9uVFwjN03zU2zVEWViXnwy5XPrw==}
+  langsmith@0.3.82:
+    resolution: {integrity: sha512-RTcxtRm0zp2lV+pMesMW7EZSsIlqN7OmR2F6sZ/sOFQwmcLVl+VErMPV4VkX4Sycs4/EIAFT5hpr36EqiHoikQ==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -972,8 +972,8 @@ packages:
   locate-character@3.0.0:
     resolution: {integrity: sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA==}
 
-  lucide-svelte@0.554.0:
-    resolution: {integrity: sha512-LLcpHi3SuKup0nVD1kKqo8FDZnjXJp48uST26GGh8Jcyrxqk5gmgpnvKmHsHox674UL3cPS1DCul/wFL7ybGqg==}
+  lucide-svelte@0.555.0:
+    resolution: {integrity: sha512-2kWIcstKGgQObLGpYXmcYwm/Y83Am+AQcP7MnybrmaRU1+QUJ/WSEpv/wAbwaSkrWUiN1TX/9FuWQKLeEeWCrQ==}
     peerDependencies:
       svelte: ^3 || ^4 || ^5.0.0-next.42
 
@@ -1510,7 +1510,7 @@ snapshots:
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.21
-      langsmith: 0.3.81
+      langsmith: 0.3.82
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 7.1.0
@@ -2018,13 +2018,12 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  langsmith@0.3.81:
+  langsmith@0.3.82:
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
       console-table-printer: 2.15.0
       p-queue: 6.6.2
-      p-retry: 4.6.2
       semver: 7.7.3
       uuid: 10.0.0
 
@@ -2082,7 +2081,7 @@ snapshots:
 
   locate-character@3.0.0: {}
 
-  lucide-svelte@0.554.0(svelte@5.43.15):
+  lucide-svelte@0.555.0(svelte@5.43.15):
     dependencies:
       svelte: 5.43.15
 
