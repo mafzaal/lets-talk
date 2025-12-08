@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@langchain/langgraph-sdk':
-        specifier: ^1.0.3
-        version: 1.0.3(@langchain/core@1.1.0)
+        specifier: ^1.2.0
+        version: 1.2.0(@langchain/core@1.1.0)
       marked:
         specifier: ^17.0.1
         version: 17.0.1
@@ -333,6 +333,20 @@ packages:
 
   '@langchain/langgraph-sdk@1.0.3':
     resolution: {integrity: sha512-6M4i0XsVO5Eb2vv/3OtIPHW3UqO4zYyXl6AOfS0Jf6d7JiWiSXqzLN8UoS0hpu1ItkcW1j575CRiP/6jn6XXFg==}
+    peerDependencies:
+      '@langchain/core': ^1.0.1
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
+    peerDependenciesMeta:
+      '@langchain/core':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
+  '@langchain/langgraph-sdk@1.2.0':
+    resolution: {integrity: sha512-nFfNJWc9P2job2uUoL37nXfz0VW9eLEtidP0edrgeHUW7BczIQzLXC9ucJHHHGLjlK0S522kmai0abAULv3pGA==}
     peerDependencies:
       '@langchain/core': ^1.0.1
       react: ^18 || ^19
@@ -1528,6 +1542,14 @@ snapshots:
       uuid: 10.0.0
 
   '@langchain/langgraph-sdk@1.0.3(@langchain/core@1.1.0)':
+    dependencies:
+      p-queue: 6.6.2
+      p-retry: 4.6.2
+      uuid: 9.0.1
+    optionalDependencies:
+      '@langchain/core': 1.1.0
+
+  '@langchain/langgraph-sdk@1.2.0(@langchain/core@1.1.0)':
     dependencies:
       p-queue: 6.6.2
       p-retry: 4.6.2
