@@ -49,7 +49,7 @@
 		]
 	},
 	"dependencies": {
-		"@langchain/langgraph-sdk": "^1.0.3",
+		"@langchain/langgraph-sdk": "^1.2.0",
 		"marked": "^17.0.1",
 		"svelte-sonner": "^1.0.7"
 	}
