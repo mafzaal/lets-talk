@@ -25,8 +25,8 @@ importers:
         specifier: ^1.0.4
         version: 1.0.4(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.1.13))(zod@4.1.13)
       '@lucide/svelte':
-        specifier: ^0.555.0
-        version: 0.555.0(svelte@5.45.7)
+        specifier: ^0.561.0
+        version: 0.561.0(svelte@5.45.7)
       '@sveltejs/adapter-static':
         specifier: ^3.0.10
         version: 3.0.10(@sveltejs/kit@2.49.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.45.7)(vite@7.2.7(jiti@2.6.1)(lightningcss@1.30.2)))(svelte@5.45.7)(vite@7.2.7(jiti@2.6.1)(lightningcss@1.30.2)))
@@ -58,8 +58,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1(svelte@5.45.7)(sveltekit-superforms@2.28.1(@sveltejs/kit@2.49.1(@sveltejs/vite-plugin-svelte@6.2.1(svelte@5.45.7)(vite@7.2.7(jiti@2.6.1)(lightningcss@1.30.2)))(svelte@5.45.7)(vite@7.2.7(jiti@2.6.1)(lightningcss@1.30.2)))(@types/json-schema@7.0.15)(esbuild@0.25.12)(svelte@5.45.7)(typescript@5.9.3))
       lucide-svelte:
-        specifier: ^0.555.0
-        version: 0.555.0(svelte@5.45.7)
+        specifier: ^0.561.0
+        version: 0.561.0(svelte@5.45.7)
       prettier:
         specifier: ^3.7.4
         version: 3.7.4
@@ -356,8 +356,8 @@ packages:
       zod-to-json-schema:
         optional: true
 
-  '@lucide/svelte@0.555.0':
-    resolution: {integrity: sha512-aqTOMjBjf/HNwrhggRdb83T0QslZdpJTyTwr/chtXTGw7u4Hcu4zQb/5uA+csF0KKawKWVnsNI1MdHEHeEXTcQ==}
+  '@lucide/svelte@0.561.0':
+    resolution: {integrity: sha512-vofKV2UFVrKE6I4ewKJ3dfCXSV6iP6nWVmiM83MLjsU91EeJcEg7LoWUABLp/aOTxj1HQNbJD1f3g3L0JQgH9A==}
     peerDependencies:
       svelte: ^5
 
@@ -975,8 +975,8 @@ packages:
   locate-character@3.0.0:
     resolution: {integrity: sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA==}
 
-  lucide-svelte@0.555.0:
-    resolution: {integrity: sha512-2kWIcstKGgQObLGpYXmcYwm/Y83Am+AQcP7MnybrmaRU1+QUJ/WSEpv/wAbwaSkrWUiN1TX/9FuWQKLeEeWCrQ==}
+  lucide-svelte@0.561.0:
+    resolution: {integrity: sha512-LxKemRvPNMNBjBa7JIVd4gZzBrTtwG1JA2ohpdM15jpQDcZCFWKyJz8eG1McaD0bq2weufkYSuVWQLclmmdUlw==}
     peerDependencies:
       svelte: ^3 || ^4 || ^5.0.0-next.42
 
@@ -1551,7 +1551,7 @@ snapshots:
       - react
       - react-dom
 
-  '@lucide/svelte@0.555.0(svelte@5.45.7)':
+  '@lucide/svelte@0.561.0(svelte@5.45.7)':
     dependencies:
       svelte: 5.45.7
 
@@ -2086,7 +2086,7 @@ snapshots:
 
   locate-character@3.0.0: {}
 
-  lucide-svelte@0.555.0(svelte@5.45.7):
+  lucide-svelte@0.561.0(svelte@5.45.7):
     dependencies:
       svelte: 5.45.7
 
