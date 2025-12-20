@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@langchain/langgraph-sdk':
-        specifier: ^1.2.0
-        version: 1.2.0(@langchain/core@1.1.0)
+        specifier: ^1.3.1
+        version: 1.3.1(@langchain/core@1.1.0)
       marked:
         specifier: ^17.0.1
         version: 17.0.1
@@ -331,22 +331,8 @@ packages:
     peerDependencies:
       '@langchain/core': ^1.0.1
 
-  '@langchain/langgraph-sdk@1.2.0':
-    resolution: {integrity: sha512-nFfNJWc9P2job2uUoL37nXfz0VW9eLEtidP0edrgeHUW7BczIQzLXC9ucJHHHGLjlK0S522kmai0abAULv3pGA==}
-    peerDependencies:
-      '@langchain/core': ^1.0.1
-      react: ^18 || ^19
-      react-dom: ^18 || ^19
-    peerDependenciesMeta:
-      '@langchain/core':
-        optional: true
-      react:
-        optional: true
-      react-dom:
-        optional: true
-
-  '@langchain/langgraph-sdk@1.3.0':
-    resolution: {integrity: sha512-4DiGhNpZKFYkBoVbUP38KUMD7EOcLwittXKet0TnkfFDoFvoZm18ygNZV49b6JQL4EsHRjRNVHXwl47HdlGyGA==}
+  '@langchain/langgraph-sdk@1.3.1':
+    resolution: {integrity: sha512-zTi7DZHwqtMEzapvm3I1FL4Q7OZsxtq9tTXy6s2gcCxyIU3sphqRboqytqVN7dNHLdTCLb8nXy49QKurs2MIBg==}
     peerDependencies:
       '@langchain/core': ^1.0.1
       react: ^18 || ^19
@@ -1215,9 +1201,6 @@ packages:
       tailwind-merge:
         optional: true
 
-  tailwindcss@4.1.17:
-    resolution: {integrity: sha512-j9Ee2YjuQqYT9bbRTfTZht9W/ytp5H+jJpZKiYdP/bpnXARAuELt9ofP0lPnmHjbga7SNQIxdTAXCmtKVYjN+Q==}
-
   tailwindcss@4.1.18:
     resolution: {integrity: sha512-4+Z+0yiYyEtUVCScyfHCxOYP06L5Ne+JiHhY2IjR2KWMIWhJOYZKLSGZaP5HkZ8+bY0cxfzwDE5uOmzFXyIwxw==}
 
@@ -1547,15 +1530,7 @@ snapshots:
       '@langchain/core': 1.1.0
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@1.2.0(@langchain/core@1.1.0)':
-    dependencies:
-      p-queue: 6.6.2
-      p-retry: 4.6.2
-      uuid: 9.0.1
-    optionalDependencies:
-      '@langchain/core': 1.1.0
-
-  '@langchain/langgraph-sdk@1.3.0(@langchain/core@1.1.0)':
+  '@langchain/langgraph-sdk@1.3.1(@langchain/core@1.1.0)':
     dependencies:
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -1567,7 +1542,7 @@ snapshots:
     dependencies:
       '@langchain/core': 1.1.0
       '@langchain/langgraph-checkpoint': 1.0.0(@langchain/core@1.1.0)
-      '@langchain/langgraph-sdk': 1.3.0(@langchain/core@1.1.0)
+      '@langchain/langgraph-sdk': 1.3.1(@langchain/core@1.1.0)
       uuid: 10.0.0
       zod: 4.1.13
     optionalDependencies:
@@ -2367,8 +2342,6 @@ snapshots:
       tailwindcss: 4.1.18
     optionalDependencies:
       tailwind-merge: 3.4.0
-
-  tailwindcss@4.1.17: {}
 
   tailwindcss@4.1.18: {}
 
