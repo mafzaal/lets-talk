@@ -15,7 +15,7 @@
 	},
 	"devDependencies": {
 		"@internationalized/date": "^3.10.1",
-		"@langchain/langgraph": "^1.0.5",
+		"@langchain/langgraph": "^1.0.7",
 		"@lucide/svelte": "^0.562.0",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.49.2",
