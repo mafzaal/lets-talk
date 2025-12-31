@@ -22,8 +22,8 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1
       '@langchain/langgraph':
-        specifier: ^1.0.5
-        version: 1.0.5(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.1.13))(zod@4.1.13)
+        specifier: ^1.0.7
+        version: 1.0.7(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.1.13))(zod@4.1.13)
       '@lucide/svelte':
         specifier: ^0.562.0
         version: 0.562.0(svelte@5.46.0)
@@ -345,8 +345,8 @@ packages:
       react-dom:
         optional: true
 
-  '@langchain/langgraph@1.0.5':
-    resolution: {integrity: sha512-r0strjMmEa4IIcbhXKMubQmhh+WhpKyaRPc00Tj9R6O+Ubf9qsKVSd9F1vZBZ2nC6FYSHxBRGA4fO3KGz2m+DA==}
+  '@langchain/langgraph@1.0.7':
+    resolution: {integrity: sha512-EBGqNOWoRiEoLUaeuiXRpUM8/DE6QcwiirNyd97XhezStebBoTTilWH8CUt6S94JRGl5zwfBBRHfzotDnZS/eA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': ^1.0.1
@@ -1538,7 +1538,7 @@ snapshots:
     optionalDependencies:
       '@langchain/core': 1.1.0
 
-  '@langchain/langgraph@1.0.5(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.1.13))(zod@4.1.13)':
+  '@langchain/langgraph@1.0.7(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.1.13))(zod@4.1.13)':
     dependencies:
       '@langchain/core': 1.1.0
       '@langchain/langgraph-checkpoint': 1.0.0(@langchain/core@1.1.0)
