@@ -18,7 +18,7 @@
 		"@langchain/langgraph": "^1.0.7",
 		"@lucide/svelte": "^0.562.0",
 		"@sveltejs/adapter-static": "^3.0.10",
-		"@sveltejs/kit": "^2.49.2",
+		"@sveltejs/kit": "^2.49.3",
 		"@sveltejs/vite-plugin-svelte": "^6.2.1",
 		"@tailwindcss/forms": "^0.5.11",
 		"@tailwindcss/typography": "^0.5.19",
