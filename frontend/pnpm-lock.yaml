@@ -22,8 +22,8 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1
       '@langchain/langgraph':
-        specifier: ^1.0.7
-        version: 1.0.7(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.2.1))(zod@4.2.1)
+        specifier: ^1.0.15
+        version: 1.0.15(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.2.1))(zod@4.2.1)
       '@lucide/svelte':
         specifier: ^0.562.0
         version: 0.562.0(svelte@5.46.1)
@@ -335,8 +335,22 @@ packages:
       react-dom:
         optional: true
 
-  '@langchain/langgraph@1.0.7':
-    resolution: {integrity: sha512-EBGqNOWoRiEoLUaeuiXRpUM8/DE6QcwiirNyd97XhezStebBoTTilWH8CUt6S94JRGl5zwfBBRHfzotDnZS/eA==}
+  '@langchain/langgraph-sdk@1.5.3':
+    resolution: {integrity: sha512-8ycRjOGsBafxvCpHyCGaWhd3s7UEXEYIEPO/vipebEzQuYaeF+E9MxS9uFSVaX1ZcNuqQNTosnBJG4ZUtirzuw==}
+    peerDependencies:
+      '@langchain/core': ^1.0.1
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
+    peerDependenciesMeta:
+      '@langchain/core':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
+  '@langchain/langgraph@1.0.15':
+    resolution: {integrity: sha512-l7/f255sPilanhyY+lbX+VDXQSnytFwJ4FVoEl4OBpjDoCHuDyHUL5yrb568apBSHgQA7aKsYac0mBEqIR5Bjg==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': ^1.0.1
@@ -799,6 +813,9 @@ packages:
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
 
+  eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
+
   fast-check@3.23.2:
     resolution: {integrity: sha512-h5+1OzzfCC3Ef7VbtKdcv7zsstUQwUDlYpUTvjeUsJAssPgLn7QzbboPtL5ro04Mq0rPOsMzl7q5hIbRs2wD1A==}
     engines: {node: '>=8.0.0'}
@@ -1011,6 +1028,10 @@ packages:
     resolution: {integrity: sha512-RwFpb72c/BhQLEXIZ5K2e+AhgNVmIejGlTgiB9MzZ0e93GRvqZ7uSi0dvRF7/XIXDeNkra2fNHBxTyPDGySpjQ==}
     engines: {node: '>=8'}
 
+  p-queue@9.1.0:
+    resolution: {integrity: sha512-O/ZPaXuQV29uSLbxWBGGZO1mCQXV2BLIwUr59JUU9SoH76mnYvtms7aafH/isNSNGwuEfP6W/4xD0/TJXxrizw==}
+    engines: {node: '>=20'}
+
   p-retry@4.6.2:
     resolution: {integrity: sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ==}
     engines: {node: '>=8'}
@@ -1022,6 +1043,10 @@ packages:
   p-timeout@3.2.0:
     resolution: {integrity: sha512-rhIwUycgwwKcP9yTOOFK/AKsAopjjCakVqLHePO3CC6Mir1Z99xT+R63jZxAT5lFZLa2inS5h+ZS2GvR99/FBg==}
     engines: {node: '>=8'}
+
+  p-timeout@7.0.1:
+    resolution: {integrity: sha512-AxTM2wDGORHGEkPCt8yqxOTMgpfbEHqF51f/5fJCmwFC3C/zNcGT63SymH2ttOAaiIws2zVg4+izQCjrakcwHg==}
+    engines: {node: '>=20'}
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -1226,6 +1251,10 @@ packages:
 
   uuid@11.1.0:
     resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
+
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
     hasBin: true
 
   uuid@9.0.1:
@@ -1486,11 +1515,19 @@ snapshots:
     optionalDependencies:
       '@langchain/core': 1.1.0
 
-  '@langchain/langgraph@1.0.7(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.2.1))(zod@4.2.1)':
+  '@langchain/langgraph-sdk@1.5.3(@langchain/core@1.1.0)':
+    dependencies:
+      p-queue: 9.1.0
+      p-retry: 7.1.1
+      uuid: 13.0.0
+    optionalDependencies:
+      '@langchain/core': 1.1.0
+
+  '@langchain/langgraph@1.0.15(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.2.1))(zod@4.2.1)':
     dependencies:
       '@langchain/core': 1.1.0
       '@langchain/langgraph-checkpoint': 1.0.0(@langchain/core@1.1.0)
-      '@langchain/langgraph-sdk': 1.3.1(@langchain/core@1.1.0)
+      '@langchain/langgraph-sdk': 1.5.3(@langchain/core@1.1.0)
       uuid: 10.0.0
       zod: 4.2.1
     optionalDependencies:
@@ -1905,6 +1942,8 @@ snapshots:
 
   eventemitter3@4.0.7: {}
 
+  eventemitter3@5.0.1: {}
+
   fast-check@3.23.2:
     dependencies:
       pure-rand: 6.1.0
@@ -2059,6 +2098,11 @@ snapshots:
       eventemitter3: 4.0.7
       p-timeout: 3.2.0
 
+  p-queue@9.1.0:
+    dependencies:
+      eventemitter3: 5.0.1
+      p-timeout: 7.0.1
+
   p-retry@4.6.2:
     dependencies:
       '@types/retry': 0.12.0
@@ -2071,6 +2115,8 @@ snapshots:
   p-timeout@3.2.0:
     dependencies:
       p-finally: 1.0.0
+
+  p-timeout@7.0.1: {}
 
   picocolors@1.1.1: {}
 
@@ -2307,6 +2353,8 @@ snapshots:
   uuid@10.0.0: {}
 
   uuid@11.1.0: {}
+
+  uuid@13.0.0: {}
 
   uuid@9.0.1: {}
 
