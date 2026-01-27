@@ -22,8 +22,8 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1
       '@langchain/langgraph':
-        specifier: ^1.0.15
-        version: 1.0.15(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.2.1))(zod@4.2.1)
+        specifier: ^1.1.2
+        version: 1.1.2(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.2.1))(zod@4.2.1)
       '@lucide/svelte':
         specifier: ^0.562.0
         version: 0.562.0(svelte@5.47.1)
@@ -335,12 +335,26 @@ packages:
       react-dom:
         optional: true
 
-  '@langchain/langgraph@1.0.15':
-    resolution: {integrity: sha512-l7/f255sPilanhyY+lbX+VDXQSnytFwJ4FVoEl4OBpjDoCHuDyHUL5yrb568apBSHgQA7aKsYac0mBEqIR5Bjg==}
+  '@langchain/langgraph-sdk@1.5.5':
+    resolution: {integrity: sha512-SyiAs6TVXPWlt/8cI9pj/43nbIvclY3ytKqUFbL5MplCUnItetEyqvH87EncxyVF5D7iJKRZRfSVYBMmOZbjbQ==}
+    peerDependencies:
+      '@langchain/core': ^1.1.15
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
+    peerDependenciesMeta:
+      '@langchain/core':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
+  '@langchain/langgraph@1.1.2':
+    resolution: {integrity: sha512-kpZCttZ0N+jHSl5Vh/zVNElD5SxGR4sTjjLiBC00aLGf9JK+Sa/XXO6Bsk3WWXFtA1dY+4tUzUqH0mAHfN0WvA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@langchain/core': ^1.0.1
-      zod: ^3.25.32 || ^4.1.0
+      zod: ^3.25.32 || ^4.2.0
       zod-to-json-schema: ^3.x
     peerDependenciesMeta:
       zod-to-json-schema:
@@ -1504,11 +1518,20 @@ snapshots:
     optionalDependencies:
       '@langchain/core': 1.1.0
 
-  '@langchain/langgraph@1.0.15(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.2.1))(zod@4.2.1)':
+  '@langchain/langgraph-sdk@1.5.5(@langchain/core@1.1.0)':
+    dependencies:
+      p-queue: 9.1.0
+      p-retry: 7.1.1
+      uuid: 13.0.0
+    optionalDependencies:
+      '@langchain/core': 1.1.0
+
+  '@langchain/langgraph@1.1.2(@langchain/core@1.1.0)(zod-to-json-schema@3.25.0(zod@4.2.1))(zod@4.2.1)':
     dependencies:
       '@langchain/core': 1.1.0
       '@langchain/langgraph-checkpoint': 1.0.0(@langchain/core@1.1.0)
-      '@langchain/langgraph-sdk': 1.5.4(@langchain/core@1.1.0)
+      '@langchain/langgraph-sdk': 1.5.5(@langchain/core@1.1.0)
+      '@standard-schema/spec': 1.1.0
       uuid: 10.0.0
       zod: 4.2.1
     optionalDependencies:
