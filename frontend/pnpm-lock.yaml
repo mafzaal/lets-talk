@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@langchain/langgraph-sdk':
-        specifier: ^1.5.5
-        version: 1.5.5(@langchain/core@1.1.0)
+        specifier: ^1.6.2
+        version: 1.6.2(@langchain/core@1.1.0)
       marked:
         specifier: ^17.0.1
         version: 17.0.1
@@ -321,10 +321,24 @@ packages:
     peerDependencies:
       '@langchain/core': ^1.0.1
 
-  '@langchain/langgraph-sdk@1.5.5':
-    resolution: {integrity: sha512-SyiAs6TVXPWlt/8cI9pj/43nbIvclY3ytKqUFbL5MplCUnItetEyqvH87EncxyVF5D7iJKRZRfSVYBMmOZbjbQ==}
+  '@langchain/langgraph-sdk@1.5.6':
+    resolution: {integrity: sha512-yNRhe4p+R0Xar/nXaTdnhZud79LC0mCgE9G1YCaBOSV6zW13dHMPW8aDs0aKHyRbn3+/LTwAKG+ipeDBA0qxKQ==}
     peerDependencies:
       '@langchain/core': ^1.1.15
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
+    peerDependenciesMeta:
+      '@langchain/core':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
+  '@langchain/langgraph-sdk@1.6.2':
+    resolution: {integrity: sha512-UzRZsnDqdTmeitf/K5yZnVdl+V+7bDj/hQUXm+Y8TwWUuKtWUDocIReKgAmPQLoIz0AN8bOUt0QGnIISmCZyuA==}
+    peerDependencies:
+      '@langchain/core': ^1.1.16
       react: ^18 || ^19
       react-dom: ^18 || ^19
     peerDependenciesMeta:
@@ -1496,8 +1510,17 @@ snapshots:
       '@langchain/core': 1.1.0
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@1.5.5(@langchain/core@1.1.0)':
+  '@langchain/langgraph-sdk@1.5.6(@langchain/core@1.1.0)':
     dependencies:
+      p-queue: 9.1.0
+      p-retry: 7.1.1
+      uuid: 13.0.0
+    optionalDependencies:
+      '@langchain/core': 1.1.0
+
+  '@langchain/langgraph-sdk@1.6.2(@langchain/core@1.1.0)':
+    dependencies:
+      '@types/json-schema': 7.0.15
       p-queue: 9.1.0
       p-retry: 7.1.1
       uuid: 13.0.0
@@ -1508,7 +1531,7 @@ snapshots:
     dependencies:
       '@langchain/core': 1.1.0
       '@langchain/langgraph-checkpoint': 1.0.0(@langchain/core@1.1.0)
-      '@langchain/langgraph-sdk': 1.5.5(@langchain/core@1.1.0)
+      '@langchain/langgraph-sdk': 1.5.6(@langchain/core@1.1.0)
       '@standard-schema/spec': 1.1.0
       uuid: 10.0.0
       zod: 4.2.1
@@ -1747,8 +1770,7 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
-  '@types/json-schema@7.0.15':
-    optional: true
+  '@types/json-schema@7.0.15': {}
 
   '@types/uuid@10.0.0': {}
 
