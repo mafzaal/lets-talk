@@ -1,4 +1,4 @@
-FROM langchain/langgraph-api:3.13-wolfi
+FROM langchain/langgraph-api:3.14-wolfi
 
 # Install timezone data for proper timezone handling
 RUN apk add --no-cache tzdata
